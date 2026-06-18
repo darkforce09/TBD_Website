@@ -88,7 +88,7 @@ export function EventHubPage() {
             ) : (
               <div className="flex flex-col gap-6">
                 {missions.map((m, i) => (
-                  <MissionDossier key={m.event_mission_id} eventId={event.id} index={i + 1} m={m} />
+                  <MissionDossier key={m.event_mission_id} index={i + 1} m={m} />
                 ))}
               </div>
             )}
@@ -99,15 +99,7 @@ export function EventHubPage() {
   )
 }
 
-function MissionDossier({
-  eventId,
-  index,
-  m,
-}: {
-  eventId: string
-  index: number
-  m: EventMissionDossier
-}) {
+function MissionDossier({ index, m }: { index: number; m: EventMissionDossier }) {
   return (
     <OpsCard className="bg-surface-container-high">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -120,13 +112,21 @@ function MissionDossier({
             {terrainLabel(m.terrain)} • {gameModeLabel(m.game_mode)} • {formatLocalDateTime(m.start_time)}
           </p>
         </div>
-        <div className="text-right">
+        <div className="flex flex-col items-end gap-2">
           {m.my_state && (
             <span className="rounded bg-success-muted px-2 py-0.5 text-xs font-semibold text-success">
               {m.my_state.toUpperCase()}
             </span>
           )}
-          <p className="mt-1 text-sm text-on-surface-variant">{m.filled}/{m.total} slots filled</p>
+          <p className="text-sm text-on-surface-variant">{m.filled}/{m.total} slots filled</p>
+          <button
+            type="button"
+            disabled
+            title="2D mission planner — coming soon"
+            className="flex cursor-not-allowed items-center gap-2 rounded-lg border border-border-subtle px-3 py-1.5 text-xs text-on-surface-variant opacity-50"
+          >
+            <MaterialIcon name="map" className="text-base" /> Mission Planner
+          </button>
         </div>
       </div>
 
@@ -152,41 +152,22 @@ function MissionDossier({
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-3">
-        <button
-          type="button"
-          disabled
-          title="2D mission planner — coming soon"
-          className="flex cursor-not-allowed items-center gap-2 rounded-lg border border-border-subtle px-4 py-2 text-sm text-on-surface-variant opacity-50"
-        >
-          <MaterialIcon name="map" /> Open in Mission Planner
-        </button>
-        <Link
-          to={`/events/${eventId}/missions/${m.event_mission_id}/orbat`}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary"
-        >
-          <MaterialIcon name="groups" /> Open ORBAT
-        </Link>
+      {/* ORBAT is registered inline — no extra navigation. */}
+      <div className="mt-4">
+        <OrbatSelector emid={m.event_mission_id} myState={m.my_state} />
       </div>
     </OpsCard>
   )
 }
 
-// --- ORBAT Selection (macOS split-pane) ------------------------------------
+// --- Reusable ORBAT split-pane selector ------------------------------------
 
-export function OrbatSelectionPage() {
-  const { id, emid } = useParams<{ id: string; emid: string }>()
-  const { data: event } = useEvent(id)
-  const { data: squads, isLoading, isError, error } = useOrbat(emid)
-  const register = useRegisterMission(emid ?? '')
-  const withdraw = useWithdrawMission(emid ?? '')
+function OrbatSelector({ emid, myState }: { emid: string; myState?: string }) {
+  const { data: squads, isLoading } = useOrbat(emid)
+  const register = useRegisterMission(emid)
+  const withdraw = useWithdrawMission(emid)
 
-  const dossier = event?.missions.find((m) => m.event_mission_id === emid)
-
-  const factions = useMemo(
-    () => [...new Set((squads ?? []).map((s) => s.faction))],
-    [squads],
-  )
+  const factions = useMemo(() => [...new Set((squads ?? []).map((s) => s.faction))], [squads])
   const [faction, setFaction] = useState<string | null>(null)
   const activeFaction = faction ?? factions[0] ?? null
   const factionSquads = (squads ?? []).filter((s) => s.faction === activeFaction)
@@ -214,6 +195,175 @@ export function OrbatSelectionPage() {
     })
   }
 
+  if (isLoading) {
+    return <p className="text-sm text-on-surface-variant">Loading ORBAT…</p>
+  }
+  if (!squads || squads.length === 0) {
+    return <p className="text-sm text-on-surface-variant">No ORBAT slots defined for this mission.</p>
+  }
+
+  return (
+    <div className="grid overflow-hidden rounded-xl border border-border-subtle md:grid-cols-[240px_1fr]">
+      {/* Left: navigation sidebar */}
+      <aside className="border-b border-border-subtle bg-surface-container p-4 md:border-b-0 md:border-r">
+        {factions.length > 1 && (
+          <div className="mb-4 flex rounded-lg bg-surface p-1">
+            {factions.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => {
+                  setFaction(f)
+                  setSquadKey(null)
+                  setSelectedSlot(null)
+                }}
+                className={cn(
+                  'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  f === activeFaction ? 'bg-primary text-on-primary' : 'text-on-surface-variant',
+                )}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <ul className="space-y-1">
+          {factionSquads.map((s) => (
+            <li key={s.squad}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSquadKey(s.squad)
+                  setSelectedSlot(null)
+                }}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                  activeSquad?.squad === s.squad
+                    ? 'bg-primary/10 text-on-surface'
+                    : 'text-on-surface-variant hover:bg-surface-container-high',
+                )}
+              >
+                <span>
+                  <span className="font-medium text-on-surface">{s.squad}</span>
+                  {s.callsign && <span className="ml-1 text-xs">{s.callsign}</span>}
+                </span>
+                <span className={cn('text-xs', s.filled >= s.total ? 'text-error' : 'text-on-surface-variant')}>
+                  {s.filled}/{s.total}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
+      {/* Right: slot detail pane */}
+      <section className="flex min-h-[18rem] flex-col bg-surface-container-high">
+        <div className="flex-1 p-4">
+          {activeSquad ? (
+            <>
+              <div className="mb-3 flex items-center justify-between">
+                <h4 className="font-semibold">
+                  {activeSquad.squad}
+                  {activeSquad.callsign && (
+                    <span className="text-sm font-normal text-on-surface-variant"> — {activeSquad.callsign}</span>
+                  )}
+                </h4>
+                <span className="text-xs uppercase text-on-surface-variant">{activeFaction}</span>
+              </div>
+              <div className="overflow-hidden rounded-lg border border-border-subtle">
+                <table className="w-full text-sm">
+                  <thead className="bg-surface-container text-xs font-semibold uppercase text-on-surface-variant">
+                    <tr>
+                      <th className="px-4 py-2 text-left">Role</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-subtle">
+                    {activeSquad.slots.map((slot) => {
+                      const taken = Boolean(slot.assigned_to)
+                      const selected = selectedSlot === slot.id
+                      return (
+                        <tr
+                          key={slot.id}
+                          onClick={() => !taken && setSelectedSlot(selected ? null : slot.id)}
+                          className={cn(
+                            !taken && 'cursor-pointer',
+                            selected && 'bg-primary/10',
+                            !taken && !selected && 'hover:bg-surface-container',
+                          )}
+                        >
+                          <td className="px-4 py-2 font-medium">{slot.role}</td>
+                          <td className="px-4 py-2">
+                            {taken ? (
+                              <span className="flex items-center gap-2 text-on-surface-variant">
+                                <img src={DEFAULT_AVATAR} alt="" className="h-6 w-6 rounded-full" />
+                                {slot.assigned_name || slot.assigned_to}
+                              </span>
+                            ) : (
+                              <span
+                                className={cn(
+                                  'flex items-center gap-2',
+                                  selected ? 'text-primary' : 'text-success',
+                                )}
+                              >
+                                <span className="h-2 w-2 rounded-full bg-current" />
+                                {selected ? 'Selected' : 'Available'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <p className="text-on-surface-variant">Select a squad to view its slots.</p>
+          )}
+        </div>
+
+        {/* Footer action bar */}
+        <div className="flex items-center justify-between gap-3 border-t border-border-subtle bg-surface-container p-4">
+          <div className="text-sm text-on-surface-variant">
+            {myState
+              ? `You are ${myState} for this mission.`
+              : 'Select an open slot to deploy.'}
+          </div>
+          <div className="flex gap-2">
+            {myState && (
+              <button
+                type="button"
+                onClick={handleWithdraw}
+                disabled={withdraw.isPending}
+                className="rounded-lg border border-error/50 px-4 py-2 text-sm text-error disabled:opacity-50"
+              >
+                Withdraw
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleRegister}
+              disabled={!selectedSlot || register.isPending}
+              className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-on-primary disabled:opacity-50"
+            >
+              Register for Deployment
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+// --- Standalone ORBAT route (deep-link / direct URL) -----------------------
+
+export function OrbatSelectionPage() {
+  const { id, emid } = useParams<{ id: string; emid: string }>()
+  const { data: event, isLoading, isError, error } = useEvent(id)
+  const dossier = event?.missions.find((m) => m.event_mission_id === emid)
+
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
@@ -228,161 +378,7 @@ export function OrbatSelectionPage() {
             title={dossier?.title ?? 'Order of Battle'}
             subtitle="Select your faction, squad, and slot, then register for deployment."
           />
-
-          <div className="grid overflow-hidden rounded-xl border border-border-subtle md:grid-cols-[260px_1fr]">
-            {/* Left: navigation sidebar */}
-            <aside className="border-b border-border-subtle bg-surface-container-high p-4 md:border-b-0 md:border-r">
-              {factions.length > 1 && (
-                <div className="mb-4 flex rounded-lg bg-surface p-1">
-                  {factions.map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => {
-                        setFaction(f)
-                        setSquadKey(null)
-                        setSelectedSlot(null)
-                      }}
-                      className={cn(
-                        'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                        f === activeFaction ? 'bg-primary text-on-primary' : 'text-on-surface-variant',
-                      )}
-                    >
-                      {f}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <ul className="space-y-1">
-                {factionSquads.map((s) => (
-                  <li key={s.squad}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSquadKey(s.squad)
-                        setSelectedSlot(null)
-                      }}
-                      className={cn(
-                        'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors',
-                        activeSquad?.squad === s.squad
-                          ? 'bg-primary/10 text-on-surface'
-                          : 'text-on-surface-variant hover:bg-surface-container',
-                      )}
-                    >
-                      <span>
-                        <span className="font-medium text-on-surface">{s.squad}</span>
-                        {s.callsign && <span className="ml-1 text-xs">{s.callsign}</span>}
-                      </span>
-                      <span className={cn('text-xs', s.filled >= s.total ? 'text-error' : 'text-on-surface-variant')}>
-                        {s.filled}/{s.total}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-                {factionSquads.length === 0 && (
-                  <li className="px-3 py-2 text-sm text-on-surface-variant">No squads in this ORBAT.</li>
-                )}
-              </ul>
-            </aside>
-
-            {/* Right: slot detail pane */}
-            <section className="flex min-h-[24rem] flex-col bg-surface-container">
-              <div className="flex-1 p-4">
-                {activeSquad ? (
-                  <>
-                    <div className="mb-3 flex items-center justify-between">
-                      <h3 className="font-semibold">
-                        {activeSquad.squad}
-                        {activeSquad.callsign && (
-                          <span className="text-sm font-normal text-on-surface-variant"> — {activeSquad.callsign}</span>
-                        )}
-                      </h3>
-                      <span className="text-xs uppercase text-on-surface-variant">{activeFaction}</span>
-                    </div>
-                    <div className="overflow-hidden rounded-lg border border-border-subtle">
-                      <table className="w-full text-sm">
-                        <thead className="bg-surface-container-high text-xs font-semibold uppercase text-on-surface-variant">
-                          <tr>
-                            <th className="px-4 py-2 text-left">Role</th>
-                            <th className="px-4 py-2 text-left">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border-subtle">
-                          {activeSquad.slots.map((slot) => {
-                            const taken = Boolean(slot.assigned_to)
-                            const selected = selectedSlot === slot.id
-                            return (
-                              <tr
-                                key={slot.id}
-                                onClick={() => !taken && setSelectedSlot(selected ? null : slot.id)}
-                                className={cn(
-                                  !taken && 'cursor-pointer',
-                                  selected && 'bg-primary/10',
-                                  !taken && !selected && 'hover:bg-surface-container-high',
-                                )}
-                              >
-                                <td className="px-4 py-2 font-medium">{slot.role}</td>
-                                <td className="px-4 py-2">
-                                  {taken ? (
-                                    <span className="flex items-center gap-2 text-on-surface-variant">
-                                      <img src={DEFAULT_AVATAR} alt="" className="h-6 w-6 rounded-full" />
-                                      {slot.assigned_name || slot.assigned_to}
-                                    </span>
-                                  ) : (
-                                    <span
-                                      className={cn(
-                                        'flex items-center gap-2',
-                                        selected ? 'text-primary' : 'text-success',
-                                      )}
-                                    >
-                                      <span className="h-2 w-2 rounded-full bg-current" />
-                                      {selected ? 'Selected' : 'Available'}
-                                    </span>
-                                  )}
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-on-surface-variant">Select a squad to view its slots.</p>
-                )}
-              </div>
-
-              {/* Footer action bar */}
-              <div className="flex items-center justify-between gap-3 border-t border-border-subtle bg-surface-container-high p-4">
-                <div className="text-sm text-on-surface-variant">
-                  {dossier?.my_state
-                    ? `You are ${dossier.my_state} for this mission.`
-                    : 'You are not registered for this mission.'}
-                </div>
-                <div className="flex gap-2">
-                  {dossier?.my_state && (
-                    <button
-                      type="button"
-                      onClick={handleWithdraw}
-                      disabled={withdraw.isPending}
-                      className="rounded-lg border border-error/50 px-4 py-2 text-sm text-error disabled:opacity-50"
-                    >
-                      Withdraw
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleRegister}
-                    disabled={!selectedSlot || register.isPending}
-                    className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-on-primary disabled:opacity-50"
-                  >
-                    Register for Deployment
-                  </button>
-                </div>
-              </div>
-            </section>
-          </div>
+          {emid && <OrbatSelector emid={emid} myState={dossier?.my_state} />}
         </div>
       </QueryState>
     </AuthGate>
