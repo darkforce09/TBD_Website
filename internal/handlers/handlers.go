@@ -67,6 +67,12 @@ func (h *Handler) Register(rg *gin.RouterGroup) {
 	rg.POST("/auth/refresh", h.Refresh)
 	rg.POST("/auth/logout", h.Logout)
 
+	// Development-only login shortcut (mints a session without Discord). The
+	// handler also guards on env, so this is a no-op surface in production.
+	if h.cfg.Env == "development" {
+		rg.GET("/auth/dev-login", h.DevLogin)
+	}
+
 	// Authenticated self-service + content read paths (members-only).
 	authed := rg.Group("", middleware.RequireAuth(h.jwt))
 	authed.GET("/me", h.GetMe)
