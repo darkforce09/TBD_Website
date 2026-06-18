@@ -54,7 +54,7 @@ open it in the browser to log in, or curl it and read `access_token` from the
 - Git: **commit directly to `main`; never create a branch.** End commit messages with
   the `Co-Authored-By` trailer. Commits are tagged `T-00x`.
 
-## Status (latest feature work: T-008, commit 2eef30b — 2026-06-19)
+## Status (latest feature work: T-009, commit cc2eed3 — 2026-06-19)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
@@ -86,6 +86,10 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     invalid-date-safe.
   - Verified: `make test-it`, frontend build+lint, and a live dev-login API smoke
     (create event → attach mission → auto-ORBAT → claim slot → withdraw).
+- T-009 inline ORBAT on the Event Hub: each mission dossier renders the
+  faction/squad/slot selector + Register button inline (no "Open ORBAT" step). The
+  split-pane is a reusable `OrbatSelector` in `pages/events.tsx`; the standalone
+  `/events/:id/missions/:emid/orbat` route reuses it for deep-links.
 
 **Not yet built / next:**
 - The 2D mission editor UI (backend stores/serves `json_payload`; the visual editor
