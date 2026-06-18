@@ -54,7 +54,9 @@ open it in the browser to log in, or curl it and read `access_token` from the
 - Git: **commit directly to `main`; never create a branch.** End commit messages with
   the `Co-Authored-By` trailer. Commits are tagged `T-00x`.
 
-## Status (as of T-004, commit fad698b — 2026-06-18)
+## Status (latest feature work: T-004, commit fad698b — 2026-06-18)
+Commits after T-004 (T-005+) are documentation only; the feature status below is current.
+
 **Done:**
 - T-001 initial backend (full schema + all handlers) + frontend scaffold.
 - T-002 Discord OAuth2 callback end-to-end.
