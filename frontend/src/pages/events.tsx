@@ -115,7 +115,74 @@ export function EventHubView({ event }: { event: EventHub }) {
   )
 }
 
+// --- Placeholder mission-intel data ----------------------------------------
+// The API does not yet supply maker/duration, a structured objective+lore, or
+// per-faction uniform/vehicle loadouts. These placeholders establish the visual
+// layout; swap them for real fields once the backend serves them.
+const PLACEHOLDER_MAKER = 'Sam'
+const PLACEHOLDER_DURATION = '90 MIN'
+// Asymmetrical win conditions — each side has its own objectives.
+const PLACEHOLDER_BLUFOR_OBJECTIVES = [
+  'Protect the forward operating bases',
+  'Protect and secure the nuke',
+  'Escort the VIP convoy to extraction',
+]
+const PLACEHOLDER_OPFOR_OBJECTIVES = [
+  'Capture the forward operating bases',
+  'Find and detonate the nuke',
+  'Intercept the VIP convoy',
+]
+const PLACEHOLDER_LORE =
+  'Hostile mechanized elements have pushed across the northern border under cover of a winter storm. Command has tasked us with holding the line until reinforcements arrive. Expect contested airspace and degraded visibility.'
+
+// A simple uniform-silhouette SVG so the frame always renders offline.
+const PLACEHOLDER_UNIFORM =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='120'><rect width='80' height='120' fill='%23242a3a'/><circle cx='40' cy='38' r='15' fill='%233a4252'/><rect x='18' y='56' width='44' height='56' rx='9' fill='%233a4252'/></svg>"
+
+const PLACEHOLDER_VEHICLES = [
+  { name: 'BTR-70 APC', qty: 4 },
+  { name: 'UAZ-469', qty: 6 },
+  { name: 'Mi-8 Hip', qty: 2 },
+]
+
+// Faction render order — deterministic so the dossier grid and the ORBAT tabs
+// always agree left-to-right regardless of API order. Known military sides sort
+// by convention (BLUFOR → OPFOR → INDFOR); anything else falls back to
+// alphabetical (e.g. "Alliance" before "Empire").
+const FACTION_SIDE_RANK: [RegExp, number][] = [
+  [/\b(blufor|bluefor|nato|usmc|us army|usa|west(ern)?)\b/i, 0],
+  [/\b(opfor|ussr|soviet|russia|csat|east(ern)?)\b/i, 1],
+  [/\b(indfor|independent|guer(rilla)?|resistance|civ(ilian)?)\b/i, 2],
+]
+
+function factionSide(name: string): number {
+  for (const [re, rank] of FACTION_SIDE_RANK) {
+    if (re.test(name)) return rank
+  }
+  return 99 // unknown side: ranked after known sides, then sorted alphabetically
+}
+
+function sortFactions(factions: string[]): string[] {
+  return [...factions].sort(
+    (a, b) => factionSide(a) - factionSide(b) || a.localeCompare(b),
+  )
+}
+
+function MetaBadge({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded border border-outline-variant/30 bg-surface-container/60 px-2 py-1 font-mono text-[11px] uppercase tracking-wide">
+      <span className="text-on-surface-variant">{label}:</span>
+      <span className="text-on-surface">{value}</span>
+    </span>
+  )
+}
+
 function MissionDossier({ index, m }: { index: number; m: EventMissionDossier }) {
+  // Real armory keyed by faction, so every listed faction gets a dossier card.
+  const armoryByFaction = new Map(m.armory_by_faction.map((f) => [f.faction, f.items]))
+  const factionList = sortFactions(
+    m.factions.length ? m.factions : m.armory_by_faction.map((f) => f.faction),
+  )
   return (
     <OpsCard className="bg-surface-container-high">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -127,6 +194,11 @@ function MissionDossier({ index, m }: { index: number; m: EventMissionDossier })
           <p className="mt-1 text-sm text-on-surface-variant">
             {terrainLabel(m.terrain)} • {gameModeLabel(m.game_mode)} • {formatLocalDateTime(m.start_time)}
           </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <MetaBadge label="Maker" value={PLACEHOLDER_MAKER} />
+            <MetaBadge label="Terrain" value={terrainLabel(m.terrain)} />
+            <MetaBadge label="Duration" value={PLACEHOLDER_DURATION} />
+          </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           {m.my_state && (
@@ -146,26 +218,118 @@ function MissionDossier({ index, m }: { index: number; m: EventMissionDossier })
         </div>
       </div>
 
-      {m.briefing && (
-        <p className="mt-2 whitespace-pre-line text-sm text-on-surface-variant">{m.briefing}</p>
-      )}
+      {/* Mission Briefing — lore + asymmetrical per-faction objectives. */}
+      <section className="mt-4">
+        <h4 className="mb-2 font-mono text-xs uppercase tracking-widest text-on-surface-variant">
+          Mission Briefing
+        </h4>
+        <p className="whitespace-pre-line text-sm leading-relaxed text-on-surface-variant">
+          {m.briefing || PLACEHOLDER_LORE}
+        </p>
 
-      {m.armory_by_faction.length > 0 && (
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          {m.armory_by_faction.map((fac) => (
-            <div key={fac.faction} className="rounded-lg border border-border-subtle bg-surface-container p-3">
-              <h4 className="mb-2 text-sm font-semibold">{fac.faction}</h4>
-              <ul className="space-y-1 text-sm">
-                {fac.items.map((it) => (
-                  <li key={it.id} className="flex justify-between text-on-surface-variant">
-                    <span>{it.item_name}</span>
-                    <span>{it.quantity == null ? '∞' : `x${it.quantity}`}</span>
-                  </li>
-                ))}
-              </ul>
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* BLUFOR (friendly) */}
+          <div className="rounded-lg border border-secondary/20 bg-secondary-container/10 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(173,198,255,0.6)]" />
+              <h4 className="font-mono text-sm text-primary">BLUFOR Objectives</h4>
             </div>
-          ))}
+            <ul className="space-y-1.5 text-sm text-on-surface-variant">
+              {PLACEHOLDER_BLUFOR_OBJECTIVES.map((o) => (
+                <li key={o} className="flex gap-2">
+                  <span className="text-primary">›</span>
+                  {o}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* OPFOR (hostile) */}
+          <div className="rounded-lg border border-error/20 bg-error-container/10 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="h-2.5 w-2.5 rounded-full bg-error shadow-[0_0_8px_rgba(255,180,171,0.6)]" />
+              <h4 className="font-mono text-sm text-error">OPFOR Objectives</h4>
+            </div>
+            <ul className="space-y-1.5 text-sm text-on-surface-variant">
+              {PLACEHOLDER_OPFOR_OBJECTIVES.map((o) => (
+                <li key={o} className="flex gap-2">
+                  <span className="text-error">›</span>
+                  {o}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
+      </section>
+
+      {/* Faction Dossiers — uniforms, assets, and real armory per faction. */}
+      {factionList.length > 0 && (
+        <section className="mt-4">
+          <h4 className="mb-2 font-mono text-xs uppercase tracking-widest text-on-surface-variant">
+            Faction Dossiers
+          </h4>
+          <div className="grid gap-3 md:grid-cols-2">
+            {factionList.map((faction) => {
+              const items = armoryByFaction.get(faction) ?? []
+              return (
+                <div
+                  key={faction}
+                  className="rounded-lg border border-border-subtle bg-surface-container p-3"
+                >
+                  <h5 className="mb-3 text-sm font-semibold">{faction}</h5>
+
+                  {/* Uniforms */}
+                  <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">
+                    Uniforms
+                  </span>
+                  <div className="mb-3 flex gap-2">
+                    {[0, 1, 2].map((i) => (
+                      <img
+                        key={i}
+                        src={PLACEHOLDER_UNIFORM}
+                        alt=""
+                        className="aspect-[2/3] w-12 rounded-md border border-white/10 object-cover"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Assets / Vehicles */}
+                  <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">
+                    Assets
+                  </span>
+                  <ul className="mb-3 overflow-hidden rounded-md bg-surface-container/50 font-mono text-xs">
+                    {PLACEHOLDER_VEHICLES.map((v) => (
+                      <li
+                        key={v.name}
+                        className="flex items-center justify-between border-b border-white/5 px-2 py-1.5 last:border-0"
+                      >
+                        <span className="text-on-surface-variant">{v.name}</span>
+                        <span className="text-tactical-yellow">x{v.qty}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Armory — real data */}
+                  {items.length > 0 && (
+                    <>
+                      <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">
+                        Armory
+                      </span>
+                      <ul className="space-y-1 text-sm">
+                        {items.map((it) => (
+                          <li key={it.id} className="flex justify-between text-on-surface-variant">
+                            <span>{it.item_name}</span>
+                            <span>{it.quantity == null ? '∞' : `x${it.quantity}`}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </section>
       )}
 
       {/* ORBAT is registered inline — no extra navigation. */}
@@ -189,7 +353,10 @@ function OrbatSelector({ emid, myState }: { emid: string; myState?: string }) {
   const isLeader = useAuthStore((s) => s.hasMinRole('leader'))
   const isAdmin = useAuthStore((s) => s.hasMinRole('admin'))
 
-  const factions = useMemo(() => [...new Set((squads ?? []).map((s) => s.faction))], [squads])
+  const factions = useMemo(
+    () => sortFactions([...new Set((squads ?? []).map((s) => s.faction))]),
+    [squads],
+  )
   const [faction, setFaction] = useState<string | null>(null)
   const activeFaction = faction ?? factions[0] ?? null
   const factionSquads = (squads ?? []).filter((s) => s.faction === activeFaction)

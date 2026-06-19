@@ -1,48 +1,40 @@
-import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { MaterialIcon } from '@/components/MaterialIcon'
-import { OpsCard } from '@/components/OpsCard'
 import { AuthGate } from '@/components/AuthGate'
 import { QueryState } from '@/components/QueryState'
-import { Badge } from '@/components/ui/badge'
 import { useServers } from '@/hooks/queries'
 import { useServerTelemetry } from '@/hooks/useServerTelemetry'
 import { pickDefaultServer } from '@/lib/defaultServer'
-import { formatBytes, formatUptime } from '@/lib/format'
+import { formatUptime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-function IntelField({
-  label,
-  children,
-  className,
-}: {
-  label: string
-  children: ReactNode
-  className?: string
-}) {
-  return (
-    <div className={cn('rounded-lg border border-outline-variant/30 bg-surface-variant/20 p-4', className)}>
-      <span className="mb-1 block text-xs font-semibold tracking-widest text-on-surface-variant uppercase">
-        {label}
-      </span>
-      {children}
-    </div>
-  )
-}
+/** Static cinematic terrain backdrop until the API exposes per-terrain imagery. */
+const THEATER_IMAGE =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuBJhklFaKKJXQ3-uOGwrugGr_URw1Dq_3Jslvkc3lEtT4ObLWKv52ipE-EQWEm3QF4HeoY5vA8NcYt_e87d76A14Z48tuHODNidNphecUVm_Zy7NLBRexvt9uUcFOBLTk3RbiSAetUEMYX2BmQMPU-BU-HvmweLf1P4-jc1CjC0jDdMMR-fzb5BVtNID-Ak1iW3MuGzWiO4LfZ4WIPy8Ijk3kcsqRFXVroQ_rZSJ8yw4se-gszeDoVOc8Vp9HL5qLcEAtnI4pFEC4I'
+
+/** Global tactical map backdrop — gives the glass panels something to frost. */
+const COMMAND_MAP_IMAGE =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuBqY9NRsaLKSRk7V0g9XrVkysuxuTRsc8FcMfq76JZujkDPkAAihMyRIw6mOuvFI4tTOwRDvDEhOe-p2Coym8zpmONJeueKLL379Yzecw64o3wzqJMRZdGCA7iBbwrno1hge-AU7AZNCE4XVo9q6IXTH5A2NRf3IToSchzAuj5JUT-Y81VVXfb-Ic4CrnLbV_So9xy2vBIxVHrwDztZ-YuY78DL-Jb5qsgNACRmxHXgRYRrsCxsCJnHBrgj-DD3LUVa31rIo4Arzrc'
 
 export function ServerIntelPage() {
   const { data: servers, isLoading, isError, error } = useServers()
   const server = servers ? pickDefaultServer(servers) : undefined
-  const { status, isConnected } = useServerTelemetry(server?.id)
+  const { status } = useServerTelemetry(server?.id)
 
   const live = status ?? server?.status
   const modpack = server?.required_modpack
   const isOnline = live?.is_online ?? false
-  const playerPct =
-    live && live.max_players > 0
-      ? Math.round((live.player_count / live.max_players) * 100)
-      : 0
   const connectAddress = server ? `${server.ip} : ${server.port}` : '—'
+
+  // `terrain` is not yet part of the server API contract; read it defensively so
+  // the overlay populates automatically once the backend surfaces it.
+  const terrainName = (server as { terrain?: string } | undefined)?.terrain ?? 'Theater Unknown'
+  const missionName = live?.current_match_id
+    ? `Match ${live.current_match_id.slice(0, 8)}`
+    : 'No Active Mission'
+
+  const fpsOptimal = (live?.server_fps ?? 0) >= 30
 
   const copyAddress = async () => {
     if (!server) return
@@ -57,176 +49,184 @@ export function ServerIntelPage() {
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <div className="mx-auto w-full max-w-[var(--spacing-container-max)]">
-          <header className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-on-surface">Server Intel</h1>
-            <p className="text-on-surface-variant">
-              Real-time server health and deployment telemetry for{' '}
-              <span className="font-medium text-on-surface">{server?.name ?? '—'}</span>
-              {isConnected && (
-                <span className="ml-2 text-xs text-success">(live stream)</span>
-              )}
-            </p>
-          </header>
+        <div className="relative h-full overflow-y-auto">
+          {/* Global satellite-map backdrop — the surface the glass panel frosts. */}
+          <div
+            className="absolute inset-0 z-0 bg-cover bg-center"
+            style={{ backgroundImage: `url('${COMMAND_MAP_IMAGE}')` }}
+          >
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          </div>
 
+          <div className="relative z-10 mx-auto flex w-full max-w-[var(--spacing-container-max)] flex-col p-8 lg:p-12">
           {!server ? (
             <p className="text-on-surface-variant">No servers configured.</p>
           ) : (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <OpsCard glass glow className="h-full">
-                <header className="mb-4 flex items-center justify-between border-b border-border-subtle pb-4">
-                  <h2 className="text-lg font-semibold">Server Status</h2>
-                  <div className="flex items-center gap-2">
+            <div className="flex w-full flex-col overflow-hidden rounded-xl border border-white/10 bg-surface-glass shadow-2xl backdrop-blur-xl">
+              {/* Panel Header */}
+              <div className="flex flex-col justify-between gap-6 border-b border-white/5 bg-surface/40 px-8 py-6 md:flex-row md:items-center">
+                <div>
+                  <div className="mb-2 flex items-center gap-3">
                     <div
                       className={cn(
                         'pulse-dot h-2.5 w-2.5 rounded-full',
-                        isOnline ? 'bg-success' : 'bg-error',
+                        isOnline ? 'bg-success' : 'bg-tactical-yellow',
                       )}
+                      title={isOnline ? 'Server Online' : 'Server Offline'}
                     />
-                    <span
-                      className={cn(
-                        'text-xs font-semibold tracking-widest uppercase',
-                        isOnline ? 'text-success' : 'text-error',
-                      )}
-                    >
-                      {isOnline ? 'Online' : 'Offline'}
-                    </span>
+                    <h2 className="text-headline-md uppercase tracking-wider text-on-surface">
+                      {server.name}
+                    </h2>
                   </div>
-                </header>
-                <div className="flex flex-col gap-4">
-                  <IntelField label="Uptime">
-                    <span className="font-mono text-sm tracking-widest text-primary">
-                      {live ? formatUptime(live.uptime_seconds) : '—'}
+                  <div className="inline-flex items-center gap-2 rounded-md border border-white/5 bg-surface-container px-3 py-1.5 text-code-md text-on-surface-variant">
+                    <MaterialIcon name="dns" className="text-[16px]" />
+                    <span>{connectAddress}</span>
+                    <button
+                      type="button"
+                      onClick={copyAddress}
+                      aria-label="Copy IP"
+                      className="ml-2 transition-colors hover:text-primary"
+                    >
+                      <MaterialIcon name="content_copy" className="text-[16px]" />
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toast.message('Launch requires the Reforger client')}
+                  className="flex shrink-0 items-center gap-2 rounded-full border border-secondary-container/50 bg-secondary-container px-6 py-3 text-label-md text-on-secondary-container transition-all duration-300 hover:shadow-[0_0_20px_rgba(5,102,217,0.4)]"
+                >
+                  <MaterialIcon name="play_arrow" filled />
+                  LAUNCH &amp; CONNECT
+                </button>
+              </div>
+
+              {/* Telemetry Grid */}
+              <div className="grid grid-cols-1 gap-8 border-b border-white/5 p-8 md:grid-cols-[1fr_2fr_1fr] md:divide-x md:divide-white/10">
+                {/* Column 1: Performance */}
+                <div className="flex flex-col justify-center space-y-4 md:pr-8">
+                  <div>
+                    <span className="mb-1 block text-label-sm uppercase tracking-widest text-on-surface-variant">
+                      Active Personnel
                     </span>
-                  </IntelField>
-                  <IntelField label="Player Count">
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-semibold">
-                        {live ? `${live.player_count} / ${live.max_players}` : '—'}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[30px] font-bold leading-tight text-tertiary-container">
+                        {live?.player_count ?? 0}
                       </span>
-                      <span className="text-sm text-on-surface-variant">Personnel</span>
+                      <span className="text-[20px] font-semibold text-on-surface-variant">
+                        / {live?.max_players ?? 0}
+                      </span>
                     </div>
-                    <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-container-highest">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${playerPct}%` }}
+                  </div>
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between text-code-md text-on-surface-variant">
+                      <span>Uptime:</span>
+                      <span>{live ? formatUptime(live.uptime_seconds) : '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-code-md text-on-surface-variant">
+                      <span>Server FPS:</span>
+                      <span className={fpsOptimal ? 'text-tactical-yellow' : 'text-error'}>
+                        {live ? `${live.server_fps} (${fpsOptimal ? 'Optimal' : 'Low'})` : '—'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: Theater of Operations */}
+                <div className="flex flex-col justify-center md:px-8">
+                  <span className="mb-3 block text-label-sm uppercase tracking-widest text-on-surface-variant">
+                    Theater of Operations
+                  </span>
+                  <Link to="/events" className="block focus:outline-none">
+                    <div className="group relative aspect-[21/9] w-full cursor-pointer overflow-hidden rounded-lg border border-white/10 transition-all duration-300 hover:ring-2 hover:ring-primary hover:ring-offset-2 hover:ring-offset-background">
+                      <img
+                        alt={`${terrainName} terrain`}
+                        src={THEATER_IMAGE}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-surface-container-highest/90 via-surface-container-highest/20 to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                        <div>
+                          <span className="block text-label-md text-on-surface">{terrainName}</span>
+                          <span className="mt-0.5 block text-label-sm text-primary">{missionName}</span>
+                        </div>
+                        <MaterialIcon name="map" className="text-on-surface-variant" />
+                      </div>
                     </div>
-                  </IntelField>
-                  <IntelField label="Server Performance" className="mt-auto">
-                    <div className="flex items-center gap-2">
-                      <MaterialIcon name="speed" className="text-lg text-success" />
-                      <span className={live && live.server_fps < 20 ? 'text-warning' : 'text-success'}>
-                        {live ? `${live.server_fps} Server FPS` : '—'}
-                      </span>
-                    </div>
-                  </IntelField>
+                  </Link>
                 </div>
-              </OpsCard>
 
-              <OpsCard glass glow className="h-full">
-                <header className="mb-4 border-b border-border-subtle pb-4">
-                  <h2 className="text-lg font-semibold">Active Deployment</h2>
-                </header>
-                <div className="relative mb-4 flex h-32 items-center justify-center overflow-hidden rounded-lg border border-border-subtle bg-surface-container">
-                  <MaterialIcon name="map" className="text-4xl text-on-surface-variant" />
-                  {live?.current_match_id && (
-                    <span className="absolute bottom-3 left-3 rounded border border-border-subtle bg-surface-container-highest/80 px-2 py-1 text-xs font-semibold tracking-widest backdrop-blur-sm">
-                      Match {live.current_match_id.slice(0, 8)}
-                    </span>
-                  )}
-                </div>
-                <ul className="flex flex-col gap-2">
-                  {[
-                    {
-                      icon: 'map',
-                      label: 'Mission',
-                      value: live?.current_match_id ? 'Active match' : 'No active match',
-                    },
-                    {
-                      icon: 'schedule',
-                      label: 'In-Game Time',
-                      value: live?.ingame_time ?? '—',
-                    },
-                    {
-                      icon: 'cloud',
-                      label: 'Weather Conditions',
-                      value: live?.ingame_weather ?? '—',
-                    },
-                  ].map((row) => (
-                    <li
-                      key={row.label}
-                      className="flex items-start gap-3 rounded-lg border border-border-subtle bg-surface-container p-3"
-                    >
-                      <MaterialIcon name={row.icon} className="mt-0.5 text-primary" />
-                      <div>
-                        <span className="block text-xs font-semibold tracking-widest text-on-surface-variant uppercase">
-                          {row.label}
-                        </span>
-                        <span className="text-on-surface">{row.value}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </OpsCard>
-
-              <OpsCard glass glow className="h-full">
-                <header className="mb-4 border-b border-border-subtle pb-4">
-                  <h2 className="text-lg font-semibold">Connection Gateway</h2>
-                </header>
-                <div className="flex flex-1 flex-col gap-4">
-                  <div className="flex flex-1 flex-col justify-center">
-                    <div className="relative mb-4 rounded-lg border border-border-subtle bg-background p-4">
-                      <span className="mb-2 block text-xs font-semibold tracking-widest text-on-surface-variant uppercase">
-                        IP / Port
-                      </span>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-sm tracking-widest text-primary">
-                          {connectAddress}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={copyAddress}
-                          className="rounded p-1 text-on-surface-variant transition-colors hover:text-primary"
-                          title="Copy to clipboard"
-                        >
-                          <MaterialIcon name="content_copy" className="text-sm" />
-                        </button>
-                      </div>
+                {/* Column 3: Environment & Mods */}
+                <div className="flex flex-col justify-center space-y-6 md:pl-8">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/5 bg-surface-container">
+                      <MaterialIcon name="schedule" className="text-primary" />
                     </div>
-                    <IntelField label="Required Modpack">
-                      <div className="flex items-center gap-2">
-                        <MaterialIcon name="extension" className="text-lg text-primary" />
-                        <span>
-                          {modpack
-                            ? `${modpack.name} v${modpack.version}`
-                            : 'No modpack required'}
-                        </span>
-                        {modpack?.is_current && (
-                          <span className="ml-auto">
-                            <Badge variant="success">Verified</Badge>
-                          </span>
-                        )}
-                      </div>
-                      {modpack && (
-                        <p className="mt-1 text-xs text-on-surface-variant">
-                          {formatBytes(modpack.total_size_bytes)} — {modpack.mods.length} mods
-                        </p>
-                      )}
-                    </IntelField>
+                    <div>
+                      <span className="block text-label-sm uppercase text-on-surface-variant">
+                        Simulated Time
+                      </span>
+                      <span className="text-body-md text-on-surface">{live?.ingame_time ?? '—'}</span>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-medium text-on-primary shadow-[0_0_15px_rgba(173,198,255,0.25)] transition-colors hover:bg-primary/90"
-                    onClick={() => toast.message('Launch requires the Reforger client')}
-                  >
-                    <MaterialIcon name="play_arrow" className="text-lg" />
-                    Launch Reforger &amp; Connect
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/5 bg-surface-container">
+                      <MaterialIcon name="rainy" className="text-tertiary-container" />
+                    </div>
+                    <div>
+                      <span className="block text-label-sm uppercase text-on-surface-variant">
+                        Conditions
+                      </span>
+                      <span className="text-body-md text-on-surface">
+                        {live?.ingame_weather ?? '—'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/5 bg-surface-container">
+                      <MaterialIcon name="verified" className="text-tactical-yellow" />
+                    </div>
+                    <div>
+                      <span className="block text-label-sm uppercase text-on-surface-variant">
+                        Mod Configuration
+                      </span>
+                      <span className="text-body-md text-on-surface">
+                        {modpack ? (
+                          <>
+                            {modpack.name} v{modpack.version}{' '}
+                            {modpack.is_current && (
+                              <span className="text-[12px] text-on-surface-variant">(Synced)</span>
+                            )}
+                          </>
+                        ) : (
+                          'No modpack required'
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </OpsCard>
+              </div>
+
+              {/* Recent Intelligence */}
+              <div className="bg-surface/20 p-8">
+                <span className="mb-4 block text-label-sm uppercase tracking-widest text-on-surface-variant">
+                  Recent Intelligence
+                </span>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4 border-b border-white/5 py-2 text-code-md">
+                    <span className="shrink-0 text-primary">[14:02:00Z]</span>
+                    <span className="text-on-surface">New hostile movement detected in Sector 4</span>
+                  </div>
+                  <div className="flex items-center gap-4 border-b border-white/5 py-2 text-code-md">
+                    <span className="shrink-0 text-primary">[13:45:12Z]</span>
+                    <span className="text-on-surface">Server Uplink maintenance completed</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
+          </div>
         </div>
       </QueryState>
     </AuthGate>

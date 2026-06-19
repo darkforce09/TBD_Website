@@ -19,6 +19,11 @@ interface SplitPaneProps {
   className?: string
   /** Header rendered above the master list (e.g. title + filter/create button). */
   masterHeader?: ReactNode
+  /**
+   * Drop the built-in opaque topo-map background so the pane can sit inside a
+   * frosted-glass encasing that frosts a map painted behind it.
+   */
+  transparent?: boolean
 }
 
 export function SplitPane({
@@ -27,11 +32,13 @@ export function SplitPane({
   masterWidth = '22rem',
   className,
   masterHeader,
+  transparent = false,
 }: SplitPaneProps) {
   return (
     <div
       className={cn(
-        'bg-topo-map bg-grid-overlay flex h-full min-h-0 w-full overflow-hidden',
+        'flex h-full min-h-0 w-full overflow-hidden',
+        !transparent && 'bg-topo-map bg-grid-overlay',
         className,
       )}
     >

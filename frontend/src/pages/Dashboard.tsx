@@ -14,6 +14,10 @@ import {
 } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
+/** Cinematic hero backdrop from the tactical-command-center blueprint. */
+const HERO_IMAGE =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuB_SlrhFHaG9jlm7NfoEUTrANNfG_-m0cqYcJVwKZ1pAUA_LTEnwP1zyNasVKfTgKdnX14ssTtYpEc3I1qn0UaEjwwEQyuAGxherp9Eu5rIpF4afr0sjFAUSjc9Z5NpB2xub7NkJCKNYCkkFsIa25L2e5QrbN4lEOZHeGZeLxpbVtQC8WATlT2skffHxtraZAi95LpXOqnuyLkxHIoJOHtxsFj2rJ4xCywZTnNZy_bJSzmLgPaun0eZsYw-Prx2nJ2GeJMP72x2l-4'
+
 export function DashboardPage() {
   const { data, isLoading, isError, error } = useDashboard()
 
@@ -31,11 +35,15 @@ export function DashboardPage() {
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <div className="flex w-full flex-col gap-4">
+        <div className="mx-auto flex w-full max-w-[var(--spacing-container-max)] flex-col gap-8 p-8 lg:p-12">
           {/* Hero Banner */}
           <div className="glass border-glow relative flex min-h-[300px] flex-col justify-end overflow-hidden rounded-xl p-8">
             <div className="absolute inset-0 z-0">
-              <div className="bg-topo-map bg-grid-overlay h-full w-full opacity-60 mix-blend-overlay" />
+              <img
+                alt="Operation theater"
+                src={HERO_IMAGE}
+                className="h-full w-full object-cover opacity-40 mix-blend-overlay"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent" />
             </div>
             <div className="relative z-10 flex w-full flex-wrap items-end justify-between gap-4">

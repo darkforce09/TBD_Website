@@ -57,7 +57,7 @@ export const router = createBrowserRouter([
       {
         path: 'server-intel',
         element: <ServerIntelPage />,
-        ...breadcrumb('Command Center', 'Server Intel'),
+        ...breadcrumb('Command Center', 'Server Intel', { fullBleed: true }),
       },
       {
         path: 'announcements',
@@ -72,7 +72,7 @@ export const router = createBrowserRouter([
       {
         path: 'leaderboards',
         element: <LeaderboardsPage />,
-        ...breadcrumb('Operations', 'Global Leaderboards'),
+        ...breadcrumb('Operations', 'Global Leaderboards', { fullBleed: true }),
       },
       {
         path: 'missions',

@@ -63,6 +63,7 @@ export interface LeaderboardRow {
   team_kills?: number
   command_win_rate?: number
   missions_played?: number
+  longest_kill_m?: number
 }
 
 export interface LeaderboardResponse {
