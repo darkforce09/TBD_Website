@@ -22,7 +22,7 @@ import {
   gameModeLabel,
   terrainLabel,
 } from '@/lib/format'
-import type { EventMissionDossier } from '@/types/api'
+import type { EventHub, EventMissionDossier } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 // --- Event Hub -------------------------------------------------------------
@@ -30,79 +30,88 @@ import { cn } from '@/lib/utils'
 export function EventHubPage() {
   const { id } = useParams<{ id: string }>()
   const { data: event, isLoading, isError, error } = useEvent(id)
-  const { data: modpack } = useCurrentModpack()
-  const missions = event?.missions ?? []
 
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
         {event && (
           <div className="mx-auto w-full max-w-5xl">
-            <Link to="/events" className="mb-4 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+            <Link to="/events" className="mb-4 inline-flex items-center gap-1 text-label-md text-primary hover:underline">
               <MaterialIcon name="chevron_left" className="text-base" /> All Operations
             </Link>
-
-            {/* Hero */}
-            <section
-              className="relative mb-8 overflow-hidden rounded-xl border border-border-subtle bg-surface-container p-8"
-              style={
-                event.banner_image_url
-                  ? {
-                      backgroundImage: `linear-gradient(rgba(13,19,34,0.82),rgba(13,19,34,0.95)), url(${event.banner_image_url})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }
-                  : undefined
-              }
-            >
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent" />
-              <div className="relative flex flex-col gap-3">
-                <span className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
-                  Operation Hub
-                </span>
-                <h1 className="text-3xl font-bold md:text-4xl">
-                  {event.name_override || 'Untitled Operation'}
-                </h1>
-                <div className="text-2xl font-semibold tracking-widest text-primary">
-                  T-MINUS {countdownLabel(event.start_time)}
-                </div>
-                <p className="text-on-surface-variant">{formatLocalDateTime(event.start_time)}</p>
-                {event.briefing && (
-                  <p className="max-w-2xl whitespace-pre-line text-on-surface-variant">{event.briefing}</p>
-                )}
-                <div className="mt-2 flex flex-wrap gap-3 text-sm">
-                  <span className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-container-high px-3 py-2">
-                    <MaterialIcon name="headset_mic" className="text-primary" /> TS3: ts.tbdevent.eu
-                  </span>
-                  {modpack && (
-                    <a
-                      href={modpack.workshop_url ?? '#'}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-container-high px-3 py-2 hover:border-primary/40"
-                    >
-                      <MaterialIcon name="extension" className="text-primary" /> {modpack.name} v
-                      {modpack.version}
-                    </a>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <h2 className="mb-4 text-lg font-semibold">Mission Dossiers</h2>
-            {missions.length === 0 ? (
-              <p className="text-on-surface-variant">No missions have been added to this operation yet.</p>
-            ) : (
-              <div className="flex flex-col gap-6">
-                {missions.map((m, i) => (
-                  <MissionDossier key={m.event_mission_id} index={i + 1} m={m} />
-                ))}
-              </div>
-            )}
+            <EventHubView event={event} />
           </div>
         )}
       </QueryState>
     </AuthGate>
+  )
+}
+
+/**
+ * The Event Hub body (hero + mission dossiers). Rendered standalone on
+ * /events/:id and embedded in the schedule split-pane's detail column.
+ */
+export function EventHubView({ event }: { event: EventHub }) {
+  const { data: modpack } = useCurrentModpack()
+  const missions = event.missions ?? []
+
+  return (
+    <>
+      <section
+        className="relative mb-8 overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container p-8"
+        style={
+          event.banner_image_url
+            ? {
+                backgroundImage: `linear-gradient(rgba(13,19,34,0.82),rgba(13,19,34,0.95)), url(${event.banner_image_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+            : undefined
+        }
+      >
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent" />
+        <div className="relative flex flex-col gap-3">
+          <span className="text-label-sm text-on-surface-variant uppercase">Operation Hub</span>
+          <h1 className="text-headline-lg text-on-surface md:text-4xl">
+            {event.name_override || 'Untitled Operation'}
+          </h1>
+          <div className="font-mono text-headline-md tracking-widest text-primary">
+            T-MINUS {countdownLabel(event.start_time)}
+          </div>
+          <p className="text-on-surface-variant">{formatLocalDateTime(event.start_time)}</p>
+          {event.briefing && (
+            <p className="max-w-2xl whitespace-pre-line text-on-surface-variant">{event.briefing}</p>
+          )}
+          <div className="mt-2 flex flex-wrap gap-3 text-label-md">
+            <span className="flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container-high px-3 py-2">
+              <MaterialIcon name="headset_mic" className="text-primary" /> TS3: ts.tbdevent.eu
+            </span>
+            {modpack && (
+              <a
+                href={modpack.workshop_url ?? '#'}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container-high px-3 py-2 hover:border-primary/40"
+              >
+                <MaterialIcon name="extension" className="text-primary" /> {modpack.name} v
+                {modpack.version}
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <h2 className="mb-4 text-label-md text-on-surface-variant uppercase tracking-wide">Mission Dossiers</h2>
+      {missions.length === 0 ? (
+        <p className="text-on-surface-variant">No missions have been added to this operation yet.</p>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {missions.map((m, i) => (
+            <MissionDossier key={m.event_mission_id} index={i + 1} m={m} />
+          ))}
+        </div>
+      )}
+    </>
   )
 }
 

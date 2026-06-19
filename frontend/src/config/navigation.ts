@@ -45,6 +45,7 @@ export const navigation: NavSection[] = [
     title: 'Doctrine & Info',
     items: [
       { label: 'SOPs & Manuals', path: '/wiki', icon: 'menu_book', minRole: 'enlisted' },
+      { label: 'Vehicle Database', path: '/vehicles', icon: 'directions_car', minRole: 'enlisted' },
       { label: 'Modpacks', path: '/modpacks', icon: 'extension', minRole: 'enlisted' },
     ],
   },

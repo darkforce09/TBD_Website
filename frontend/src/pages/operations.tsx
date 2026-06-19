@@ -4,12 +4,21 @@ import { OpsCard } from '@/components/OpsCard'
 import { PageHeader } from '@/components/PageHeader'
 import { AuthGate } from '@/components/AuthGate'
 import { QueryState } from '@/components/QueryState'
+import { MaterialIcon } from '@/components/MaterialIcon'
+import { SplitPane, SplitPaneEmpty } from '@/components/ui/split-pane'
+import { ListDetailItem } from '@/components/ui/list-detail-item'
+import { Badge } from '@/components/ui/badge'
+import { useAuthStore } from '@/store/useAuthStore'
+import { DEFAULT_AVATAR } from '@/lib/avatar'
+import type { Announcement } from '@/types/api'
 import {
   useAnnouncements,
   useDeployments,
+  useEvent,
   useEvents,
   useLeaderboards,
 } from '@/hooks/queries'
+import { EventHubView } from '@/pages/events'
 import {
   formatLocalDateTime,
   formatShortDate,
@@ -26,128 +35,194 @@ const LEADERBOARD_TABS = [
 
 export function AnnouncementsPage() {
   const { data, isLoading, isError, error } = useAnnouncements(50, 0)
-  const posts = data?.data ?? []
-  const pinned = posts.filter((p) => p.is_pinned)
-  const rest = posts.filter((p) => !p.is_pinned)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  // Pinned first, then the rest — preserving incoming order within each group.
+  const posts = [...(data?.data ?? [])].sort(
+    (a, b) => Number(b.is_pinned) - Number(a.is_pinned),
+  )
+  const selected = posts.find((p) => p.id === selectedId) ?? posts[0] ?? null
 
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <div className="mx-auto w-full max-w-4xl">
-          <PageHeader title="Command Announcements" subtitle="Operational updates from command staff." />
-          {pinned.map((a) => (
-            <OpsCard key={a.id} className="mb-6 border-primary/30 bg-surface-container-high">
-              <div className="mb-4 flex flex-wrap gap-2">
-                <span className="rounded bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
-                  PINNED
-                </span>
-                <span className="rounded bg-surface-container-highest px-2 py-0.5 text-xs font-semibold text-on-surface-variant">
-                  {tagLabel(a.tag)}
-                </span>
-              </div>
-              <h2 className="text-xl font-semibold">{a.title}</h2>
-              {a.published_at && (
-                <p className="mt-1 text-sm text-on-surface-variant">
-                  Published {formatLocalDateTime(a.published_at)}
-                </p>
-              )}
-              <p className="mt-4 text-on-surface-variant">{a.snippet || a.body}</p>
-            </OpsCard>
-          ))}
-          <div className="flex flex-col gap-4">
-            {rest.length === 0 && pinned.length === 0 ? (
-              <p className="text-on-surface-variant">No announcements yet.</p>
+        <SplitPane
+          masterHeader={
+            <>
+              <h2 className="text-headline-sm tracking-wide text-on-surface uppercase">Comms Link</h2>
+              <MaterialIcon name="filter_list" className="text-outline" />
+            </>
+          }
+          master={
+            posts.length === 0 ? (
+              <p className="px-1 py-4 text-label-md text-on-surface-variant">No announcements yet.</p>
             ) : (
-              rest.map((a) => (
-                <OpsCard key={a.id} className="bg-surface-container-high">
-                  <span className="mb-2 inline-block rounded bg-surface-container-highest px-2 py-0.5 text-xs font-semibold text-on-surface-variant">
-                    {tagLabel(a.tag)}
-                  </span>
-                  <h3 className="text-lg font-semibold">{a.title}</h3>
-                  {a.published_at && (
-                    <p className="mt-1 text-sm text-on-surface-variant">
-                      {formatLocalDateTime(a.published_at)}
-                    </p>
-                  )}
-                  <p className="mt-2 text-sm text-on-surface-variant">{a.snippet || a.body.slice(0, 200)}</p>
-                </OpsCard>
+              posts.map((a) => (
+                <ListDetailItem
+                  key={a.id}
+                  active={selected?.id === a.id}
+                  onClick={() => setSelectedId(a.id)}
+                  meta={`[${formatShortDate(a.published_at || a.created_at)}]`}
+                  dotClassName={a.is_pinned ? 'bg-tactical-yellow' : undefined}
+                  title={a.title}
+                  preview={a.snippet || a.body}
+                />
               ))
-            )}
-          </div>
-        </div>
+            )
+          }
+          detail={
+            selected ? (
+              <AnnouncementDetail post={selected} />
+            ) : (
+              <SplitPaneEmpty
+                icon={<MaterialIcon name="campaign" className="text-4xl" />}
+                message="Select a broadcast to read."
+              />
+            )
+          }
+        />
       </QueryState>
     </AuthGate>
   )
 }
 
+function AnnouncementDetail({ post }: { post: Announcement }) {
+  return (
+    <>
+      <div className="z-10 shrink-0 border-b border-outline-variant/20 bg-surface-container-low/40 px-8 py-7 backdrop-blur-md md:px-12">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          {post.is_pinned && (
+            <Badge variant="warning" icon="push_pin">
+              Pinned
+            </Badge>
+          )}
+          <Badge variant="primary">{tagLabel(post.tag)}</Badge>
+          {post.published_at && (
+            <span className="ml-auto font-mono text-code-md text-outline">
+              {formatLocalDateTime(post.published_at)}
+            </span>
+          )}
+        </div>
+        <h1 className="text-headline-lg text-on-surface">{post.title}</h1>
+      </div>
+      <div className="px-8 py-8 md:px-12">
+        <div className="mx-auto max-w-3xl space-y-6">
+          {post.thumbnail_url && (
+            <div className="relative h-72 w-full overflow-hidden rounded-xl border border-outline-variant/30 shadow-2xl">
+              <img src={post.thumbnail_url} alt="" className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 to-transparent" />
+            </div>
+          )}
+          <div className="text-body-lg whitespace-pre-line text-on-surface-variant">{post.body}</div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function outcomeIsWin(outcome: string) {
+  return /vict|win|success|complete/i.test(outcome)
+}
+
 export function DeploymentsPage() {
   const { data, isLoading, isError, error } = useDeployments()
+  const user = useAuthStore((s) => s.user)
   const upcoming = data?.upcoming ?? []
   const history = data?.service_history ?? []
 
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <div className="mx-auto w-full max-w-5xl">
-          <PageHeader title="My Deployments" subtitle="Service record and upcoming operations." />
-          <OpsCard className="mb-8 bg-surface-container-high">
-            <div className="flex flex-wrap gap-8 text-sm">
+        <div className="bg-topo-map bg-grid-overlay flex h-full min-h-0 w-full overflow-hidden">
+          {/* Left: service stats dossier */}
+          <aside className="custom-scrollbar flex h-full w-72 shrink-0 flex-col gap-6 overflow-y-auto border-r border-outline-variant/30 bg-surface-container-lowest/50 p-6">
+            <div className="flex flex-col items-center text-center">
+              <img
+                src={user?.avatar_url || DEFAULT_AVATAR}
+                alt=""
+                className="h-20 w-20 rounded-full border border-outline-variant/50 object-cover"
+              />
+              <h2 className="mt-3 text-headline-sm text-on-surface">{user?.username}</h2>
+              <span className="text-label-sm text-on-surface-variant uppercase">{user?.role}</span>
+            </div>
+            <div className="space-y-4">
               <div>
-                <span className="text-on-surface-variant">Total Operations</span>
-                <p className="text-2xl font-bold text-primary">{data?.total_operations ?? 0}</p>
+                <span className="text-label-sm text-on-surface-variant uppercase">Total Operations</span>
+                <p className="font-mono text-headline-lg text-primary">{data?.total_operations ?? 0}</p>
               </div>
               <div>
-                <span className="text-on-surface-variant">Attendance Rate</span>
-                <p className="text-2xl font-bold text-success">{data?.attendance_rate ?? 0}%</p>
+                <span className="text-label-sm text-on-surface-variant uppercase">Attendance Rate</span>
+                <p className="font-mono text-headline-lg text-success">{data?.attendance_rate ?? 0}%</p>
+              </div>
+              <div>
+                <span className="text-label-sm text-on-surface-variant uppercase">Awaiting Deployment</span>
+                <p className="font-mono text-headline-lg text-tertiary">{upcoming.length}</p>
               </div>
             </div>
-          </OpsCard>
-          <h2 className="mb-4 text-lg font-semibold">Awaiting Deployment</h2>
-          {upcoming.length === 0 ? (
-            <p className="mb-8 text-sm text-on-surface-variant">No upcoming deployments registered.</p>
-          ) : (
-            upcoming.map((e) => (
-              <OpsCard key={e.event_id} className="mb-4 border-primary/20 bg-surface-container-high">
-                <h3 className="text-lg font-semibold">{e.name}</h3>
-                <p className="mt-1 text-on-surface-variant">
-                  {formatLocalDateTime(e.start_time)} — {terrainLabel(e.terrain)}
-                </p>
-                {(e.faction || e.squad || e.role) && (
-                  <p className="mt-3 text-sm">
-                    <span className="text-on-surface-variant">ASSIGNED SLOT: </span>
-                    {[e.faction, e.squad, e.role].filter(Boolean).join(' — ')}
-                  </p>
-                )}
-              </OpsCard>
-            ))
-          )}
-          <h2 className="mb-4 text-lg font-semibold">Service Record</h2>
-          {history.length === 0 ? (
-            <p className="text-sm text-on-surface-variant">No service history yet.</p>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border-subtle">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-surface-container-high text-xs font-semibold tracking-widest text-on-surface-variant uppercase">
-                  <tr>
-                    <th className="px-4 py-3">Operation</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Result</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-subtle bg-surface-container">
-                  {history.map((row, i) => (
-                    <tr key={`${row.operation}-${i}`}>
-                      <td className="px-4 py-3">{row.operation}</td>
-                      <td className="px-4 py-3 text-on-surface-variant">{formatShortDate(row.date)}</td>
-                      <td className="px-4 py-3 text-on-surface-variant">{row.role}</td>
-                      <td className="px-4 py-3 text-success">{row.outcome}</td>
-                    </tr>
+          </aside>
+
+          {/* Right: upcoming + combat timeline */}
+          <main className="custom-scrollbar flex h-full min-h-0 flex-1 flex-col gap-8 overflow-y-auto bg-surface-container-highest/10 p-8">
+            <section>
+              <h2 className="mb-4 text-label-md text-on-surface-variant uppercase tracking-wide">
+                Awaiting Deployment
+              </h2>
+              {upcoming.length === 0 ? (
+                <p className="text-label-md text-on-surface-variant">No upcoming deployments registered.</p>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {upcoming.map((e) => (
+                    <Link key={e.event_id} to={`/events/${e.event_id}`}>
+                      <OpsCard glass className="h-full transition-colors hover:border-primary/40">
+                        <h3 className="text-headline-sm text-on-surface">{e.name}</h3>
+                        <p className="text-label-md text-on-surface-variant">
+                          {formatLocalDateTime(e.start_time)} — {terrainLabel(e.terrain)}
+                        </p>
+                        {(e.faction || e.squad || e.role) && (
+                          <p className="mt-2 text-label-md">
+                            <span className="text-on-surface-variant">ASSIGNED: </span>
+                            {[e.faction, e.squad, e.role].filter(Boolean).join(' — ')}
+                          </p>
+                        )}
+                      </OpsCard>
+                    </Link>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                </div>
+              )}
+            </section>
+
+            <section>
+              <h2 className="mb-4 text-label-md text-on-surface-variant uppercase tracking-wide">
+                Combat History
+              </h2>
+              {history.length === 0 ? (
+                <p className="text-label-md text-on-surface-variant">No service history yet.</p>
+              ) : (
+                <ol className="relative ml-2 border-l border-outline-variant/30">
+                  {history.map((row, i) => {
+                    const win = outcomeIsWin(row.outcome)
+                    return (
+                      <li key={`${row.operation}-${i}`} className="mb-5 ml-6">
+                        <span
+                          className={cn(
+                            'absolute -left-[7px] mt-1.5 h-3 w-3 rounded-full border-2 border-background',
+                            win ? 'bg-success' : 'bg-error-alert',
+                          )}
+                        />
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-label-md font-semibold text-on-surface">{row.operation}</h3>
+                          <Badge variant={win ? 'success' : 'error'}>{row.outcome}</Badge>
+                        </div>
+                        <p className="mt-1 text-label-sm text-outline">
+                          {formatShortDate(row.date)} · {row.role}
+                        </p>
+                      </li>
+                    )
+                  })}
+                </ol>
+              )}
+            </section>
+          </main>
         </div>
       </QueryState>
     </AuthGate>
@@ -272,90 +347,103 @@ export function LeaderboardsPage() {
   )
 }
 
+function eventStatusLabel(status: string, locked: boolean) {
+  if (status === 'live') return 'LIVE'
+  if (locked) return 'LOCKED'
+  return status.toUpperCase()
+}
+
 export function EventSchedulePage() {
   const { data, isLoading, isError, error } = useEvents('upcoming')
   const events = data?.data ?? []
-
-  const statusLabel = (status: string, locked: boolean) => {
-    if (status === 'live') return 'LIVE'
-    if (locked) return 'LOCKED'
-    return status.toUpperCase()
-  }
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selected = events.find((e) => e.id === selectedId) ?? events[0] ?? null
 
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <div className="mx-auto w-full max-w-5xl">
-          <PageHeader
-            title="Upcoming Operations"
-            subtitle="Review and register for scheduled tactical deployments."
-          />
-          {events.length === 0 ? (
-            <p className="text-on-surface-variant">No upcoming operations scheduled.</p>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border-subtle">
-              <table className="w-full text-sm">
-                <thead className="bg-surface-container-high text-xs font-semibold uppercase text-on-surface-variant">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Operation</th>
-                    <th className="px-4 py-3 text-left">Schedule</th>
-                    <th className="px-4 py-3 text-right">Missions</th>
-                    <th className="px-4 py-3 text-left">Status</th>
-                    <th className="px-4 py-3 text-right">Slots Filled</th>
-                    <th className="px-4 py-3 text-right" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-subtle bg-surface-container">
-                  {events.map((e) => {
-                    const label = statusLabel(e.status, e.registration_locked)
-                    return (
-                      <tr key={e.id}>
-                        <td className="px-4 py-3 font-medium">
-                          {e.name_override || 'Untitled Operation'}
-                        </td>
-                        <td className="px-4 py-3 text-on-surface-variant">
-                          {formatLocalDateTime(e.start_time)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-on-surface-variant">
-                          {e.mission_count}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              'rounded px-2 py-0.5 text-xs font-semibold',
-                              label === 'LIVE' && 'bg-primary/20 text-primary',
-                              label === 'LOCKED' && 'bg-surface-container-highest text-on-surface-variant',
-                              label !== 'LIVE' && label !== 'LOCKED' && 'bg-success-muted text-success',
-                            )}
-                          >
-                            {label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right text-on-surface-variant">
-                          {e.filled}/{e.total_slots}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Link
-                            to={`/events/${e.id}`}
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Open Hub
-                          </Link>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {data && (
-            <p className="mt-4 text-sm text-on-surface-variant">
-              Showing {events.length} of {data.total} upcoming operations
-            </p>
-          )}
-        </div>
+        <SplitPane
+          masterWidth="24rem"
+          masterHeader={
+            <h2 className="text-headline-sm tracking-wide text-on-surface uppercase">Upcoming Ops</h2>
+          }
+          master={
+            events.length === 0 ? (
+              <p className="px-1 py-4 text-label-md text-on-surface-variant">
+                No upcoming operations scheduled.
+              </p>
+            ) : (
+              events.map((e) => {
+                const label = eventStatusLabel(e.status, e.registration_locked)
+                const active = selected?.id === e.id
+                return (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => setSelectedId(e.id)}
+                    className={cn(
+                      'group relative w-full overflow-hidden rounded-lg border p-3 text-left transition-all',
+                      active
+                        ? 'border-primary/30 bg-surface-variant/80 shadow-[inset_0_0_15px_rgba(173,198,255,0.1)]'
+                        : 'border-transparent hover:border-outline-variant/30 hover:bg-surface-variant/40',
+                    )}
+                  >
+                    {active && <span className="absolute top-0 bottom-0 left-0 w-1 bg-primary" />}
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <span className="font-mono text-code-md text-outline">
+                        {formatLocalDateTime(e.start_time)}
+                      </span>
+                      <Badge
+                        variant={label === 'LIVE' ? 'primary' : label === 'LOCKED' ? 'neutral' : 'success'}
+                      >
+                        {label}
+                      </Badge>
+                    </div>
+                    <h3 className="text-label-md font-semibold text-on-surface">
+                      {e.name_override || 'Untitled Operation'}
+                    </h3>
+                    <p className="mt-0.5 text-label-sm text-outline">
+                      {e.mission_count} mission{e.mission_count === 1 ? '' : 's'}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-container-highest">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${Math.min(100, e.percent)}%` }}
+                        />
+                      </div>
+                      <span className="shrink-0 font-mono text-label-sm text-on-surface-variant">
+                        {e.filled}/{e.total_slots}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })
+            )
+          }
+          detail={
+            selected ? (
+              <div className="px-8 py-8">
+                <EventScheduleDetail id={selected.id} />
+              </div>
+            ) : (
+              <SplitPaneEmpty
+                icon={<MaterialIcon name="calendar_month" className="text-4xl" />}
+                message="Select an operation to view its hub."
+              />
+            )
+          }
+        />
       </QueryState>
     </AuthGate>
+  )
+}
+
+function EventScheduleDetail({ id }: { id: string }) {
+  const { data: event, isLoading, isError, error } = useEvent(id)
+  return (
+    <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
+      {event && <EventHubView event={event} />}
+    </QueryState>
   )
 }

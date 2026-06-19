@@ -15,7 +15,12 @@ import {
   MissionLibraryPage,
   MissionOverviewPage,
 } from '@/pages/missions'
-import { ModpacksPage, MortarCalculatorPage, WikiPage } from '@/pages/doctrine'
+import {
+  ModpacksPage,
+  MortarCalculatorPage,
+  VehicleDatabasePage,
+  WikiPage,
+} from '@/pages/doctrine'
 import {
   AuditLogsPage,
   ContentManagerPage,
@@ -57,12 +62,12 @@ export const router = createBrowserRouter([
       {
         path: 'announcements',
         element: <AnnouncementsPage />,
-        ...breadcrumb('Command Center', 'Announcements'),
+        ...breadcrumb('Command Center', 'Announcements', { fullBleed: true }),
       },
       {
         path: 'deployments',
         element: <DeploymentsPage />,
-        ...breadcrumb('Operations', 'My Deployments'),
+        ...breadcrumb('Operations', 'My Deployments', { fullBleed: true }),
       },
       {
         path: 'leaderboards',
@@ -82,7 +87,7 @@ export const router = createBrowserRouter([
       {
         path: 'events',
         element: <EventSchedulePage />,
-        ...breadcrumb('Operations', 'Event Schedule'),
+        ...breadcrumb('Operations', 'Event Schedule', { fullBleed: true }),
       },
       {
         path: 'events/:id',
@@ -96,6 +101,11 @@ export const router = createBrowserRouter([
       },
       { path: 'wiki', element: <WikiPage />, ...breadcrumb('Doctrine & Info', 'SOPs & Manuals') },
       { path: 'wiki/:slug', element: <WikiPage />, ...breadcrumb('Doctrine & Info', 'SOPs & Manuals') },
+      {
+        path: 'vehicles',
+        element: <VehicleDatabasePage />,
+        ...breadcrumb('Doctrine & Info', 'Vehicle Database', { fullBleed: true }),
+      },
       { path: 'modpacks', element: <ModpacksPage />, ...breadcrumb('Doctrine & Info', 'Modpacks') },
       {
         path: 'tools/mortar',
@@ -124,7 +134,7 @@ export const router = createBrowserRouter([
           {
             path: 'admin/approvals',
             element: <MissionApprovalsPage />,
-            ...breadcrumb('Administration', 'Mission Approvals'),
+            ...breadcrumb('Administration', 'Mission Approvals', { fullBleed: true }),
           },
           {
             path: 'admin/server',
@@ -144,7 +154,7 @@ export const router = createBrowserRouter([
           {
             path: 'admin/audit',
             element: <AuditLogsPage />,
-            ...breadcrumb('Administration', 'Audit Logs'),
+            ...breadcrumb('Administration', 'Audit Logs', { fullBleed: true }),
           },
         ],
       },

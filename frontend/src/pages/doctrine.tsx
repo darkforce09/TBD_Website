@@ -9,6 +9,10 @@ import { useCurrentModpack, useModpacks, useVehicles, useWikiPages } from '@/hoo
 import { useSolveFireMission } from '@/hooks/mutations'
 import { formatBytes } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { SplitPane, SplitPaneEmpty } from '@/components/ui/split-pane'
+import { ListDetailItem } from '@/components/ui/list-detail-item'
+import { Badge } from '@/components/ui/badge'
+import type { VehicleRow } from '@/types/api'
 
 export function ModpacksPage() {
   const { data: current, isLoading: loadingCurrent } = useCurrentModpack()
@@ -162,6 +166,125 @@ export function WikiPage() {
         </div>
       </QueryState>
     </AuthGate>
+  )
+}
+
+function threatVariant(threat?: string): 'error' | 'warning' | 'success' | 'neutral' {
+  if (!threat) return 'neutral'
+  if (/high|heavy/i.test(threat)) return 'error'
+  if (/med/i.test(threat)) return 'warning'
+  if (/low/i.test(threat)) return 'success'
+  return 'neutral'
+}
+
+export function VehicleDatabasePage() {
+  const { data: vehicles, isLoading, isError, error } = useVehicles()
+  const [q, setQ] = useState('')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  const rows = vehicles ?? []
+  const filtered = q
+    ? rows.filter((v) => `${v.name} ${v.faction}`.toLowerCase().includes(q.toLowerCase()))
+    : rows
+  const selected = filtered.find((v) => v.id === selectedId) ?? filtered[0] ?? null
+
+  // Group filtered vehicles by faction for the master list.
+  const byFaction = filtered.reduce<Record<string, VehicleRow[]>>((acc, v) => {
+    ;(acc[v.faction] ??= []).push(v)
+    return acc
+  }, {})
+
+  return (
+    <AuthGate>
+      <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
+        <SplitPane
+          masterWidth="20rem"
+          masterHeader={
+            <input
+              type="search"
+              placeholder="Search assets..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="w-full rounded-lg border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-label-md outline-none focus:border-primary/60"
+            />
+          }
+          master={
+            filtered.length === 0 ? (
+              <p className="px-1 py-4 text-label-md text-on-surface-variant">No vehicles in database.</p>
+            ) : (
+              Object.entries(byFaction).map(([faction, list]) => (
+                <div key={faction} className="mb-2">
+                  <p className="px-2 py-1 text-label-sm text-outline uppercase">{faction}</p>
+                  {list.map((v) => (
+                    <ListDetailItem
+                      key={v.id}
+                      active={selected?.id === v.id}
+                      onClick={() => setSelectedId(v.id)}
+                      title={v.name}
+                      preview={v.armor_type}
+                    />
+                  ))}
+                </div>
+              ))
+            )
+          }
+          detail={
+            selected ? (
+              <VehicleDossier vehicle={selected} />
+            ) : (
+              <SplitPaneEmpty
+                icon={<MaterialIcon name="directions_car" className="text-4xl" />}
+                message="Select an asset to view its dossier."
+              />
+            )
+          }
+        />
+      </QueryState>
+    </AuthGate>
+  )
+}
+
+function VehicleDossier({ vehicle }: { vehicle: VehicleRow }) {
+  return (
+    <div>
+      <div className="relative h-64 w-full overflow-hidden border-b border-outline-variant/30">
+        {vehicle.profile_image_url ? (
+          <img src={vehicle.profile_image_url} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-surface-container-low">
+            <MaterialIcon name="directions_car" className="text-6xl text-outline" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
+        <div className="absolute right-6 bottom-6 left-6">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <Badge variant="neutral">{vehicle.faction}</Badge>
+            <Badge variant="primary">{vehicle.armor_type}</Badge>
+            {vehicle.primary_threat && (
+              <Badge variant={threatVariant(vehicle.primary_threat)}>
+                Threat: {vehicle.primary_threat}
+              </Badge>
+            )}
+          </div>
+          <h1 className="text-headline-lg text-on-surface">{vehicle.name}</h1>
+        </div>
+      </div>
+      <div className="grid gap-4 p-8 sm:grid-cols-2">
+        <Spec label="Faction" value={vehicle.faction} />
+        <Spec label="Classification" value={vehicle.armor_type} />
+        <Spec label="Primary Threat" value={vehicle.primary_threat ?? '—'} />
+        <Spec label="Amphibious" value={vehicle.amphibious ?? '—'} />
+      </div>
+    </div>
+  )
+}
+
+function Spec({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-outline-variant/30 bg-surface-variant/30 p-4">
+      <span className="text-label-sm text-on-surface-variant uppercase">{label}</span>
+      <p className="mt-1 text-body-md text-on-surface">{value}</p>
+    </div>
   )
 }
 
