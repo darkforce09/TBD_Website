@@ -54,7 +54,7 @@ open it in the browser to log in, or curl it and read `access_token` from the
 - Git: **commit directly to `main`; never create a branch.** End commit messages with
   the `Co-Authored-By` trailer. Commits are tagged `T-00x`.
 
-## Status (latest feature work: T-010, commit 12a0463 — 2026-06-19)
+## Status (latest feature work: T-012, commit b6f0a1c — 2026-06-19)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
@@ -100,6 +100,25 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     /event-missions/:emid/squads/{reserve,release}` (leader+). A held squad blocks
     others' claims; the reserver/admin fill it via `AssignSlot` + a `GET /members`
     directory search. Slot/assign routes moved to the leader tier.
+- T-011 **macOS "Aegis" design-system foundation** (frontend, presentation-only):
+  `index.css` adopts the full Aegis palette (desaturated `#adc6ff` primary, off-white
+  `on-surface`, `tertiary`/`tactical-yellow`/`error-alert`/`surface-glass`) plus the
+  many Aegis tokens pages already referenced but were undefined, the semantic type
+  scale (`text-headline-lg`..`text-code-md`), and `.glass`/`.bg-topo-map`/
+  `.bg-grid-overlay` utilities. New reusable primitives in `frontend/src/components/ui/`
+  built on `@base-ui/react` (no new deps): `SplitPane`, `Dialog`, `Sheet`, `Switch`,
+  `Badge`, `GlassPanel`/`HudBar`, `ListDetailItem`; `OpsCard` gained a `glass` variant.
+  Shell: `AppLayout` honors a `fullBleed` route handle (split-pane pages run full-height);
+  `TopNav` is a frosted glass bar; `Sidebar` uses the Aegis left-bar active state.
+- T-012 **macOS page redesigns — split-pane master/detail** (presentation-only; no API/
+  query changes). Announcements → Apple-Mail split-view; Event Schedule → split-pane with
+  op cards + embedded `EventHubView` (no full-page replace; ORBAT selector logic unchanged);
+  My Deployments → service-record split dossier; admin Personnel/Approvals/Audit →
+  table/queue + slide-over dossier / review HUD; Event & Content Manager forms moved into
+  frosted `Dialog`s (kills the form-over-list anti-pattern); new **Vehicle Database** page
+  (`/vehicles`, split-pane dossier) + nav entry. Verified: tsc/build/lint clean + live
+  dev-login API contract smoke. **Phase 3 (dashboards/grids: Dashboard, Server Intel,
+  Leaderboards, Mission Library/Overview, Modpacks, Mortar, Settings) not yet restyled.**
 
 **Not yet built / next:**
 - The 2D mission editor UI (backend stores/serves `json_payload`; the visual editor
