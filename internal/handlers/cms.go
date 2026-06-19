@@ -66,10 +66,14 @@ func (h *Handler) CreateAnnouncement(c *gin.Context) {
 	}
 	author := middleware.DiscordID(c)
 
+	// Sanitize author-supplied HTML before it ever touches the DB so the body is
+	// safe to render verbatim on the client (no stored XSS).
+	body := services.SanitizeHTML(in.Body)
+
 	a := models.Announcement{
 		Title:        in.Title,
-		Body:         in.Body,
-		Snippet:      snippetFrom(in.Snippet, in.Body),
+		Body:         body,
+		Snippet:      snippetFrom(in.Snippet, body),
 		Tag:          tag,
 		ThumbnailURL: in.ThumbnailURL,
 		AuthorID:     author,
@@ -135,7 +139,7 @@ func (h *Handler) UpdateAnnouncement(c *gin.Context) {
 		updates["title"] = *in.Title
 	}
 	if in.Body != nil {
-		updates["body"] = *in.Body
+		updates["body"] = services.SanitizeHTML(*in.Body)
 	}
 	if in.Snippet != nil {
 		updates["snippet"] = *in.Snippet
