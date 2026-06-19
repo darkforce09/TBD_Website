@@ -1,18 +1,15 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { MaterialIcon } from '@/components/MaterialIcon'
 import { OpsCard } from '@/components/OpsCard'
 import { PageHeader } from '@/components/PageHeader'
 import { AuthGate } from '@/components/AuthGate'
 import { QueryState } from '@/components/QueryState'
-import { useCurrentModpack, useModpacks, useVehicles, useWikiPages } from '@/hooks/queries'
+import { useCurrentModpack, useModpacks } from '@/hooks/queries'
 import { useSolveFireMission } from '@/hooks/mutations'
 import { formatBytes } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { SplitPane, SplitPaneEmpty } from '@/components/ui/split-pane'
-import { ListDetailItem } from '@/components/ui/list-detail-item'
 import { Badge } from '@/components/ui/badge'
-import type { VehicleRow } from '@/types/api'
 
 export function ModpacksPage() {
   const { data: current, isLoading: loadingCurrent } = useCurrentModpack()
@@ -83,207 +80,740 @@ export function ModpacksPage() {
   )
 }
 
+// ─── SOPs & Manuals (Wiki) ────────────────────────────────────────────────
+// Mock doctrine content so the premium reading layout can be evaluated before
+// the wiki CMS is wired up. Replace with `useWikiPages()` data when available.
+
+/** Inline monospace token for frequencies, hotkeys, callsigns. */
+function Mono({ children }: { children: ReactNode }) {
+  return (
+    <code className="rounded bg-black/40 px-1.5 py-0.5 font-mono text-[0.85em] text-blue-200">
+      {children}
+    </code>
+  )
+}
+
+type CalloutVariant = 'critical' | 'warning' | 'info'
+
+const CALLOUT_STYLES: Record<CalloutVariant, { box: string; label: string; title: string }> = {
+  critical: { box: 'bg-red-900/20 border-red-500', label: 'text-red-400', title: 'CRITICAL RULE' },
+  warning: { box: 'bg-amber-900/20 border-amber-500', label: 'text-amber-400', title: 'WARNING' },
+  info: { box: 'bg-blue-900/20 border-blue-500', label: 'text-blue-300', title: 'NOTE' },
+}
+
+function Callout({
+  variant,
+  title,
+  children,
+}: {
+  variant: CalloutVariant
+  title?: string
+  children: ReactNode
+}) {
+  const s = CALLOUT_STYLES[variant]
+  return (
+    <div className={cn('my-6 rounded-2xl border border-l-4 p-4 shadow-lg backdrop-blur-md', s.box)}>
+      <p className={cn('mb-1 font-mono text-xs font-bold tracking-widest uppercase', s.label)}>
+        {title ?? s.title}
+      </p>
+      <div className="text-body-md leading-relaxed text-slate-300">{children}</div>
+    </div>
+  )
+}
+
+/** Section heading inside a manual document. */
+function DocH2({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="mt-10 mb-3 border-b border-white/10 pb-2 text-xl font-bold tracking-tight text-white">
+      {children}
+    </h2>
+  )
+}
+
+interface Manual {
+  id: string
+  category: string
+  title: string
+  updated: string
+  /** Raw Markdown — the single source of truth, editable in-app and AI-ready. */
+  body: string
+}
+
+// GitHub-style alert tags → our Callout variants.
+const CALLOUT_TAGS: Record<string, { variant: CalloutVariant; title?: string }> = {
+  CRITICAL: { variant: 'critical' },
+  CAUTION: { variant: 'critical' },
+  WARNING: { variant: 'warning' },
+  TIP: { variant: 'info', title: 'PRO-TIP' },
+  NOTE: { variant: 'info' },
+  INFO: { variant: 'info' },
+}
+
+/** Inline Markdown: **bold**, *italic*, `code`. */
+function renderInline(text: string): ReactNode {
+  const nodes: ReactNode[] = []
+  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g
+  let last = 0
+  let key = 0
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) nodes.push(text.slice(last, match.index))
+    const tok = match[0]
+    if (tok.startsWith('**')) {
+      nodes.push(
+        <strong key={key++} className="font-semibold text-slate-100">
+          {tok.slice(2, -2)}
+        </strong>,
+      )
+    } else if (tok.startsWith('`')) {
+      nodes.push(<Mono key={key++}>{tok.slice(1, -1)}</Mono>)
+    } else {
+      nodes.push(<em key={key++}>{tok.slice(1, -1)}</em>)
+    }
+    last = regex.lastIndex
+  }
+  if (last < text.length) nodes.push(text.slice(last))
+  return nodes
+}
+
+/**
+ * Minimal Markdown → React renderer for the wiki reading pane. Supports the
+ * subset we author: `##` headings, `-` bullet lists, GitHub `> [!TYPE]` alert
+ * blocks (mapped to Callouts), and paragraphs with inline bold/italic/code.
+ * Swap for `react-markdown` + `remark-gfm` if richer Markdown is ever needed —
+ * the stored `body` string stays the same source of truth.
+ */
+function Markdown({ source }: { source: string }) {
+  const lines = source.replace(/\r\n/g, '\n').split('\n')
+  const blocks: ReactNode[] = []
+  let i = 0
+  let key = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+    if (!line.trim()) {
+      i++
+      continue
+    }
+
+    if (line.startsWith('## ')) {
+      blocks.push(<DocH2 key={key++}>{renderInline(line.slice(3))}</DocH2>)
+      i++
+      continue
+    }
+    if (line.startsWith('# ')) {
+      blocks.push(
+        <h1 key={key++} className="mb-4 text-2xl font-bold tracking-tight text-white">
+          {renderInline(line.slice(2))}
+        </h1>,
+      )
+      i++
+      continue
+    }
+
+    // Callout block: one or more consecutive `>` lines.
+    if (line.startsWith('>')) {
+      const quoted: string[] = []
+      while (i < lines.length && lines[i].startsWith('>')) {
+        quoted.push(lines[i].replace(/^>\s?/, ''))
+        i++
+      }
+      let variant: CalloutVariant = 'info'
+      let title: string | undefined
+      let bodyLines = quoted
+      const tagMatch = quoted[0].match(/^\[!([A-Za-z-]+)\]\s*(.*)$/)
+      if (tagMatch) {
+        const mapped = CALLOUT_TAGS[tagMatch[1].toUpperCase()]
+        if (mapped) {
+          variant = mapped.variant
+          title = tagMatch[2].trim() || mapped.title
+        }
+        bodyLines = quoted.slice(1)
+      }
+      blocks.push(
+        <Callout key={key++} variant={variant} title={title}>
+          {renderInline(bodyLines.join(' '))}
+        </Callout>,
+      )
+      continue
+    }
+
+    // Bullet list.
+    if (line.startsWith('- ') || line.startsWith('* ')) {
+      const items: string[] = []
+      while (i < lines.length && (lines[i].startsWith('- ') || lines[i].startsWith('* '))) {
+        items.push(lines[i].slice(2))
+        i++
+      }
+      blocks.push(
+        <ul key={key++} className="mt-3 ml-1 space-y-2 text-body-md text-slate-300">
+          {items.map((it, idx) => (
+            <li key={idx}>• {renderInline(it)}</li>
+          ))}
+        </ul>,
+      )
+      continue
+    }
+
+    // Paragraph: gather until a blank line or a new block starts.
+    const para: string[] = []
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !lines[i].startsWith('#') &&
+      !lines[i].startsWith('>') &&
+      !lines[i].startsWith('- ') &&
+      !lines[i].startsWith('* ')
+    ) {
+      para.push(lines[i])
+      i++
+    }
+    blocks.push(
+      <p key={key++} className="mt-3 text-body-md leading-relaxed text-slate-300">
+        {renderInline(para.join(' '))}
+      </p>,
+    )
+  }
+
+  return <>{blocks}</>
+}
+
+// Sidebar category order (independent of document declaration order).
+const CATEGORY_ORDER = [
+  'Leadership Fundamentals',
+  'Timeline & Mission Planning',
+  'Dynamic Communications Strategy',
+  'Combat Formations & Maneuvers',
+]
+
+const MANUALS: Manual[] = [
+  {
+    id: 'plan-timeline',
+    category: 'Timeline & Mission Planning',
+    title: 'Timeline & Mission Planning',
+    updated: '2026-06-18',
+    body: `In a 1-life PvP environment, the plan you make in the staging area decides the fight before a single shot is fired. You do not get a second attempt. This guide uses the Swedish squad leader methodology — a simple, repeatable loop for turning a vague objective into a clear, time-bound plan your squad can actually execute under pressure.
+
+The whole process answers three questions, in order: **What is the problem? How much time do I have? How do we adapt when it breaks?**
+
+## Phase 1 — Define the Problem
+
+Before you talk about movement, get brutally clear on what you are actually being asked to do and what stands in the way. If you cannot state the objective in one sentence, you are not ready to brief it.
+
+- **The objective.** What does winning look like — hold a grid, destroy an asset, break the enemy's main effort? Name it.
+- **Enemy composition.** How many, how equipped, armor or air? Where are they likely strong, and where are they thin?
+- **Terrain.** What covers our approach, what channels us into a kill zone, and what high ground matters?
+- **Our assets.** Squad size, weapon teams, vehicles, and — critically — how much daylight and time you have.
+
+> [!CRITICAL]
+> Plan against what the enemy *can* do, not what you *hope* they do. Build your plan around their most dangerous option, then exploit the gaps.
+
+## Phase 2 — Define the Timeline
+
+This is the part most squad leads skip, and it is the part that wins matches. Work **backwards** from the moment you expect contact and assign hard times to every step. A plan without a clock is just a wish.
+
+- Set your decisive moment — call it \`H-Hour\` (the assault, the ambush trigger, the objective seizure).
+- Back-plan from it: \`H-15\` in support-by-fire position, \`H-30\` at the last covered rally, \`H-45\` step off from staging.
+- Reserve time for the things that always run long: crossing danger areas, re-org after contact, and getting everyone on the same map.
+- Give the squad a **time hack** so every watch matches. "We move in 5" means nothing if nobody agrees on now.
+
+> [!TIP]
+> Budget roughly a third of your available time for planning and rehearsal, and two-thirds for movement and execution. If you spend the whole window talking, you will be rushing — and loud — when it counts.
+
+## Phase 3 — Execution & Adaptability
+
+No plan survives first contact. The point of Phases 1 and 2 is not a rigid script — it is to give your squad enough shared understanding that they keep fighting *your intent* when the plan falls apart and you can't talk to them.
+
+- Brief **intent**, not just instructions: "I want us holding the north ridge by \`H+10\`, even if Alpha gets pinned." Tell them the *why*.
+- Push decisions down. A fireteam that understands the goal will make a good call faster than they can raise you on a (possibly looted) radio.
+- Name your triggers and branches in advance: "If we take fire from the treeline, Bravo suppresses, Alpha flanks left — no further orders needed."
+- Run a 60-second rehearsal or backbrief. Have a team lead repeat the plan back; you will catch the gaps before the enemy does.
+
+> [!WARNING]
+> When the plan breaks, the worst choice is to freeze and wait for perfect information. Make a decision, communicate it in one line, and keep the squad moving. Momentum beats hesitation in a 1-life fight.`,
+  },
+  {
+    id: 'lead-role',
+    category: 'Leadership Fundamentals',
+    title: 'The Squad Leader Mindset',
+    updated: '2026-06-15',
+    body: `Your job is not to be the best shooter — it is to make the rest of the squad more effective than they would be alone. You fight with your radio and your map first, your rifle second. A squad lead who is heads-down in a firefight is a squad lead who has stopped leading.
+
+## What You Own
+
+- **The plan** — and making sure everyone understands the intent behind it.
+- **Tempo** — knowing when to push hard and when to slow down and reset.
+- **Information** — building the picture and pushing the relevant parts down.
+
+> [!TIP]
+> Position yourself where you can *see and influence*, not where the action is hottest. Usually that is just behind your lead element, with eyes on the objective.
+
+> [!CRITICAL]
+> Calm is contagious, and so is panic. The squad takes its emotional temperature from you — if you keep your voice level under fire, they will too.`,
+  },
+  {
+    id: 'lead-decisions',
+    category: 'Leadership Fundamentals',
+    title: 'Decision-Making Under Pressure',
+    updated: '2026-06-10',
+    body: `In a 1-life fight you will rarely have complete information, and waiting for it is itself a decision — usually a bad one. Train yourself to act on a good-enough read of the situation.
+
+## A Fast Decision Loop
+
+- **Read** — what just changed, and what is the biggest threat right now?
+- **Decide** — pick the option that keeps initiative and protects the squad.
+- **Act** — give one clear order and commit; correct on the move.
+
+> [!WARNING]
+> A decent decision made now beats a perfect decision made too late. Indecision gets people killed faster than a wrong call you correct quickly.`,
+  },
+  {
+    id: 'comms-dynamic',
+    category: 'Dynamic Communications Strategy',
+    title: 'Operating With Looted Radios',
+    updated: '2026-06-16',
+    body: `We do not use fixed frequencies. The enemy can loot a radio off a body and listen to everything you say — so our comms plan assumes the net is compromised from the start. Frequencies are randomized each match and treated as throwaway.
+
+## Assume You Are Being Heard
+
+- Distribute the match frequency in the staging area, never over an open channel.
+- If a member goes down in enemy territory, treat that frequency as **burned** and jump to your pre-agreed fallback.
+- Reference locations by features or a private grid-shift, not raw map grids the enemy can also read.
+- Keep transmissions short. Long, chatty traffic gives away your strength, intent, and rough position.
+
+> [!CRITICAL]
+> The moment a radio is lost behind enemy lines, every callsign and reference on that net is assumed compromised. Switch frequency and stop using any code words tied to it.
+
+> [!TIP]
+> Agree on a one-word **flash** signal before the op that means "the net is blown, jump to fallback now." One word, everyone moves, no debate on the radio.`,
+  },
+  {
+    id: 'combat-formations',
+    category: 'Combat Formations & Maneuvers',
+    title: 'Fire & Movement',
+    updated: '2026-06-05',
+    body: `Everything in a gunfight comes down to one principle: one element fixes the enemy with fire while the other moves. If nobody is shooting, nobody should be moving in the open.
+
+## Bounding
+
+- Split into a **base of fire** and a **maneuver element** before you make contact, not during.
+- Short bounds between hard cover — stay up only as long as your buddy can realistically cover you.
+- The flank, not the frontal push, wins the position. Use fire to pin them in place while you get to their side.
+
+> [!WARNING]
+> Stay dispersed. In a 1-life fight, two operators caught in the same blast or burst is two permanent losses for the rest of the match.
+
+> [!TIP]
+> Read the terrain backwards from the objective: pick your support-by-fire position and your assault lane *before* you move, and the formation almost chooses itself.`,
+  },
+]
+
 export function WikiPage() {
-  const { data: pages, isLoading: loadingPages } = useWikiPages()
-  const { data: vehicles, isLoading: loadingVehicles, isError, error } = useVehicles()
-  const categories = [...new Set((pages ?? []).map((p) => p.category))]
-  const [category, setCategory] = useState<string | null>(null)
-  const activeCategory = category ?? categories[0] ?? 'Vehicle Database'
+  // Mocked for now — wire to the real role (useAuthStore) when editing goes live.
+  const isAdmin = true
+
+  const [activeId, setActiveId] = useState<string>('plan-timeline')
+  const [search, setSearch] = useState('')
+  const [mode, setMode] = useState<'read' | 'edit'>('read')
+  // In-session Markdown edits keyed by manual id (source of truth stays the string).
+  const [edits, setEdits] = useState<Record<string, string>>({})
+
+  const filtered = search
+    ? MANUALS.filter((m) => `${m.title} ${m.category}`.toLowerCase().includes(search.toLowerCase()))
+    : MANUALS
+
+  // Group filtered manuals by category for the navigation index, in a fixed order.
+  const byCategory = filtered.reduce<Record<string, Manual[]>>((acc, m) => {
+    ;(acc[m.category] ??= []).push(m)
+    return acc
+  }, {})
+  const orderedCategories = CATEGORY_ORDER.filter((c) => byCategory[c]?.length)
+
+  const active = MANUALS.find((m) => m.id === activeId) ?? MANUALS[0]
+  const source = edits[active.id] ?? active.body
+
+  const selectDoc = (id: string) => {
+    setActiveId(id)
+    setMode('read')
+  }
 
   return (
     <AuthGate>
-      <QueryState
-        isLoading={loadingPages || loadingVehicles}
-        isError={isError}
-        error={error as Error}
-      >
-        <div className="mx-auto flex w-full max-w-6xl gap-6">
-          {categories.length > 0 && (
-            <aside className="hidden w-56 shrink-0 lg:block">
-              <p className="mb-3 text-xs font-semibold tracking-widest text-on-surface-variant uppercase">
-                SOP Categories
-              </p>
-              <ul className="space-y-1">
-                {categories.map((c) => (
-                  <li key={c}>
-                    <button
-                      type="button"
-                      onClick={() => setCategory(c)}
-                      className={cn(
-                        'w-full rounded-lg px-3 py-2 text-left text-sm',
-                        c === activeCategory
-                          ? 'bg-primary/15 text-primary'
-                          : 'text-on-surface-variant hover:bg-surface-container-high',
-                      )}
-                    >
-                      {c}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </aside>
-          )}
-          <div className="min-w-0 flex-1">
-            <PageHeader
-              title="Vehicle Database &amp; IFF"
-              subtitle="Learn strengths, weaknesses, and identification markers of armored assets."
+      <div className="flex h-full w-full flex-1 overflow-hidden bg-surface-glass backdrop-blur-xl">
+        {/* Left sidebar — navigation index */}
+        <aside className="flex w-64 shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-black/30 to-black/15 shadow-[1px_0_12px_rgba(0,0,0,0.35)]">
+          <div className="border-b border-white/10 p-4">
+            <p className="mb-3 font-mono text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+              SOPs &amp; Manuals
+            </p>
+            <input
+              type="search"
+              placeholder="Search manuals..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-on-surface-variant focus:border-blue-500/60"
             />
-            <OpsCard className="mb-6 border-warning/30 bg-warning/10">
-              <p className="text-sm text-warning">
-                <strong>CRITICAL:</strong> Do NOT engage armored contacts unless you have positively
-                identified them per IFF protocol.
-              </p>
-            </OpsCard>
-            {!vehicles?.length ? (
-              <p className="text-on-surface-variant">No vehicles in database.</p>
+          </div>
+          <nav className="custom-scrollbar flex-1 overflow-y-auto p-3">
+            {orderedCategories.length === 0 ? (
+              <p className="px-2 py-4 text-sm text-on-surface-variant">No manuals found.</p>
             ) : (
-              <div className="mb-6 overflow-hidden rounded-xl border border-border-subtle">
-                <table className="w-full text-sm">
-                  <thead className="bg-surface-container-high text-xs font-semibold uppercase text-on-surface-variant">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Vehicle</th>
-                      <th className="px-4 py-3 text-left">Faction</th>
-                      <th className="px-4 py-3 text-left">Class</th>
-                      <th className="px-4 py-3 text-left">Threat</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-subtle bg-surface-container">
-                    {vehicles.map((v) => (
-                      <tr key={v.id}>
-                        <td className="px-4 py-3 font-medium">{v.name}</td>
-                        <td className="px-4 py-3">{v.faction}</td>
-                        <td className="px-4 py-3">{v.armor_type}</td>
-                        <td className="px-4 py-3 text-on-surface-variant">
-                          {v.primary_threat ?? '—'}
-                        </td>
-                      </tr>
+              orderedCategories.map((category) => (
+                <div key={category} className="mb-4">
+                  <p className="px-2 py-1 font-mono text-[11px] tracking-widest text-outline uppercase">
+                    {category}
+                  </p>
+                  <ul className="mt-1 space-y-0.5">
+                    {byCategory[category].map((m) => (
+                      <li key={m.id}>
+                        <button
+                          type="button"
+                          onClick={() => selectDoc(m.id)}
+                          className={cn(
+                            'w-full border-l-2 px-3 py-2 text-left text-sm transition-colors',
+                            m.id === activeId
+                              ? 'border-blue-500 bg-blue-600/20 text-blue-100'
+                              : 'border-transparent text-on-surface-variant hover:bg-white/5 hover:text-white',
+                          )}
+                        >
+                          {m.title}
+                        </button>
+                      </li>
                     ))}
-                  </tbody>
-                </table>
+                  </ul>
+                </div>
+              ))
+            )}
+          </nav>
+        </aside>
+
+        {/* Right content area — document viewer */}
+        <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <header className="flex shrink-0 items-start justify-between gap-4 border-b border-white/10 px-8 pt-8 pb-5 md:px-12">
+            <div className="min-w-0">
+              <div className="mb-3 flex items-center gap-2">
+                <Badge variant="neutral" icon="schedule">
+                  Last updated {active.updated}
+                </Badge>
+                <span className="font-mono text-xs tracking-widest text-outline uppercase">
+                  {active.category}
+                </span>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight text-white">{active.title}</h1>
+            </div>
+            {/* Read / Edit toggle — admin only; removed from the DOM otherwise. */}
+            {isAdmin && (
+              <div className="inline-flex shrink-0 gap-1 rounded-full border border-white/5 bg-black/20 p-1 font-mono text-xs">
+                <button
+                  type="button"
+                  onClick={() => setMode('read')}
+                  className={cn(
+                    'rounded-full px-3 py-1 font-medium transition-all',
+                    mode === 'read'
+                      ? 'bg-surface-glass text-on-surface shadow-md'
+                      : 'text-on-surface-variant hover:text-on-surface',
+                  )}
+                >
+                  [ READ ]
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('edit')}
+                  className={cn(
+                    'rounded-full px-3 py-1 font-medium transition-all',
+                    mode === 'edit'
+                      ? 'bg-surface-glass text-on-surface shadow-md'
+                      : 'text-on-surface-variant hover:text-on-surface',
+                  )}
+                >
+                  [ EDIT ]
+                </button>
               </div>
             )}
-          </div>
-        </div>
-      </QueryState>
+          </header>
+
+          {isAdmin && mode === 'edit' ? (
+            // Distraction-free Markdown editor — fills the entire pane.
+            <textarea
+              value={source}
+              onChange={(e) => setEdits((prev) => ({ ...prev, [active.id]: e.target.value }))}
+              spellCheck={false}
+              className="h-full w-full flex-1 resize-none border-none bg-transparent p-8 font-mono text-sm leading-relaxed text-slate-300 outline-none focus:ring-0 md:p-12"
+            />
+          ) : (
+            <article className="custom-scrollbar flex-1 overflow-y-auto p-8 md:p-12">
+              <div className="max-w-3xl">
+                <Markdown source={source} />
+              </div>
+            </article>
+          )}
+        </section>
+      </div>
     </AuthGate>
   )
 }
 
-function threatVariant(threat?: string): 'error' | 'warning' | 'success' | 'neutral' {
-  if (!threat) return 'neutral'
-  if (/high|heavy/i.test(threat)) return 'error'
-  if (/med/i.test(threat)) return 'warning'
-  if (/low/i.test(threat)) return 'success'
-  return 'neutral'
+// ─── Vehicle Database ─────────────────────────────────────────────────────
+// AI-ready tactical intel: every field is a discrete, actionable signal an
+// agent (or another page) can ingest or interlink by `id`. No encyclopedic
+// fluff — only what a player needs to fight or avoid the asset.
+
+type ThreatLevel = 'LOW' | 'MED' | 'HIGH'
+
+interface VehicleIntel {
+  id: string
+  name: string
+  faction: string // grouping bucket, e.g. "USSR Forces"
+  class: string // e.g. APC, IFV, MBT
+  threatLevel: ThreatLevel
+  shortDescription: string
+  criticalDirective: string
+  telemetry: { mobility: string; defense: string; capacity: string }
+  armament: string[]
+  primaryThreats: string[]
+  image?: string
+}
+
+const VEHICLES: VehicleIntel[] = [
+  {
+    id: 'btr-70',
+    name: 'BTR-70',
+    faction: 'USSR Forces',
+    class: 'APC',
+    threatLevel: 'MED',
+    shortDescription:
+      '8×8 wheeled amphibious APC. A fast road mover for shuttling infantry — thin armour means it is a battle taxi, not a fighting vehicle.',
+    criticalDirective:
+      'Do not let it bully you with the KPVT. The hull stops rifle rounds only — a single RPG or sustained .50 cal will brew it up with the whole squad inside.',
+    telemetry: { mobility: '80 km/h · Amphibious', defense: 'Light · ~10mm steel', capacity: '2 crew + 8 pax' },
+    armament: ['14.5mm KPVT HMG', '7.62mm PKT coax'],
+    primaryThreats: ['Infantry AT', 'Heavy MG', 'Autocannon'],
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAa6uQ_tsnbNhDf8cIp17ebpWDCdpJntK9g1ME75jrq_heGg9E-S3PYbbWNY2nunPGsJZDn-Zd7FEt3Jff2dDz_ZIqRZzxXlXp3OKqkQIoTmXkozbiwqK3iC_VLuc3hKtPKcznvLKREbs_XU_mNuUq7r7Wx9aX6GYMjJrlVza8sEz5zAAcKFdjbj5giyYLbY8jd3ZoBYl-IEL8aAWt9a9P6R7bs7wJyjK1DEuGhhu-z1dypXTXCul5dANMGZJAcAwNp4Hk4C_5-60c',
+  },
+  {
+    id: 'bmp-2',
+    name: 'BMP-2',
+    faction: 'USSR Forces',
+    class: 'IFV',
+    threatLevel: 'HIGH',
+    shortDescription:
+      'Tracked IFV pairing a hard-hitting 30mm autocannon with an ATGM. Lethal to infantry and light vehicles, but its armour is still thin.',
+    criticalDirective:
+      'The 30mm is the real threat to your squad, not the hull. Break line of sight immediately — do not try to outrun it across open ground.',
+    telemetry: { mobility: '65 km/h · Amphibious', defense: 'Light · spaced steel', capacity: '3 crew + 7 pax' },
+    armament: ['30mm 2A42 autocannon', '9M113 Konkurs ATGM', '7.62mm PKT coax'],
+    primaryThreats: ['Tank main gun', 'Tandem ATGM', 'Top-attack'],
+  },
+  {
+    id: 'm1a1-abrams',
+    name: 'M1A1 Abrams',
+    faction: 'US Forces',
+    class: 'MBT',
+    threatLevel: 'HIGH',
+    shortDescription:
+      'Main battle tank. The frontal armour is near-impervious to most man-portable AT; the exploitable threat is its flanks, rear, and top.',
+    criticalDirective:
+      'Never engage frontally with light AT — you will only give away your position. Maneuver for a side or rear shot, or hit the top with tandem/top-attack munitions.',
+    telemetry: { mobility: '67 km/h · 1500 hp', defense: 'Composite + DU armour', capacity: '4 crew' },
+    armament: ['120mm M256 smoothbore', '12.7mm M2 cupola', '7.62mm M240 coax'],
+    primaryThreats: ['Tandem ATGM', 'Top-attack', 'AT mines'],
+  },
+  {
+    id: 'm2-bradley',
+    name: 'M2 Bradley',
+    faction: 'US Forces',
+    class: 'IFV',
+    threatLevel: 'HIGH',
+    shortDescription:
+      'Tracked IFV pairing a 25mm autocannon with TOW missiles. It will shred infantry up close and kill armour at range.',
+    criticalDirective:
+      'The TOW outranges your AT launchers. Close the distance through hard cover, or stay out of its line of sight entirely — do not trade in the open.',
+    telemetry: { mobility: '66 km/h · 600 hp', defense: 'Aluminium + appliqué', capacity: '3 crew + 6 pax' },
+    armament: ['25mm M242 Bushmaster', 'TOW ATGM launcher', '7.62mm M240 coax'],
+    primaryThreats: ['Tank main gun', 'Tandem ATGM', 'Autocannon'],
+  },
+]
+
+const VEHICLE_FACTION_ORDER = ['USSR Forces', 'US Forces']
+
+function threatBadgeVariant(level: ThreatLevel): 'error' | 'warning' | 'success' {
+  return level === 'HIGH' ? 'error' : level === 'MED' ? 'warning' : 'success'
 }
 
 export function VehicleDatabasePage() {
-  const { data: vehicles, isLoading, isError, error } = useVehicles()
   const [q, setQ] = useState('')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState('btr-70')
 
-  const rows = vehicles ?? []
   const filtered = q
-    ? rows.filter((v) => `${v.name} ${v.faction}`.toLowerCase().includes(q.toLowerCase()))
-    : rows
-  const selected = filtered.find((v) => v.id === selectedId) ?? filtered[0] ?? null
+    ? VEHICLES.filter((v) => `${v.name} ${v.class} ${v.faction}`.toLowerCase().includes(q.toLowerCase()))
+    : VEHICLES
 
-  // Group filtered vehicles by faction for the master list.
-  const byFaction = filtered.reduce<Record<string, VehicleRow[]>>((acc, v) => {
+  const byFaction = filtered.reduce<Record<string, VehicleIntel[]>>((acc, v) => {
     ;(acc[v.faction] ??= []).push(v)
     return acc
   }, {})
+  const orderedFactions = VEHICLE_FACTION_ORDER.filter((f) => byFaction[f]?.length)
+
+  const selected = filtered.find((v) => v.id === selectedId) ?? filtered[0] ?? null
 
   return (
     <AuthGate>
-      <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <SplitPane
-          masterWidth="20rem"
-          masterHeader={
+      <div className="flex h-full w-full flex-1 overflow-hidden bg-surface-glass backdrop-blur-xl">
+        {/* Left sidebar — categorized asset index */}
+        <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-black/30 to-black/15 shadow-[1px_0_12px_rgba(0,0,0,0.35)]">
+          <div className="border-b border-white/10 p-4">
+            <p className="mb-3 font-mono text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+              Vehicle Database
+            </p>
             <input
               type="search"
               placeholder="Search assets..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="w-full rounded-lg border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-label-md outline-none focus:border-primary/60"
+              className="w-full rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-on-surface-variant focus:border-blue-500/60"
             />
-          }
-          master={
-            filtered.length === 0 ? (
-              <p className="px-1 py-4 text-label-md text-on-surface-variant">No vehicles in database.</p>
+          </div>
+          <nav className="custom-scrollbar flex-1 overflow-y-auto p-3">
+            {orderedFactions.length === 0 ? (
+              <p className="px-2 py-4 text-sm text-on-surface-variant">No assets found.</p>
             ) : (
-              Object.entries(byFaction).map(([faction, list]) => (
-                <div key={faction} className="mb-2">
-                  <p className="px-2 py-1 text-label-sm text-outline uppercase">{faction}</p>
-                  {list.map((v) => (
-                    <ListDetailItem
-                      key={v.id}
-                      active={selected?.id === v.id}
-                      onClick={() => setSelectedId(v.id)}
-                      title={v.name}
-                      preview={v.armor_type}
-                    />
-                  ))}
+              orderedFactions.map((faction) => (
+                <div key={faction} className="mb-4">
+                  <p className="px-2 py-1 font-mono text-[11px] tracking-widest text-outline uppercase">
+                    {faction}
+                  </p>
+                  <ul className="mt-1 space-y-0.5">
+                    {byFaction[faction].map((v) => (
+                      <li key={v.id}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedId(v.id)}
+                          className={cn(
+                            'w-full rounded-lg border px-3 py-2 text-left transition-all',
+                            v.id === selectedId
+                              ? 'border-blue-500/60 bg-blue-600/20 text-blue-100 shadow-[0_0_12px_rgba(59,130,246,0.25)]'
+                              : 'border-transparent text-on-surface-variant hover:bg-white/5 hover:text-white',
+                          )}
+                        >
+                          <span className="block text-sm font-medium">{v.name}</span>
+                          <span className="font-mono text-[11px] text-outline uppercase">{v.class}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ))
-            )
-          }
-          detail={
-            selected ? (
-              <VehicleDossier vehicle={selected} />
-            ) : (
-              <SplitPaneEmpty
-                icon={<MaterialIcon name="directions_car" className="text-4xl" />}
-                message="Select an asset to view its dossier."
-              />
-            )
-          }
-        />
-      </QueryState>
+            )}
+          </nav>
+        </aside>
+
+        {/* Right pane — the intelligence dossier */}
+        <section className="custom-scrollbar min-w-0 flex-1 overflow-y-auto bg-surface-dim/80">
+          {selected ? (
+            <VehicleDossier vehicle={selected} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-on-surface-variant">
+              <p>Select an asset to view its dossier.</p>
+            </div>
+          )}
+        </section>
+      </div>
     </AuthGate>
   )
 }
 
-function VehicleDossier({ vehicle }: { vehicle: VehicleRow }) {
+function VehicleStat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <div className="relative h-64 w-full overflow-hidden border-b border-outline-variant/30">
-        {vehicle.profile_image_url ? (
-          <img src={vehicle.profile_image_url} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-surface-container-low">
-            <MaterialIcon name="directions_car" className="text-6xl text-outline" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
-        <div className="absolute right-6 bottom-6 left-6">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <Badge variant="neutral">{vehicle.faction}</Badge>
-            <Badge variant="primary">{vehicle.armor_type}</Badge>
-            {vehicle.primary_threat && (
-              <Badge variant={threatVariant(vehicle.primary_threat)}>
-                Threat: {vehicle.primary_threat}
-              </Badge>
-            )}
-          </div>
-          <h1 className="text-headline-lg text-on-surface">{vehicle.name}</h1>
-        </div>
-      </div>
-      <div className="grid gap-4 p-8 sm:grid-cols-2">
-        <Spec label="Faction" value={vehicle.faction} />
-        <Spec label="Classification" value={vehicle.armor_type} />
-        <Spec label="Primary Threat" value={vehicle.primary_threat ?? '—'} />
-        <Spec label="Amphibious" value={vehicle.amphibious ?? '—'} />
-      </div>
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <p className="font-mono text-[11px] tracking-widest text-on-surface-variant uppercase">{label}</p>
+      <p className="mt-1 font-mono text-base text-white">{value}</p>
     </div>
   )
 }
 
-function Spec({ label, value }: { label: string; value: string }) {
+function VehicleSectionTitle({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-outline-variant/30 bg-surface-variant/30 p-4">
-      <span className="text-label-sm text-on-surface-variant uppercase">{label}</span>
-      <p className="mt-1 text-body-md text-on-surface">{value}</p>
+    <h2 className="mb-3 font-mono text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+      {children}
+    </h2>
+  )
+}
+
+function VehicleDossier({ vehicle }: { vehicle: VehicleIntel }) {
+  return (
+    <div>
+      {/* Cinematic hero banner */}
+      <div className="relative h-72 w-full overflow-hidden">
+        {vehicle.image ? (
+          <img src={vehicle.image} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-surface-container-low">
+            <MaterialIcon name="directions_car" className="text-7xl text-outline" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent" />
+        <div className="absolute right-8 bottom-6 left-8">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Badge variant="neutral">CLASS: {vehicle.class}</Badge>
+            <Badge variant={threatBadgeVariant(vehicle.threatLevel)}>THREAT: {vehicle.threatLevel}</Badge>
+            <Badge variant="primary">{vehicle.faction}</Badge>
+          </div>
+          <h1 className="text-4xl font-black tracking-tighter text-white uppercase">{vehicle.name}</h1>
+          <p className="mt-2 max-w-2xl text-body-md text-slate-300">{vehicle.shortDescription}</p>
+        </div>
+      </div>
+
+      <div className="space-y-8 p-8 md:p-12">
+        {/* Critical directive */}
+        <div className="rounded-2xl border-l-4 border-tactical-yellow bg-tactical-yellow/10 p-4 shadow-lg backdrop-blur-md">
+          <p className="mb-1 font-mono text-xs font-bold tracking-widest text-tactical-yellow uppercase">
+            Critical Directive
+          </p>
+          <p className="text-body-md leading-relaxed text-slate-300">{vehicle.criticalDirective}</p>
+        </div>
+
+        {/* Telemetry */}
+        <div>
+          <VehicleSectionTitle>Telemetry</VehicleSectionTitle>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <VehicleStat label="Mobility" value={vehicle.telemetry.mobility} />
+            <VehicleStat label="Defense" value={vehicle.telemetry.defense} />
+            <VehicleStat label="Capacity" value={vehicle.telemetry.capacity} />
+          </div>
+        </div>
+
+        {/* Armament & Primary Threats */}
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div>
+            <VehicleSectionTitle>Armament</VehicleSectionTitle>
+            <ul className="space-y-2">
+              {vehicle.armament.map((weapon) => (
+                <li
+                  key={weapon}
+                  className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 font-mono text-sm text-slate-300"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
+                  {weapon}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <VehicleSectionTitle>Primary Threats</VehicleSectionTitle>
+            <div className="flex flex-wrap gap-2">
+              {vehicle.primaryThreats.map((threat) => (
+                <span
+                  key={threat}
+                  className="rounded-full border border-error-alert/30 bg-error-alert/10 px-3 py-1 font-mono text-xs tracking-wide text-error-alert uppercase"
+                >
+                  {threat}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

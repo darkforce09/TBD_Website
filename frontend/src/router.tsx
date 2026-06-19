@@ -77,7 +77,7 @@ export const router = createBrowserRouter([
       {
         path: 'missions',
         element: <MissionLibraryPage />,
-        ...breadcrumb('Mission Hub', 'Mission Library'),
+        ...breadcrumb('Mission Hub', 'Mission Library', { fullBleed: true }),
       },
       {
         path: 'missions/:id',
@@ -99,8 +99,8 @@ export const router = createBrowserRouter([
         element: <OrbatSelectionPage />,
         ...breadcrumb('Operations', 'ORBAT Selection'),
       },
-      { path: 'wiki', element: <WikiPage />, ...breadcrumb('Doctrine & Info', 'SOPs & Manuals') },
-      { path: 'wiki/:slug', element: <WikiPage />, ...breadcrumb('Doctrine & Info', 'SOPs & Manuals') },
+      { path: 'wiki', element: <WikiPage />, ...breadcrumb('Doctrine & Info', 'SOPs & Manuals', { fullBleed: true }) },
+      { path: 'wiki/:slug', element: <WikiPage />, ...breadcrumb('Doctrine & Info', 'SOPs & Manuals', { fullBleed: true }) },
       {
         path: 'vehicles',
         element: <VehicleDatabasePage />,

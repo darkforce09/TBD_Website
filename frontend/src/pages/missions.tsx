@@ -5,9 +5,9 @@ import { OpsCard } from '@/components/OpsCard'
 import { PageHeader } from '@/components/PageHeader'
 import { AuthGate } from '@/components/AuthGate'
 import { QueryState } from '@/components/QueryState'
-import { MaterialIcon } from '@/components/MaterialIcon'
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Sheet } from '@/components/ui/sheet'
 import { useMission, useMissions } from '@/hooks/queries'
 import { useCreateMission } from '@/hooks/mutations'
 import { gameModeLabel, terrainLabel } from '@/lib/format'
@@ -15,105 +15,212 @@ import type { MissionDetail } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 const SCOPES = [
-  { label: 'Global', value: 'global' },
+  { label: 'Global Missions', value: 'global' },
   { label: 'My Missions', value: 'mine' },
   { label: 'Bookmarked', value: 'bookmarked' },
 ] as const
 
 const TERRAINS = ['', 'everon', 'arland'] as const
+const MODES = ['', 'pve_coop', 'pvp', 'zeus'] as const
+// `player_count` is parsed server-side as a "lo-hi" range (internal/handlers/missions.go).
+const PLAYER_RANGES = [
+  { label: 'All Players', value: '' },
+  { label: '1–8', value: '1-8' },
+  { label: '9–16', value: '9-16' },
+  { label: '17–32', value: '17-32' },
+  { label: '33–64', value: '33-64' },
+] as const
+
+const SELECT_CLASS =
+  'rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-label-md text-on-surface outline-none transition-colors focus:border-primary/60'
+
+// Cinematic fallback art so cards/hero never render as empty grey blocks.
+const PLACEHOLDER_ART =
+  'https://lh3.googleusercontent.com/aida/AP1WRLtxuwSoyDyCrRuQu8gTHWuSmoOWZq8e7gw0bSjjZCmteU96TomvCGHto-cuqHYV_0gxNUjw_Lx2SWgiEl2W3vEi6aVH84DpTky5lG8-FKDJOzH96TrwAJwGJwE3DSwSN1gRC7miWds0X7kNvMAZRBgQPu_5g2iX9RtJ3WYUlgHbfVLYcmV7TaHPUvhZHvvvKenG2B3S2CRER15d2kdG5YNFbtFwtwgzEIeYG2jP4GubWd7SMO0bADPFFA'
 
 export function MissionLibraryPage() {
   const [scopeIdx, setScopeIdx] = useState(0)
   const [q, setQ] = useState('')
   const [terrain, setTerrain] = useState('')
+  const [mode, setMode] = useState('')
+  const [players, setPlayers] = useState('')
   const [previewId, setPreviewId] = useState<string | null>(null)
   const scope = SCOPES[scopeIdx]?.value ?? 'global'
   const filters: Record<string, string> = {}
   if (terrain) filters.terrain = terrain
+  if (mode) filters.mode = mode
+  if (players) filters.player_count = players
   if (q) filters.q = q
 
   const { data, isLoading, isError, error } = useMissions(scope, filters)
   const missions = data?.data ?? []
+  // The hero spotlights the most recent operation in view (list is ordered newest-first).
+  const featured = missions[0]
 
   return (
     <AuthGate>
-      <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <div className="mx-auto w-full max-w-6xl">
-          <PageHeader title="Mission Library" subtitle="Browse, filter, and deploy active operations." />
-          <div className="mb-6 flex flex-wrap gap-2">
+      {/* Full-bleed: the glass panel fills the available width/height and scrolls
+          internally — no floating max-width box with massive margins. */}
+      <div className="flex h-full w-full flex-col p-4 md:p-6">
+        <div className="flex h-full w-full flex-1 flex-col overflow-y-auto rounded-3xl border border-white/10 bg-surface-glass p-4 shadow-2xl backdrop-blur-xl md:p-8">
+        {/* Header + macOS segmented control */}
+        <header className="mb-6">
+          <h1 className="text-4xl font-bold tracking-tight text-on-surface uppercase">Mission Library</h1>
+          <p className="mt-1 text-body-md text-on-surface-variant">
+            Browse, filter, and deploy active operations across the theater.
+          </p>
+          <div className="mt-5 inline-flex gap-1 rounded-full border border-white/5 bg-black/20 p-1">
             {SCOPES.map((tab, i) => (
               <button
                 key={tab.value}
                 type="button"
                 onClick={() => setScopeIdx(i)}
                 className={cn(
-                  'rounded-lg px-4 py-2 text-label-md font-medium transition-colors',
-                  i === scopeIdx ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant',
+                  'rounded-full px-4 py-1.5 text-label-md font-medium transition-all',
+                  i === scopeIdx
+                    ? 'bg-surface-glass text-on-surface shadow-md'
+                    : 'text-on-surface-variant hover:text-on-surface',
                 )}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <OpsCard glass className="mb-6 flex-row flex-wrap gap-3">
+        </header>
+
+        <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
+          {/* Featured Operation — cinematic hero. "LIVE OPERATION" is a presentational
+              flourish; the mission model has no live-status flag. */}
+          {featured && (
+            <section className="relative mb-8 flex min-h-[320px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/30 lg:flex-row">
+              {/* Text content — sits above the art on small screens, side-by-side on desktop. */}
+              <div className="relative z-10 flex w-full flex-col justify-center gap-4 p-8 lg:w-3/5">
+                <div className="flex items-center gap-2 font-mono text-label-sm tracking-widest text-error-alert uppercase">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-error-alert opacity-60" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-error-alert" />
+                  </span>
+                  Live Operation
+                </div>
+                <h2 className="text-4xl font-black tracking-tighter text-on-surface uppercase xl:text-5xl">
+                  {featured.title}
+                </h2>
+                <p className="max-w-prose text-body-md text-on-surface-variant line-clamp-3">
+                  {featured.briefing ||
+                    'Command has flagged this operation as the priority deployment. Review the dossier for objectives, ORBAT, and the armory loadout before committing forces to the field.'}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="primary">{gameModeLabel(featured.game_mode)}</Badge>
+                  <Badge variant="neutral">{terrainLabel(featured.terrain)}</Badge>
+                  <Badge variant="tertiary">{featured.max_players} OPERATORS</Badge>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewId(featured.id)}
+                    className="mt-2 rounded-lg bg-primary px-6 py-3 font-mono text-label-md font-semibold tracking-wider text-on-primary uppercase transition-transform hover:scale-[1.02]"
+                  >
+                    [ View Dossier ]
+                  </button>
+                </div>
+              </div>
+              {/* Cinematic art — layers behind the text on small screens (absolute),
+                  sits side-by-side on desktop (relative), always object-cover. */}
+              <div className="absolute inset-0 lg:relative lg:inset-auto lg:w-2/5">
+                <img
+                  src={featured.thumbnail_url || PLACEHOLDER_ART}
+                  alt=""
+                  className="h-full w-full object-cover opacity-60 mix-blend-luminosity"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-transparent" />
+              </div>
+            </section>
+          )}
+
+          {/* Unified search + filter toolbar */}
+          <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-white/5 bg-black/20 p-2 backdrop-blur-md">
             <input
               type="search"
               placeholder="Search operations..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="min-w-[200px] flex-1 rounded-lg border border-outline-variant/40 bg-surface px-3 py-2 text-label-md outline-none focus:border-primary/60"
+              className="min-w-[200px] flex-1 rounded-lg border border-white/10 bg-black/30 px-4 py-2 text-label-md text-on-surface outline-none transition-colors focus:border-primary/60"
             />
-            <select
-              value={terrain}
-              onChange={(e) => setTerrain(e.target.value)}
-              className="rounded-lg border border-outline-variant/40 bg-surface px-3 py-2 text-label-md outline-none focus:border-primary/60"
-            >
+            <select value={terrain} onChange={(e) => setTerrain(e.target.value)} className={SELECT_CLASS}>
               {TERRAINS.map((t) => (
                 <option key={t || 'all'} value={t}>
                   {t ? terrainLabel(t) : 'All Terrains'}
                 </option>
               ))}
             </select>
-          </OpsCard>
+            <select value={mode} onChange={(e) => setMode(e.target.value)} className={SELECT_CLASS}>
+              {MODES.map((m) => (
+                <option key={m || 'all'} value={m}>
+                  {m ? gameModeLabel(m) : 'All Modes'}
+                </option>
+              ))}
+            </select>
+            <select value={players} onChange={(e) => setPlayers(e.target.value)} className={SELECT_CLASS}>
+              {PLAYER_RANGES.map((p) => (
+                <option key={p.value || 'all'} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Mission grid */}
           {missions.length === 0 ? (
-            <p className="text-on-surface-variant">No missions found.</p>
+            <p className="py-12 text-center text-on-surface-variant">No missions found.</p>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {missions.map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   onClick={() => setPreviewId(m.id)}
-                  className="group overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container text-left transition-all hover:border-primary/40 hover:shadow-xl"
+                  className="group overflow-hidden rounded-2xl border border-white/10 bg-surface-container/60 text-left transition-all hover:-translate-y-0.5 hover:border-white/25 hover:shadow-xl"
                 >
-                  <div className="relative h-36 w-full overflow-hidden bg-surface-container-low">
-                    {m.thumbnail_url ? (
-                      <img
-                        src={m.thumbnail_url}
-                        alt=""
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <MaterialIcon name="map" className="text-4xl text-outline" />
-                      </div>
-                    )}
+                  <div className="relative h-48 w-full overflow-hidden bg-surface-container-low">
+                    <img
+                      src={m.thumbnail_url || PLACEHOLDER_ART}
+                      alt=""
+                      className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                     <span className="absolute top-3 left-3">
-                      <Badge variant="primary">{gameModeLabel(m.game_mode)}</Badge>
+                      <Badge variant="primary" className="border-white/10 bg-black/40 backdrop-blur-md">
+                        {gameModeLabel(m.game_mode)}
+                      </Badge>
                     </span>
                   </div>
                   <div className="p-4">
-                    <h3 className="text-headline-sm text-on-surface">{m.title}</h3>
-                    <p className="mt-1 text-label-md text-on-surface-variant">
-                      {m.author_name} · {terrainLabel(m.terrain)} · {m.max_players} max
-                    </p>
+                    <div className="mb-3 flex items-center gap-2">
+                      {m.author_avatar ? (
+                        <img src={m.author_avatar} alt="" className="h-6 w-6 rounded-full object-cover" />
+                      ) : (
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-high text-label-sm text-on-surface-variant">
+                          {m.author_name?.charAt(0).toUpperCase() || '?'}
+                        </span>
+                      )}
+                      <span className="text-label-md text-on-surface-variant">{m.author_name}</span>
+                    </div>
+                    <h3 className="text-headline-sm font-bold text-on-surface">{m.title}</h3>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className="rounded-md border border-white/5 bg-black/30 px-2 py-0.5 font-mono text-label-sm text-on-surface-variant">
+                        {terrainLabel(m.terrain)}
+                      </span>
+                      <span className="rounded-md border border-white/5 bg-black/30 px-2 py-0.5 font-mono text-label-sm text-on-surface-variant">
+                        {m.max_players} MAX
+                      </span>
+                    </div>
                   </div>
                 </button>
               ))}
             </div>
           )}
+        </QueryState>
         </div>
-      </QueryState>
+      </div>
 
       {/* Slide-over mission dossier (no full-page navigation) */}
       <Sheet open={previewId != null} onOpenChange={(o) => !o && setPreviewId(null)}>
@@ -123,14 +230,81 @@ export function MissionLibraryPage() {
   )
 }
 
+/**
+ * Bespoke "Slide-Over Dossier" drawer — wide frosted panel with an edge-to-edge
+ * cinematic hero, scrollable body, and a sticky two-button action footer. Built
+ * straight on the Base UI Dialog primitives (the shared SheetContent is too narrow
+ * and is reused elsewhere, so we don't touch it).
+ */
 function MissionDossierSheet({ id }: { id: string }) {
+  const navigate = useNavigate()
   const { data: mission, isLoading, isError, error } = useMission(id)
+
   return (
-    <SheetContent title={mission?.title ?? 'Mission Dossier'} description={mission?.author_name}>
-      <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        {mission && <MissionDossierBody mission={mission} />}
-      </QueryState>
-    </SheetContent>
+    <DialogPrimitive.Portal>
+      <DialogPrimitive.Backdrop
+        className={cn(
+          'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300',
+          'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
+        )}
+      />
+      <DialogPrimitive.Popup
+        className={cn(
+          'fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col overflow-hidden border-l border-white/10 bg-slate-900/60 shadow-2xl outline-none backdrop-blur-3xl md:w-[60vw]',
+          'transition-transform duration-300 ease-out',
+          'data-[starting-style]:translate-x-full data-[ending-style]:translate-x-full',
+        )}
+      >
+        {/* Edge-to-edge cinematic hero header */}
+        <div className="relative h-64 w-full shrink-0 md:h-80">
+          <img
+            src={mission?.thumbnail_url || PLACEHOLDER_ART}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent" />
+          <DialogPrimitive.Close
+            aria-label="Close"
+            className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/30 text-on-surface backdrop-blur-md transition-colors hover:bg-black/50"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </DialogPrimitive.Close>
+          <div className="absolute right-8 bottom-6 left-8">
+            <DialogPrimitive.Title className="text-4xl font-black tracking-tighter text-white uppercase">
+              {mission?.title ?? 'Mission Dossier'}
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className="mt-1 font-mono text-label-md text-on-surface-variant">
+              {mission?.author_name ? `Authored by ${mission.author_name}` : 'Loading dossier…'}
+            </DialogPrimitive.Description>
+          </div>
+        </div>
+
+        {/* Scrollable content — pb-32 clears the sticky footer */}
+        <div className="custom-scrollbar flex-1 overflow-y-auto px-8 pt-6 pb-32">
+          <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
+            {mission && <MissionDossierBody mission={mission} />}
+          </QueryState>
+        </div>
+
+        {/* Sticky action footer */}
+        <div className="absolute right-0 bottom-0 left-0 flex">
+          <button
+            type="button"
+            onClick={() => navigate('/missions/create')}
+            className="flex-1 bg-blue-600/90 py-5 font-bold tracking-wide text-white backdrop-blur-md transition-colors hover:bg-blue-500"
+          >
+            [ OPEN IN MISSION CREATOR ]
+          </button>
+          <button
+            type="button"
+            onClick={() => toast('2D Tactical Planner — coming soon')}
+            className="flex-1 border-t border-white/10 bg-slate-800/90 py-5 font-bold tracking-wide text-blue-300 backdrop-blur-md transition-colors hover:bg-slate-700"
+          >
+            [ LAUNCH TACTICAL PLANNER ]
+          </button>
+        </div>
+      </DialogPrimitive.Popup>
+    </DialogPrimitive.Portal>
   )
 }
 
@@ -142,10 +316,7 @@ function MissionDossierBody({ mission }: { mission: MissionDetail }) {
   const armoryItems = mission.armory.filter((a) => a.faction === activeFaction)
 
   return (
-    <div className="space-y-5">
-      {mission.thumbnail_url && (
-        <img src={mission.thumbnail_url} alt="" className="h-40 w-full rounded-lg object-cover" />
-      )}
+    <div className="space-y-8">
       <div className="flex flex-wrap gap-2">
         <Badge variant="primary">{gameModeLabel(mission.game_mode)}</Badge>
         <Badge variant="neutral">{terrainLabel(mission.terrain)}</Badge>
@@ -153,13 +324,15 @@ function MissionDossierBody({ mission }: { mission: MissionDetail }) {
       </div>
 
       <section>
-        <h3 className="mb-2 text-label-md text-on-surface-variant uppercase">Briefing</h3>
-        <p className="whitespace-pre-wrap text-body-md text-on-surface-variant">
+        <h3 className="mb-2 font-mono text-label-md tracking-widest text-on-surface-variant uppercase">
+          Tactical Briefing
+        </h3>
+        <p className="whitespace-pre-wrap text-body-md leading-relaxed text-on-surface-variant">
           {mission.briefing || 'No briefing provided.'}
         </p>
       </section>
 
-      <dl className="grid grid-cols-2 gap-3">
+      <dl className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <Detail label="Weather" value={mission.weather} />
         <Detail label="Time" value={mission.time_of_day} />
         <Detail label="Max Players" value={String(mission.max_players)} />
@@ -205,9 +378,9 @@ function MissionDossierBody({ mission }: { mission: MissionDetail }) {
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-outline-variant/30 bg-surface-variant/30 p-3">
-      <dt className="text-label-sm text-on-surface-variant uppercase">{label}</dt>
-      <dd className="mt-0.5 text-label-md text-on-surface">{value}</dd>
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <dt className="font-mono text-label-sm tracking-widest text-on-surface-variant uppercase">{label}</dt>
+      <dd className="mt-1 text-headline-sm text-on-surface">{value}</dd>
     </div>
   )
 }
