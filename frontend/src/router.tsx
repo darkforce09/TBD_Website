@@ -27,8 +27,12 @@ import { SettingsPage } from '@/pages/Settings'
 import { AuthCallbackPage, LoginPage } from '@/pages/auth'
 import { NotFoundPage, ServerControlPage } from '@/pages/utility'
 
-const breadcrumb = (parent: string, current: string) => ({
-  handle: { breadcrumb: { parent, current } },
+const breadcrumb = (
+  parent: string,
+  current: string,
+  opts?: { fullBleed?: boolean },
+) => ({
+  handle: { breadcrumb: { parent, current }, fullBleed: opts?.fullBleed },
 })
 
 export const router = createBrowserRouter([

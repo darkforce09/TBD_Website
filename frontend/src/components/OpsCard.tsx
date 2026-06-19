@@ -5,15 +5,18 @@ interface OpsCardProps {
   children: ReactNode
   className?: string
   glow?: boolean
+  /** Frosted Aegis glass surface (for panels over the topo/grid background). */
+  glass?: boolean
 }
 
-/** Tactical panel card — matches Stitch surface-container styling. */
-export function OpsCard({ children, className, glow }: OpsCardProps) {
+/** Tactical panel card — matches Aegis surface-container / glass styling. */
+export function OpsCard({ children, className, glow, glass }: OpsCardProps) {
   return (
     <div
       className={cn(
-        'relative flex flex-col gap-3 overflow-hidden rounded-xl border border-border-subtle bg-surface-container p-6',
-        glow && 'shadow-[0_0_15px_rgba(59,130,246,0.15)]',
+        'relative flex flex-col gap-3 overflow-hidden rounded-xl p-6',
+        glass ? 'glass' : 'border border-border-subtle bg-surface-container',
+        glow && 'shadow-[0_0_15px_rgba(173,198,255,0.15)]',
         className,
       )}
     >

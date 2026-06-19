@@ -37,10 +37,10 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                        'flex items-center gap-3 rounded-md px-3 py-2.5 text-label-md font-medium transition-colors',
                         isActive
-                          ? 'nav-item-active text-primary shadow-[inset_0_0_10px_rgba(59,130,246,0.3)]'
-                          : 'text-gray-400 hover:bg-white/5 hover:text-white',
+                          ? 'nav-item-active text-primary'
+                          : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface',
                       )
                     }
                   >
@@ -62,7 +62,7 @@ function SidebarBrand() {
     <header className="relative flex h-16 shrink-0 items-center px-6">
       <div className="flex items-center gap-2">
         <span className="text-2xl font-bold tracking-wide text-primary">TBD</span>
-        <span className="text-2xl font-bold tracking-wide text-white">Reforger</span>
+        <span className="text-2xl font-bold tracking-wide text-on-surface">Reforger</span>
       </div>
     </header>
   )
