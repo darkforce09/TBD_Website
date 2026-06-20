@@ -22,4 +22,14 @@ export interface TacticalMapProps {
   className?: string
   /** Fired on an empty-map click with the world (meters) position picked. */
   onMapClick?: (world: { x: number; y: number }) => void
+  /** Fired on hover with the world (meters) cursor position, or null when off-map. */
+  onCursorMove?: (world: { x: number; y: number } | null) => void
+  /** Receives the imperative map API (e.g. flyTo) for use by sibling panels. */
+  onReady?: (api: TacticalMapApi) => void
+}
+
+/** Imperative handle exposed via onReady. */
+export interface TacticalMapApi {
+  /** Center the camera on a world (meters) position. */
+  flyTo: (world: { x: number; y: number }) => void
 }

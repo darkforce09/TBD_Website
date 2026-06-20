@@ -5,7 +5,7 @@ export { TacticalMap } from './TacticalMap'
 export { useMapContext } from './context/MapContext'
 export { getTerrain, TERRAINS, DEFAULT_TERRAIN } from './coords/terrains'
 export type { TerrainDef, TerrainId } from './coords/terrains'
-export type { MapViewState, TacticalMapProps } from './types'
+export type { MapViewState, TacticalMapProps, TacticalMapApi } from './types'
 
 // State foundation (Ultra Plan §2)
 export { useMapStore } from './state/useMapStore'
@@ -16,13 +16,24 @@ export {
   moveEntity,
   removeEntity,
   clearAll,
+  seedMeta,
+  setTitle,
+  updateEnvironment,
+  updateSlot,
+  addFaction,
+  addSquad,
   LOCAL_ORIGIN,
 } from './state/ydoc'
 export type { MissionDoc, EntityMapName } from './state/ydoc'
 export { bindStoreToDoc, docToSnapshot } from './state/bindings'
 export { createUndoManager } from './state/undo'
 export type { UndoController } from './state/undo'
-export { selectSlotIcons } from './state/selectors'
+export {
+  selectSlotIcons,
+  selectFactionList,
+  selectSquadsOf,
+  selectSlotsOf,
+} from './state/selectors'
 export type { SlotIcon } from './state/selectors'
 export type {
   ID,

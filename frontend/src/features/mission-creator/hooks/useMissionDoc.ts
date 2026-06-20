@@ -11,6 +11,7 @@ import {
   bindStoreToDoc,
   createMissionDoc,
   createUndoManager,
+  seedMeta,
   useMapStore,
   type MissionDoc,
   type UndoController,
@@ -35,6 +36,11 @@ export function useMissionDoc(missionId: string | undefined): MissionDocHandle {
   useEffect(() => {
     const unbind = bindStoreToDoc(md)
     const persistence = new IndexeddbPersistence(dbName, md.doc)
+    // Once the local snapshot has loaded, seed defaults if this is a fresh mission
+    // (non-tracked origin → not an undo step). New keys flow in via observeDeep.
+    persistence.once('synced', () =>
+      seedMeta(md, { id: missionId ?? 'draft', title: 'Untitled Mission' }),
+    )
 
     return () => {
       unbind()
@@ -43,7 +49,7 @@ export function useMissionDoc(missionId: string | undefined): MissionDocHandle {
       md.doc.destroy()
       useMapStore.getState().reset()
     }
-  }, [md, undo, dbName])
+  }, [md, undo, dbName, missionId])
 
   return { md, undo }
 }

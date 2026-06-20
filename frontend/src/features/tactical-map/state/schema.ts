@@ -95,7 +95,13 @@ export interface MapMarker {
 
 // ── UI / runtime state (not persisted to json_payload) ──────────────────────
 
-export type ToolId = 'select' | 'ruler' | 'los' | 'waypoint' | 'objective'
+export type ToolId =
+  | 'select'
+  | 'place' // place a unit/slot on the map (Phase 3)
+  | 'ruler'
+  | 'los'
+  | 'waypoint'
+  | 'objective'
 
 export type SelectionKind =
   | 'none'

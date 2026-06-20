@@ -20,6 +20,8 @@ interface UseOrthographicView {
   view: OrthographicView
   viewState: MapViewState
   onViewStateChange: (params: { viewState: MapViewState }) => void
+  /** Recenter the camera on a common-space target [x, y] (stable identity). */
+  flyTo: (target: [number, number]) => void
 }
 
 export function useOrthographicView(terrain: TerrainDef): UseOrthographicView {
@@ -49,5 +51,15 @@ export function useOrthographicView(terrain: TerrainDef): UseOrthographicView {
     [terrain.width, terrain.height],
   )
 
-  return { view, viewState, onViewStateChange }
+  const flyTo = useCallback(
+    (target: [number, number]) => {
+      setViewState((prev) => ({
+        ...prev,
+        target: [clamp(target[0], 0, terrain.width), clamp(target[1], 0, terrain.height)],
+      }))
+    },
+    [terrain.width, terrain.height],
+  )
+
+  return { view, viewState, onViewStateChange, flyTo }
 }

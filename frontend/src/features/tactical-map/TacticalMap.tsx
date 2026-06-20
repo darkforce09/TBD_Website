@@ -4,7 +4,7 @@
 // layers (Ultra Plan §4.3). Deck owns all entity rendering — React never draws
 // per-entity DOM — which is what holds 60 fps with hundreds of slots.
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import DeckGL from '@deck.gl/react'
 import type { PickingInfo } from '@deck.gl/core'
 import { getTerrain } from './coords/terrains'
@@ -12,7 +12,6 @@ import { useOrthographicView } from './view/useOrthographicView'
 import { useBaseMapLayer } from './layers/useBaseMapLayer'
 import { useIconLayer } from './layers/useIconLayer'
 import { MapContextProvider, createMapContextValue } from './context/MapContext'
-import { worldToPixel } from './coords/projection'
 import { useMapStore } from './state/useMapStore'
 import type { ID } from './state/schema'
 import type { MapViewState, TacticalMapProps } from './types'
@@ -21,9 +20,12 @@ export function TacticalMap({
   terrain: terrainId,
   className,
   onMapClick,
+  onCursorMove,
+  onReady,
 }: TacticalMapProps) {
   const terrain = useMemo(() => getTerrain(terrainId), [terrainId])
-  const { view, viewState, onViewStateChange } = useOrthographicView(terrain)
+  const { view, viewState, onViewStateChange, flyTo: viewFlyTo } =
+    useOrthographicView(terrain)
   const baseMap = useBaseMapLayer(terrain)
   const iconLayer = useIconLayer()
   const setSelection = useMapStore((s) => s.setSelection)
@@ -43,13 +45,26 @@ export function TacticalMap({
     [setSelection, onMapClick],
   )
 
-  const flyTo = useCallback(
-    (world: { x: number; y: number }) => {
-      const [px, py] = worldToPixel(terrain, world.x, world.y)
-      onViewStateChange({ viewState: { ...viewState, target: [px, py] } })
+  const onHover = useCallback(
+    (info: PickingInfo) => {
+      onCursorMove?.(
+        info.coordinate
+          ? { x: info.coordinate[0], y: info.coordinate[1] }
+          : null,
+      )
     },
-    [terrain, viewState, onViewStateChange],
+    [onCursorMove],
   )
+
+  // Identity projection (flipY:false → common space == world space), so a world
+  // position centers directly. Stable across renders for the onReady handle.
+  const flyTo = useCallback(
+    (world: { x: number; y: number }) => viewFlyTo([world.x, world.y]),
+    [viewFlyTo],
+  )
+
+  // Expose flyTo to sibling panels (Outliner) that live outside MapContext.
+  useEffect(() => onReady?.({ flyTo }), [onReady, flyTo])
 
   const ctx = useMemo(
     () => createMapContextValue(terrain, flyTo),
@@ -68,6 +83,7 @@ export function TacticalMap({
           controller={{ doubleClickZoom: false }}
           layers={[baseMap, iconLayer]}
           onClick={onClick}
+          onHover={onHover}
           getCursor={({ isHovering }) => (isHovering ? 'pointer' : 'grab')}
           style={{ position: 'absolute', width: '100%', height: '100%' }}
         />

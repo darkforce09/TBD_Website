@@ -1,21 +1,32 @@
-// Full-bleed route shell for the 2D Mission Creator. Phase 4 mounts the live map +
-// the Y.Doc state foundation (via useMissionDoc) with a temporary debug harness for
-// add/move/undo/persist. The real Top Command Strip / Outliner / Inspector / Toolbelt
-// (Ultra Plan §5) arrive in later phases. The route carries the `fullBleed` handle so
-// AppLayout runs this page full-height with no padding.
+// Full-bleed route shell for the 2D Mission Creator. Phase 3 frames the live map
+// with the Aegis-glass application shell (Ultra Plan §5): Top Command Strip,
+// Left Outliner, Right Inspector, Bottom Toolbelt — all wired to the Phase-4 Y.Doc
+// state. The route carries the `fullBleed` handle so AppLayout runs it full-height.
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { TacticalMap, moveEntity, useMapStore } from '@/features/tactical-map'
+import {
+  TacticalMap,
+  moveEntity,
+  useMapStore,
+  type TacticalMapApi,
+} from '@/features/tactical-map'
 import { useMissionDoc } from './hooks/useMissionDoc'
-import { DebugToolbar } from './DebugToolbar'
+import { TopCommandStrip } from './layout/TopCommandStrip'
+import { BottomToolbelt } from './layout/BottomToolbelt'
+import { OutlinerPanel } from './layout/LeftOutliner/OutlinerPanel'
+import { InspectorPanel } from './layout/RightInspector/InspectorPanel'
 import { FpsCounter } from './FpsCounter'
 
 export default function MissionCreatorPage() {
   const { id } = useParams<{ id: string }>()
   const { md, undo } = useMissionDoc(id)
 
-  // With a slot selected, clicking empty map moves it there (Phase-7 drag stand-in).
+  const [mapApi, setMapApi] = useState<TacticalMapApi | null>(null)
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null)
+
+  // Click empty map with a slot selected → reposition it. (Placement is via the
+  // Asset Browser; the Toolbelt no longer places — Ultra Plan §5.3.)
   const onMapClick = useCallback(
     (world: { x: number; y: number }) => {
       const { selection } = useMapStore.getState()
@@ -28,15 +39,36 @@ export default function MissionCreatorPage() {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-background">
-      <TacticalMap terrain="everon" onMapClick={onMapClick} />
+      {/* Full-bleed map behind everything. */}
+      <TacticalMap
+        terrain="everon"
+        className="absolute inset-0 z-0"
+        onMapClick={onMapClick}
+        onCursorMove={setCursor}
+        onReady={setMapApi}
+      />
 
-      <FpsCounter />
-      <DebugToolbar md={md} undo={undo} />
+      {/* Floating overlay layer: spans the screen and ignores pointer events so
+          empty space (incl. the padded gaps) pans the map; each panel re-enables
+          hits via `pointer-events-auto` in the `overlayPanel` recipe. */}
+      <div className="pointer-events-none absolute inset-0 z-10">
+        <div className="absolute inset-x-4 top-4">
+          <TopCommandStrip md={md} undo={undo} />
+        </div>
 
-      {/* Minimal non-functional marker so the route is self-evidently the editor.
-          Replaced by the Top Command Strip in a later phase. */}
-      <div className="glass pointer-events-none absolute left-4 top-4 z-10 rounded-md px-3 py-1.5 font-mono text-code-md text-on-surface-variant">
-        Mission Creator · {id ?? '—'}
+        <div className="absolute bottom-[5.5rem] left-4 top-[4.75rem]">
+          <OutlinerPanel md={md} flyTo={mapApi?.flyTo} />
+        </div>
+
+        <div className="absolute bottom-[5.5rem] right-4 top-[4.75rem]">
+          <InspectorPanel md={md} flyTo={mapApi?.flyTo} />
+        </div>
+
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2">
+          <BottomToolbelt cursorWorld={cursor} />
+        </div>
+
+        <FpsCounter />
       </div>
     </div>
   )

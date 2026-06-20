@@ -380,13 +380,16 @@ OutlinerPanel
 - Drag a slot from Alpha → Bravo → `onReparent(slotId, squadId)` (one Y.Doc transaction).
 - Selecting any row calls `MapContext.flyTo(entity.position)` to center the map.
 
-### 5.2 Right Inspector — contextual
-`InspectorPanel` switches on `selection.kind`:
+### 5.2 Right Panel — Asset Browser & Inspector
+The right panel defaults to the **Asset Browser**, a catalog of units, vehicles, and objects used to drag and drop entities onto the map.
+When an entity is selected, it switches to the `InspectorPanel` based on `selection.kind`:
 | State | Component | Props |
 |-------|-----------|-------|
-| `none` | `GlobalSettingsInspector` | `meta`, `onChangeEnvironment` |
-| `slot` | `ArsenalInspector` | `slot: Slot`, `loadout: Loadout`, `registry: RegistryClient`, `onEquip(slotType, itemClass)`, `onUnequip(slotType)`, `onAttach(weaponItemId, attachSlot, itemClass)` |
+| `none` | `AssetBrowser` | Catalog of placeable assets |
+| `slot` | `ArsenalInspector` | `slot: Slot`, `loadout: Loadout`, `registry: RegistryClient`, `onEquip`, `onUnequip`, `onAttach` |
 | `objective` | `ObjectiveInspector` | `objective: Objective`, `onChange(patch)` |
+
+*Note: Mission Settings are NOT in the right panel. They belong in a dedicated modal dialog.*
 
 `ArsenalInspector` renders `SoldierDoll` (2D paper-doll: helmet/vest/uniform/primary/backpack) +
 a list of `SlotCategory` (collapsible) each opening an `ItemPicker` (registry-backed search grid).
@@ -394,12 +397,10 @@ Every pick round-trips through `useArsenalValidation` → the registry worker be
 
 ### 5.3 Bottom Toolbelt
 `BottomToolbelt` props: `activeTool: ToolId`, `onToolChange(tool)`, `cursorWorld: {x,y,z}` (live
-JetBrains-Mono readout). Tools: Select, Line-of-Sight, Ruler, Place Waypoint, Place Objective.
+JetBrains-Mono readout). Tools: Select, Ruler, Line-of-Sight. (Unit placement is exclusively drag-and-drop from the Asset Browser).
 
 ### 5.4 Top Command Strip
-`TopCommandStrip`: mission title (inline edit), **Visual-Git timeline scrubber** (driven by the
-`Y.UndoManager` stack — scrub to undo/redo to any prior state), environment controls
-(time-of-day slider, weather toggles), and the **Export** button (invokes the compiler worker).
+`TopCommandStrip`: mission title (inline edit), **Visual-Git timeline scrubber**, a button to open the **Mission Settings Dialog** (time/weather/environment), and the **Export** button.
 
 ---
 

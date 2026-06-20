@@ -8,10 +8,13 @@
 
 import * as Y from 'yjs'
 import { ENTITY_MAPS } from './schema'
-import type { ID, Slot } from './schema'
+import type { ID, MissionMeta, Slot } from './schema'
 
 /** Origin tag stamped on every local mutation; tracked by the UndoManager. */
 export const LOCAL_ORIGIN = 'local-user'
+
+/** Origin for non-user seeding (defaults) — deliberately NOT undo-tracked. */
+export const INIT_ORIGIN = 'init'
 
 export type EntityMapName = (typeof ENTITY_MAPS)[number]
 
@@ -87,23 +90,25 @@ export function ensureDefaultSquad(md: MissionDoc): ID {
   return squadId
 }
 
-/** Add a slot (test unit) at a world position. */
+/** Add a slot at a world position, into a given squad (or the default squad). */
 export function addSlot(
   md: MissionDoc,
   position: { x: number; y: number },
+  opts?: { squadId?: ID; role?: string; tag?: string },
 ): ID {
   let id = ''
   transact(md, () => {
-    const squadId = ensureDefaultSquad(md)
+    const targetSquad = opts?.squadId ?? ensureDefaultSquad(md)
     const { slots, squads } = md.entities
-    const squad = squads.get(squadId)!
+    const squad = squads.get(targetSquad)!
     const slotIds = squad.get('slotIds') as ID[]
     id = newId()
     const slot: Slot = {
       id,
-      squadId,
+      squadId: targetSquad,
       index: slotIds.length,
-      role: 'Rifleman',
+      role: opts?.role ?? 'Rifleman',
+      ...(opts?.tag ? { tag: opts.tag } : {}),
       position: { x: position.x, y: position.y, z: 0, rotation: 0 },
       stance: 'stand',
       loadoutId: null,
@@ -129,26 +134,32 @@ export function moveEntity(
   })
 }
 
-/** Remove an entity (and detach a slot from its squad). */
+/** Remove an entity, cascading children (faction→squads→slots) and detaching refs. */
 export function removeEntity(
   md: MissionDoc,
   mapName: EntityMapName,
   id: ID,
 ): void {
+  const { factions, squads, slots } = md.entities
   transact(md, () => {
-    const map = md.entities[mapName]
     if (mapName === 'slots') {
-      const slot = map.get(id)
-      const squadId = slot?.get('squadId') as ID | undefined
-      const squad = squadId ? md.entities.squads.get(squadId) : undefined
-      if (squad) {
-        squad.set(
-          'slotIds',
-          (squad.get('slotIds') as ID[]).filter((s) => s !== id),
-        )
+      const squadId = slots.get(id)?.get('squadId') as ID | undefined
+      const squad = squadId ? squads.get(squadId) : undefined
+      squad?.set('slotIds', (squad.get('slotIds') as ID[]).filter((s) => s !== id))
+    } else if (mapName === 'squads') {
+      const squad = squads.get(id)
+      for (const slotId of (squad?.get('slotIds') as ID[]) ?? []) slots.delete(slotId)
+      const factionId = squad?.get('factionId') as ID | undefined
+      const faction = factionId ? factions.get(factionId) : undefined
+      faction?.set('squadIds', (faction.get('squadIds') as ID[]).filter((s) => s !== id))
+    } else if (mapName === 'factions') {
+      for (const squadId of (factions.get(id)?.get('squadIds') as ID[]) ?? []) {
+        const squad = squads.get(squadId)
+        for (const slotId of (squad?.get('slotIds') as ID[]) ?? []) slots.delete(slotId)
+        squads.delete(squadId)
       }
     }
-    map.delete(id)
+    md.entities[mapName].delete(id)
   })
 }
 
@@ -157,4 +168,78 @@ export function clearAll(md: MissionDoc): void {
   transact(md, () => {
     for (const name of ENTITY_MAPS) md.entities[name].clear()
   })
+}
+
+// ── Meta + structural actions (Phase 3 shell) ───────────────────────────────
+
+const DEFAULT_META = (id: ID, title: string): MissionMeta => ({
+  id,
+  title,
+  terrain: 'everon',
+  environment: { time: '06:00', weather: 'clear', viewDistance: 1600, thermals: false },
+})
+
+/** Seed meta with defaults if empty. Uses INIT_ORIGIN so it is NOT an undo step. */
+export function seedMeta(md: MissionDoc, opts: { id: ID; title: string }): void {
+  if (md.meta.size > 0) return
+  md.doc.transact(() => {
+    const m = DEFAULT_META(opts.id, opts.title)
+    for (const [k, v] of Object.entries(m)) md.meta.set(k, v)
+  }, INIT_ORIGIN)
+}
+
+export function setTitle(md: MissionDoc, title: string): void {
+  transact(md, () => md.meta.set('title', title))
+}
+
+export function updateEnvironment(
+  md: MissionDoc,
+  patch: Partial<MissionMeta['environment']>,
+): void {
+  transact(md, () => {
+    const env = (md.meta.get('environment') as MissionMeta['environment']) ?? {}
+    md.meta.set('environment', { ...env, ...patch })
+  })
+}
+
+/** Patch scalar slot fields (role / tag / stance). */
+export function updateSlot(
+  md: MissionDoc,
+  id: ID,
+  patch: Partial<Pick<Slot, 'role' | 'tag' | 'stance'>>,
+): void {
+  const slot = md.entities.slots.get(id)
+  if (!slot) return
+  transact(md, () => {
+    for (const [k, v] of Object.entries(patch)) slot.set(k, v)
+  })
+}
+
+/** Create a new faction; returns its id. */
+export function addFaction(md: MissionDoc): ID {
+  const id = newId()
+  transact(md, () => {
+    const n = md.entities.factions.size + 1
+    md.entities.factions.set(
+      id,
+      entityToYMap({ id, key: 'BLUFOR', name: `Faction ${n}`, squadIds: [] }),
+    )
+  })
+  return id
+}
+
+/** Create a squad under a faction; returns its id. */
+export function addSquad(md: MissionDoc, factionId: ID): ID {
+  const id = newId()
+  transact(md, () => {
+    const faction = md.entities.factions.get(factionId)
+    if (!faction) return
+    const n = (faction.get('squadIds') as ID[]).length + 1
+    md.entities.squads.set(
+      id,
+      entityToYMap({ id, factionId, name: `Squad ${n}`, slotIds: [] }),
+    )
+    faction.set('squadIds', [...(faction.get('squadIds') as ID[]), id])
+  })
+  return id
 }

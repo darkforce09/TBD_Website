@@ -29,7 +29,7 @@ export function FpsCounter() {
   const color = fps >= 55 ? '#4ade80' : fps >= 30 ? '#facc15' : '#f87171'
 
   return (
-    <div className="glass pointer-events-none absolute right-4 top-4 z-10 rounded-md px-3 py-1.5 font-mono text-code-md tabular-nums">
+    <div className="glass pointer-events-none absolute bottom-4 right-4 z-10 rounded-md px-3 py-1.5 font-mono text-code-md tabular-nums">
       <span style={{ color }}>{fps}</span>
       <span className="text-on-surface-variant"> FPS</span>
     </div>
