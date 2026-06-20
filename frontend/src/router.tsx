@@ -114,7 +114,7 @@ export const router = createBrowserRouter([
       {
         path: 'tools/mortar',
         element: <MortarCalculatorPage />,
-        ...breadcrumb('Field Tools', 'Mortar Calculator'),
+        ...breadcrumb('Field Tools', 'Mortar Calculator', { fullBleed: true }),
       },
       { path: 'settings', element: <SettingsPage />, ...breadcrumb('Account', 'Settings') },
       {

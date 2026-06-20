@@ -8,7 +8,60 @@ import { useSolveFireMission } from '@/hooks/mutations'
 import { formatBytes } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { SplitPane, SplitPaneEmpty } from '@/components/ui/split-pane'
+import { ListDetailItem } from '@/components/ui/list-detail-item'
 import type { ModpackDTO, ModpackMod } from '@/types/api'
+
+// ─── Shared doctrine master/detail shell ──────────────────────────────────
+// Topo-map background → frosted glass encasing → transparent SplitPane, matching
+// the Announcements blueprint. Reused by Modpacks, Wiki and the Vehicle Database.
+function GlassSplit({
+  masterHeader,
+  master,
+  detail,
+  masterWidth,
+}: {
+  masterHeader: ReactNode
+  master: ReactNode
+  detail: ReactNode
+  masterWidth?: string
+}) {
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      <div className="bg-topo-map bg-grid-overlay absolute inset-0 z-0" />
+      <div className="relative z-10 flex h-full w-full bg-surface-glass backdrop-blur-xl">
+        <SplitPane transparent masterWidth={masterWidth} masterHeader={masterHeader} master={master} detail={detail} />
+      </div>
+    </div>
+  )
+}
+
+/** Search box used across the doctrine master panes. */
+function SidebarSearch({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+}) {
+  return (
+    <div className="relative w-full">
+      <MaterialIcon
+        name="search"
+        className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-base text-on-surface-variant"
+      />
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-white/10 bg-black/30 py-2 pr-3 pl-9 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary/50 focus:outline-none"
+      />
+    </div>
+  )
+}
 
 // ─── Server Modpacks ──────────────────────────────────────────────────────
 // "macOS Tactical" split-pane: a searchable modpack list on the left, an
@@ -102,63 +155,41 @@ export function ModpacksPage() {
 
   return (
     <AuthGate>
-      <div className="flex h-full w-full flex-1 overflow-hidden bg-surface-glass backdrop-blur-xl">
-        {/* Left sidebar — modpack list */}
-        <aside className="flex w-72 shrink-0 flex-col border-r border-white/10">
-          <div className="border-b border-white/10 p-4">
-            <h1 className="mb-3 text-lg font-bold tracking-tight text-on-surface">Modpacks</h1>
-            <div className="relative">
-              <MaterialIcon
-                name="search"
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-base text-on-surface-variant"
-              />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search packs & mods…"
-                className="w-full rounded-xl border border-white/10 bg-black/30 py-2.5 pr-3 pl-9 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary/50 focus:outline-none"
-              />
-            </div>
+      <GlassSplit
+        masterWidth="18rem"
+        masterHeader={
+          <div className="w-full space-y-3">
+            <h1 className="text-headline-sm tracking-wide text-on-surface uppercase">Modpacks</h1>
+            <SidebarSearch value={query} onChange={setQuery} placeholder="Search packs & mods…" />
           </div>
-          <nav className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
-            {filtered.map((pack) => (
-              <button
+        }
+        master={
+          filtered.length === 0 ? (
+            <p className="px-1 py-4 text-label-md text-on-surface-variant">
+              No modpacks match “{query}”.
+            </p>
+          ) : (
+            filtered.map((pack) => (
+              <ListDetailItem
                 key={pack.id}
-                type="button"
+                active={pack.id === selected?.id}
                 onClick={() => {
                   setSelectedId(pack.id)
                   setMode('read')
                 }}
-                className={cn(
-                  'group w-full rounded-xl border px-4 py-3 text-left transition',
-                  pack.id === selected?.id
-                    ? 'border-primary/60 bg-primary/15 shadow-[0_0_20px_rgba(173,198,255,0.15)]'
-                    : 'border-transparent hover:border-white/10 hover:bg-white/[0.03]',
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="truncate font-semibold text-on-surface">{pack.name}</span>
-                  {pack.is_current && (
-                    <span className="ml-auto"><Badge variant="success">Active</Badge></span>
-                  )}
-                </div>
-                <p className="mt-1 font-mono text-xs text-on-surface-variant">
-                  v{pack.version} · {pack.mods.length} mods · {formatBytes(pack.total_size_bytes)}
-                </p>
-              </button>
-            ))}
-            {filtered.length === 0 && (
-              <p className="px-3 py-6 text-center text-sm text-on-surface-variant">
-                No modpacks match “{query}”.
-              </p>
-            )}
-          </nav>
-        </aside>
-
-        {/* Right pane — dossier / editor */}
-        <main className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
-          {selected ? (
+                title={pack.name}
+                trailing={pack.is_current ? <Badge variant="success">Active</Badge> : undefined}
+                preview={
+                  <span className="font-mono text-on-surface-variant">
+                    v{pack.version} · {pack.mods.length} mods · {formatBytes(pack.total_size_bytes)}
+                  </span>
+                }
+              />
+            ))
+          )
+        }
+        detail={
+          selected ? (
             mode === 'edit' ? (
               <ModpackEditor
                 key={selected.id}
@@ -167,19 +198,16 @@ export function ModpacksPage() {
                 onSave={handleSave}
               />
             ) : (
-              <ModpackDossier
-                pack={selected}
-                isAdmin={isAdmin}
-                onEdit={() => setMode('edit')}
-              />
+              <ModpackDossier pack={selected} isAdmin={isAdmin} onEdit={() => setMode('edit')} />
             )
           ) : (
-            <div className="flex h-full items-center justify-center text-on-surface-variant">
-              Select a modpack
-            </div>
-          )}
-        </main>
-      </div>
+            <SplitPaneEmpty
+              icon={<MaterialIcon name="inventory_2" className="text-4xl" />}
+              message="Select a modpack."
+            />
+          )
+        }
+      />
     </AuthGate>
   )
 }
@@ -784,56 +812,41 @@ export function WikiPage() {
 
   return (
     <AuthGate>
-      <div className="flex h-full w-full flex-1 overflow-hidden bg-surface-glass backdrop-blur-xl">
-        {/* Left sidebar — navigation index */}
-        <aside className="flex w-64 shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-black/30 to-black/15 shadow-[1px_0_12px_rgba(0,0,0,0.35)]">
-          <div className="border-b border-white/10 p-4">
-            <p className="mb-3 font-mono text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+      <GlassSplit
+        masterWidth="17rem"
+        masterHeader={
+          <div className="w-full space-y-3">
+            <p className="font-mono text-xs font-bold tracking-widest text-on-surface-variant uppercase">
               SOPs &amp; Manuals
             </p>
-            <input
-              type="search"
-              placeholder="Search manuals..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary/50"
-            />
+            <SidebarSearch value={search} onChange={setSearch} placeholder="Search manuals..." />
           </div>
-          <nav className="custom-scrollbar flex-1 overflow-y-auto p-3">
-            {orderedCategories.length === 0 ? (
-              <p className="px-2 py-4 text-sm text-on-surface-variant">No manuals found.</p>
-            ) : (
-              orderedCategories.map((category) => (
-                <div key={category} className="mb-4">
-                  <p className="px-2 py-1 font-mono text-[11px] tracking-widest text-outline uppercase">
-                    {category}
-                  </p>
-                  <ul className="mt-1 space-y-0.5">
-                    {byCategory[category].map((m) => (
-                      <li key={m.id}>
-                        <button
-                          type="button"
-                          onClick={() => selectDoc(m.id)}
-                          className={cn(
-                            'w-full border-l-2 px-3 py-2 text-left text-sm transition-colors',
-                            m.id === activeId
-                              ? 'border-primary bg-primary/15 text-primary'
-                              : 'border-transparent text-on-surface-variant hover:bg-white/5 hover:text-white',
-                          )}
-                        >
-                          {m.title}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+        }
+        master={
+          orderedCategories.length === 0 ? (
+            <p className="px-1 py-4 text-label-md text-on-surface-variant">No manuals found.</p>
+          ) : (
+            orderedCategories.map((category) => (
+              <div key={category} className="mb-3">
+                <p className="px-1 py-1 font-mono text-[11px] tracking-widest text-outline uppercase">
+                  {category}
+                </p>
+                <div className="mt-1 flex flex-col gap-1">
+                  {byCategory[category].map((m) => (
+                    <ListDetailItem
+                      key={m.id}
+                      active={m.id === activeId}
+                      onClick={() => selectDoc(m.id)}
+                      title={m.title}
+                    />
+                  ))}
                 </div>
-              ))
-            )}
-          </nav>
-        </aside>
-
-        {/* Right content area — document viewer */}
-        <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              </div>
+            ))
+          )
+        }
+        detail={
+          <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
           <header className="flex shrink-0 items-start justify-between gap-4 border-b border-white/10 px-8 pt-8 pb-5 md:px-12">
             <div className="min-w-0">
               <div className="mb-3 flex items-center gap-2">
@@ -892,8 +905,9 @@ export function WikiPage() {
               </div>
             </article>
           )}
-        </section>
-      </div>
+          </section>
+        }
+      />
     </AuthGate>
   )
 }
@@ -1004,66 +1018,53 @@ export function VehicleDatabasePage() {
 
   return (
     <AuthGate>
-      <div className="flex h-full w-full flex-1 overflow-hidden bg-surface-glass backdrop-blur-xl">
-        {/* Left sidebar — categorized asset index */}
-        <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-black/30 to-black/15 shadow-[1px_0_12px_rgba(0,0,0,0.35)]">
-          <div className="border-b border-white/10 p-4">
-            <p className="mb-3 font-mono text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+      <GlassSplit
+        masterWidth="18rem"
+        masterHeader={
+          <div className="w-full space-y-3">
+            <p className="font-mono text-xs font-bold tracking-widest text-on-surface-variant uppercase">
               Vehicle Database
             </p>
-            <input
-              type="search"
-              placeholder="Search assets..."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              className="w-full rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary/50"
-            />
+            <SidebarSearch value={q} onChange={setQ} placeholder="Search assets..." />
           </div>
-          <nav className="custom-scrollbar flex-1 overflow-y-auto p-3">
-            {orderedFactions.length === 0 ? (
-              <p className="px-2 py-4 text-sm text-on-surface-variant">No assets found.</p>
-            ) : (
-              orderedFactions.map((faction) => (
-                <div key={faction} className="mb-4">
-                  <p className="px-2 py-1 font-mono text-[11px] tracking-widest text-outline uppercase">
-                    {faction}
-                  </p>
-                  <ul className="mt-1 space-y-0.5">
-                    {byFaction[faction].map((v) => (
-                      <li key={v.id}>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedId(v.id)}
-                          className={cn(
-                            'w-full rounded-lg border px-3 py-2 text-left transition-all',
-                            v.id === selectedId
-                              ? 'border-primary/60 bg-primary/15 text-primary shadow-[0_0_12px_rgba(173,198,255,0.25)]'
-                              : 'border-transparent text-on-surface-variant hover:bg-white/5 hover:text-white',
-                          )}
-                        >
-                          <span className="block text-sm font-medium">{v.name}</span>
-                          <span className="font-mono text-[11px] text-outline uppercase">{v.class}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+        }
+        master={
+          orderedFactions.length === 0 ? (
+            <p className="px-1 py-4 text-label-md text-on-surface-variant">No assets found.</p>
+          ) : (
+            orderedFactions.map((faction) => (
+              <div key={faction} className="mb-3">
+                <p className="px-1 py-1 font-mono text-[11px] tracking-widest text-outline uppercase">
+                  {faction}
+                </p>
+                <div className="mt-1 flex flex-col gap-1">
+                  {byFaction[faction].map((v) => (
+                    <ListDetailItem
+                      key={v.id}
+                      active={v.id === selectedId}
+                      onClick={() => setSelectedId(v.id)}
+                      title={v.name}
+                      preview={
+                        <span className="font-mono uppercase text-outline">{v.class}</span>
+                      }
+                    />
+                  ))}
                 </div>
-              ))
-            )}
-          </nav>
-        </aside>
-
-        {/* Right pane — the intelligence dossier */}
-        <section className="custom-scrollbar min-w-0 flex-1 overflow-y-auto bg-surface-dim/80">
-          {selected ? (
+              </div>
+            ))
+          )
+        }
+        detail={
+          selected ? (
             <VehicleDossier vehicle={selected} />
           ) : (
-            <div className="flex h-full items-center justify-center text-on-surface-variant">
-              <p>Select an asset to view its dossier.</p>
-            </div>
-          )}
-        </section>
-      </div>
+            <SplitPaneEmpty
+              icon={<MaterialIcon name="directions_car" className="text-4xl" />}
+              message="Select an asset to view its dossier."
+            />
+          )
+        }
+      />
     </AuthGate>
   )
 }
@@ -1182,9 +1183,12 @@ export function MortarCalculatorPage() {
 
   return (
     <AuthGate>
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="relative flex h-full w-full flex-col overflow-hidden">
+        {/* Global topo-map background */}
+        <div className="bg-topo-map bg-grid-overlay absolute inset-0 z-0" />
+        <div className="relative z-10 flex h-full w-full flex-col gap-4 bg-surface-glass p-6 backdrop-blur-xl md:p-8">
         <PageHeader title="Mortar Calculator" subtitle="Enter grid coordinates for M252 81mm solution." />
-        <OpsCard glass className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <OpsCard glass className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-sm">
             FP X
             <input
@@ -1226,11 +1230,11 @@ export function MortarCalculatorPage() {
           type="button"
           onClick={handleSolve}
           disabled={solve.isPending}
-          className="mb-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-50"
+          className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary disabled:opacity-50"
         >
           {solve.isPending ? 'Computing…' : 'Calculate Solution'}
         </button>
-        <div className="relative h-[calc(100vh-16rem)] overflow-hidden rounded-xl border border-border-subtle bg-surface-container-lowest">
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-border-subtle bg-surface-container-lowest">
           <div
             className="absolute inset-0 opacity-30"
             style={{
@@ -1276,6 +1280,7 @@ export function MortarCalculatorPage() {
               </p>
             )}
           </OpsCard>
+        </div>
         </div>
       </div>
     </AuthGate>
