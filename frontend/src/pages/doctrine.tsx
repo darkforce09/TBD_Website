@@ -117,7 +117,7 @@ export function ModpacksPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search packs & mods…"
-                className="w-full rounded-xl border border-white/10 bg-black/30 py-2.5 pr-3 pl-9 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-blue-500/60 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-black/30 py-2.5 pr-3 pl-9 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary/50 focus:outline-none"
               />
             </div>
           </div>
@@ -133,7 +133,7 @@ export function ModpacksPage() {
                 className={cn(
                   'group w-full rounded-xl border px-4 py-3 text-left transition',
                   pack.id === selected?.id
-                    ? 'border-blue-500/60 bg-blue-600/20 shadow-[0_0_20px_rgba(37,99,235,0.15)]'
+                    ? 'border-primary/60 bg-primary/15 shadow-[0_0_20px_rgba(173,198,255,0.15)]'
                     : 'border-transparent hover:border-white/10 hover:bg-white/[0.03]',
                 )}
               >
@@ -238,7 +238,7 @@ function ModpackDossier({
         <button
           type="button"
           onClick={() => toast.message('Launch requires the Reforger client')}
-          className="w-full rounded-full bg-blue-600 py-5 text-lg font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition hover:bg-blue-500"
+          className="w-full rounded-full bg-action py-5 text-lg font-bold text-on-action shadow-[0_0_30px_rgba(59,130,246,0.4)] transition hover:bg-action/90"
         >
           [ Launch Game &amp; Auto-Download ]
         </button>
@@ -307,7 +307,7 @@ function ModpackEditor({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-2xl font-bold tracking-tight text-on-surface focus:border-blue-500/60 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-2xl font-bold tracking-tight text-on-surface focus:border-primary/50 focus:outline-none"
           />
         </div>
         <ReadEditToggle mode="edit" onChange={(m) => m === 'read' && onCancel()} />
@@ -363,7 +363,7 @@ function ModpackEditor({
             }
           }}
           placeholder="Add a mod (e.g. ACE Reforged)…"
-          className="flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-blue-500/60 focus:outline-none"
+          className="flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary/50 focus:outline-none"
         />
         <button
           type="button"
@@ -380,7 +380,7 @@ function ModpackEditor({
         <button
           type="button"
           onClick={() => onSave({ ...pack, name: name.trim() || pack.name, mods })}
-          className="flex-1 rounded-full bg-blue-600 py-4 text-lg font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition hover:bg-blue-500"
+          className="flex-1 rounded-full bg-action py-4 text-lg font-bold text-on-action shadow-[0_0_30px_rgba(59,130,246,0.4)] transition hover:bg-action/90"
         >
           Save Changes
         </button>
@@ -414,7 +414,7 @@ function ReadEditToggle({
           className={cn(
             'rounded-full px-4 py-1.5 tracking-wider uppercase transition',
             mode === m
-              ? 'bg-blue-600/30 text-blue-200 shadow-[0_0_12px_rgba(37,99,235,0.25)]'
+              ? 'bg-primary/20 text-primary shadow-[0_0_12px_rgba(173,198,255,0.25)]'
               : 'text-on-surface-variant hover:text-on-surface',
           )}
         >
@@ -432,7 +432,7 @@ function ReadEditToggle({
 /** Inline monospace token for frequencies, hotkeys, callsigns. */
 function Mono({ children }: { children: ReactNode }) {
   return (
-    <code className="rounded bg-black/40 px-1.5 py-0.5 font-mono text-[0.85em] text-blue-200">
+    <code className="rounded bg-black/40 px-1.5 py-0.5 font-mono text-[0.85em] text-primary">
       {children}
     </code>
   )
@@ -441,9 +441,9 @@ function Mono({ children }: { children: ReactNode }) {
 type CalloutVariant = 'critical' | 'warning' | 'info'
 
 const CALLOUT_STYLES: Record<CalloutVariant, { box: string; label: string; title: string }> = {
-  critical: { box: 'bg-red-900/20 border-red-500', label: 'text-red-400', title: 'CRITICAL RULE' },
-  warning: { box: 'bg-amber-900/20 border-amber-500', label: 'text-amber-400', title: 'WARNING' },
-  info: { box: 'bg-blue-900/20 border-blue-500', label: 'text-blue-300', title: 'NOTE' },
+  critical: { box: 'bg-error/10 border-error', label: 'text-error-alert', title: 'CRITICAL RULE' },
+  warning: { box: 'bg-tactical-yellow/10 border-tactical-yellow', label: 'text-tactical-yellow', title: 'WARNING' },
+  info: { box: 'bg-primary/10 border-primary', label: 'text-primary', title: 'NOTE' },
 }
 
 function Callout({
@@ -461,7 +461,7 @@ function Callout({
       <p className={cn('mb-1 font-mono text-xs font-bold tracking-widest uppercase', s.label)}>
         {title ?? s.title}
       </p>
-      <div className="text-body-md leading-relaxed text-slate-300">{children}</div>
+      <div className="text-body-md leading-relaxed text-on-surface-variant">{children}</div>
     </div>
   )
 }
@@ -506,7 +506,7 @@ function renderInline(text: string): ReactNode {
     const tok = match[0]
     if (tok.startsWith('**')) {
       nodes.push(
-        <strong key={key++} className="font-semibold text-slate-100">
+        <strong key={key++} className="font-semibold text-on-surface">
           {tok.slice(2, -2)}
         </strong>,
       )
@@ -591,7 +591,7 @@ function Markdown({ source }: { source: string }) {
         i++
       }
       blocks.push(
-        <ul key={key++} className="mt-3 ml-1 space-y-2 text-body-md text-slate-300">
+        <ul key={key++} className="mt-3 ml-1 space-y-2 text-body-md text-on-surface-variant">
           {items.map((it, idx) => (
             <li key={idx}>• {renderInline(it)}</li>
           ))}
@@ -614,7 +614,7 @@ function Markdown({ source }: { source: string }) {
       i++
     }
     blocks.push(
-      <p key={key++} className="mt-3 text-body-md leading-relaxed text-slate-300">
+      <p key={key++} className="mt-3 text-body-md leading-relaxed text-on-surface-variant">
         {renderInline(para.join(' '))}
       </p>,
     )
@@ -796,7 +796,7 @@ export function WikiPage() {
               placeholder="Search manuals..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-on-surface-variant focus:border-blue-500/60"
+              className="w-full rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary/50"
             />
           </div>
           <nav className="custom-scrollbar flex-1 overflow-y-auto p-3">
@@ -817,7 +817,7 @@ export function WikiPage() {
                           className={cn(
                             'w-full border-l-2 px-3 py-2 text-left text-sm transition-colors',
                             m.id === activeId
-                              ? 'border-blue-500 bg-blue-600/20 text-blue-100'
+                              ? 'border-primary bg-primary/15 text-primary'
                               : 'border-transparent text-on-surface-variant hover:bg-white/5 hover:text-white',
                           )}
                         >
@@ -883,7 +883,7 @@ export function WikiPage() {
               value={source}
               onChange={(e) => setEdits((prev) => ({ ...prev, [active.id]: e.target.value }))}
               spellCheck={false}
-              className="h-full w-full flex-1 resize-none border-none bg-transparent p-8 font-mono text-sm leading-relaxed text-slate-300 outline-none focus:ring-0 md:p-12"
+              className="h-full w-full flex-1 resize-none border-none bg-transparent p-8 font-mono text-sm leading-relaxed text-on-surface-variant outline-none focus:ring-0 md:p-12"
             />
           ) : (
             <article className="custom-scrollbar flex-1 overflow-y-auto p-8 md:p-12">
@@ -1016,7 +1016,7 @@ export function VehicleDatabasePage() {
               placeholder="Search assets..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="w-full rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-on-surface-variant focus:border-blue-500/60"
+              className="w-full rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary/50"
             />
           </div>
           <nav className="custom-scrollbar flex-1 overflow-y-auto p-3">
@@ -1037,7 +1037,7 @@ export function VehicleDatabasePage() {
                           className={cn(
                             'w-full rounded-lg border px-3 py-2 text-left transition-all',
                             v.id === selectedId
-                              ? 'border-blue-500/60 bg-blue-600/20 text-blue-100 shadow-[0_0_12px_rgba(59,130,246,0.25)]'
+                              ? 'border-primary/60 bg-primary/15 text-primary shadow-[0_0_12px_rgba(173,198,255,0.25)]'
                               : 'border-transparent text-on-surface-variant hover:bg-white/5 hover:text-white',
                           )}
                         >
@@ -1105,7 +1105,7 @@ function VehicleDossier({ vehicle }: { vehicle: VehicleIntel }) {
             <Badge variant="primary">{vehicle.faction}</Badge>
           </div>
           <h1 className="text-4xl font-black tracking-tighter text-white uppercase">{vehicle.name}</h1>
-          <p className="mt-2 max-w-2xl text-body-md text-slate-300">{vehicle.shortDescription}</p>
+          <p className="mt-2 max-w-2xl text-body-md text-on-surface-variant">{vehicle.shortDescription}</p>
         </div>
       </div>
 
@@ -1115,7 +1115,7 @@ function VehicleDossier({ vehicle }: { vehicle: VehicleIntel }) {
           <p className="mb-1 font-mono text-xs font-bold tracking-widest text-tactical-yellow uppercase">
             Critical Directive
           </p>
-          <p className="text-body-md leading-relaxed text-slate-300">{vehicle.criticalDirective}</p>
+          <p className="text-body-md leading-relaxed text-on-surface-variant">{vehicle.criticalDirective}</p>
         </div>
 
         {/* Telemetry */}
@@ -1136,9 +1136,9 @@ function VehicleDossier({ vehicle }: { vehicle: VehicleIntel }) {
               {vehicle.armament.map((weapon) => (
                 <li
                   key={weapon}
-                  className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 font-mono text-sm text-slate-300"
+                  className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 font-mono text-sm text-on-surface-variant"
                 >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   {weapon}
                 </li>
               ))}
