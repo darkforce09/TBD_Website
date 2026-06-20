@@ -35,11 +35,17 @@ export function EventHubPage() {
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
         {event && (
-          <div className="mx-auto w-full max-w-5xl">
-            <Link to="/events" className="mb-4 inline-flex items-center gap-1 text-label-md text-primary hover:underline">
-              <MaterialIcon name="chevron_left" className="text-base" /> All Operations
-            </Link>
-            <EventHubView event={event} />
+          <div className="relative h-full w-full overflow-hidden">
+            {/* Global topo-map background */}
+            <div className="bg-topo-map bg-grid-overlay absolute inset-0 z-0" />
+            <div className="custom-scrollbar relative z-10 h-full w-full overflow-y-auto bg-surface-glass backdrop-blur-xl">
+              <div className="mx-auto w-full max-w-5xl p-6 md:p-8">
+                <Link to="/events" className="mb-4 inline-flex items-center gap-1 text-label-md text-primary hover:underline">
+                  <MaterialIcon name="chevron_left" className="text-base" /> All Operations
+                </Link>
+                <EventHubView event={event} />
+              </div>
+            </div>
           </div>
         )}
       </QueryState>
@@ -206,7 +212,7 @@ function MissionDossier({ index, m }: { index: number; m: EventMissionDossier })
               {m.my_state.toUpperCase()}
             </span>
           )}
-          <p className="text-sm text-on-surface-variant">{m.filled}/{m.total} slots filled</p>
+          <p className="font-mono text-sm text-on-surface-variant">{m.filled}/{m.total} slots filled</p>
           <button
             type="button"
             disabled
@@ -447,7 +453,7 @@ function OrbatSelector({ emid, myState }: { emid: string; myState?: string }) {
                   <span className="font-medium text-on-surface">{s.squad}</span>
                   {s.callsign && <span className="ml-1 text-xs">{s.callsign}</span>}
                 </span>
-                <span className={cn('text-xs', s.filled >= s.total ? 'text-error' : 'text-on-surface-variant')}>
+                <span className={cn('font-mono text-xs', s.filled >= s.total ? 'text-error' : 'text-on-surface-variant')}>
                   {s.filled}/{s.total}
                 </span>
               </button>

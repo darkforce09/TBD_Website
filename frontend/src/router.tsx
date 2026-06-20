@@ -92,7 +92,7 @@ export const router = createBrowserRouter([
       {
         path: 'events/:id',
         element: <EventHubPage />,
-        ...breadcrumb('Operations', 'Event Hub'),
+        ...breadcrumb('Operations', 'Event Hub', { fullBleed: true }),
       },
       {
         path: 'events/:id/missions/:emid/orbat',
