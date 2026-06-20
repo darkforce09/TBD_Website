@@ -1,6 +1,8 @@
+import { Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { MissionEditorPage } from '@/features/mission-creator/routes'
 import {
   AnnouncementsPage,
   DeploymentsPage,
@@ -124,6 +126,21 @@ export const router = createBrowserRouter([
             path: 'missions/create',
             element: <MissionCreatorPage />,
             ...breadcrumb('Mission Hub', 'Mission Creator'),
+          },
+          {
+            path: 'missions/:id/edit',
+            element: (
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center text-on-surface-variant">
+                    Loading editor…
+                  </div>
+                }
+              >
+                <MissionEditorPage />
+              </Suspense>
+            ),
+            ...breadcrumb('Mission Hub', 'Mission Creator', { fullBleed: true }),
           },
         ],
       },
