@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AdminGate } from '@/components/AdminGate'
 import { MaterialIcon } from '@/components/MaterialIcon'
+import { SplitPane } from '@/components/ui/split-pane'
 import { cn } from '@/lib/utils'
 
 // ─── Server Control ────────────────────────────────────────────────────────
@@ -102,17 +103,20 @@ export function ServerControlPage() {
 
   return (
     <AdminGate>
-      <div className="flex h-full w-full flex-1 overflow-hidden bg-surface-glass backdrop-blur-xl">
-        {/* ── Left: server selector ───────────────────────────────── */}
-        <aside className="flex w-1/4 min-w-[15rem] shrink-0 flex-col border-r border-white/5">
-          <div className="border-b border-white/5 px-5 py-4">
-            <h1 className="text-label-md font-semibold tracking-wide text-on-surface uppercase">
-              Servers
-              <span className="ml-2 font-mono text-code-md text-outline">{MOCK_SERVERS.length}</span>
-            </h1>
-          </div>
-          <nav className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
-            {MOCK_SERVERS.map((s) => {
+      <div className="relative h-full w-full overflow-hidden">
+        {/* Global topo-map background */}
+        <div className="bg-topo-map bg-grid-overlay absolute inset-0 z-0" />
+        <div className="relative z-10 flex h-full w-full bg-surface-glass backdrop-blur-xl">
+          <SplitPane
+            transparent
+            masterWidth="17rem"
+            masterHeader={
+              <h1 className="w-full text-label-md font-semibold tracking-wide text-on-surface uppercase">
+                Servers
+                <span className="ml-2 font-mono text-code-md text-outline">{MOCK_SERVERS.length}</span>
+              </h1>
+            }
+            master={MOCK_SERVERS.map((s) => {
               const meta = STATUS_META[s.status]
               const active = s.id === server.id
               return (
@@ -121,9 +125,9 @@ export function ServerControlPage() {
                   type="button"
                   onClick={() => setSelectedId(s.id)}
                   className={cn(
-                    'flex items-center gap-3 rounded-r-xl border-l-4 px-4 py-3 text-left transition-all duration-200',
+                    'flex items-center gap-3 rounded-lg border-l-4 px-3 py-3 text-left transition-all duration-200',
                     active
-                      ? 'border-blue-500 bg-blue-600/20'
+                      ? 'border-primary bg-primary/15'
                       : 'border-transparent hover:bg-white/[0.03]',
                   )}
                 >
@@ -152,13 +156,10 @@ export function ServerControlPage() {
                 </button>
               )
             })}
-          </nav>
-        </aside>
-
-        {/* ── Right: command & telemetry ──────────────────────────── */}
-        <main className="flex min-w-0 flex-1 flex-col">
-          {/* Command header */}
-          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 p-6 pb-6">
+            detail={
+              <div className="flex h-full min-w-0 flex-1 flex-col">
+                {/* Command header */}
+                <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 p-6 pb-6">
             <div className="min-w-0">
               <h2 className="truncate text-headline-lg text-on-surface">{server.name}</h2>
               <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1">
@@ -186,7 +187,7 @@ export function ServerControlPage() {
               <button
                 type="button"
                 onClick={() => toast.success(`Connecting to ${server.ip}…`)}
-                className="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2.5 text-label-md font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition hover:bg-blue-500"
+                className="flex items-center gap-2 rounded-full bg-action px-6 py-2.5 text-label-md font-bold text-on-action shadow-[0_0_30px_rgba(59,130,246,0.4)] transition hover:bg-action/90"
               >
                 <MaterialIcon name="rocket_launch" className="text-[18px]" />
                 LAUNCH &amp; CONNECT
@@ -217,8 +218,11 @@ export function ServerControlPage() {
           </div>
 
           {/* RCON console — fills the bottom half */}
-          <RconConsole key={server.id} server={server} />
-        </main>
+                <RconConsole key={server.id} server={server} />
+              </div>
+            }
+          />
+        </div>
       </div>
     </AdminGate>
   )
@@ -240,7 +244,7 @@ function TelemetryCol({
       <p className="font-mono text-code-md tracking-wider text-on-surface-variant/70 uppercase">
         {primaryLabel}
       </p>
-      <p className="mt-1 truncate text-3xl font-bold tracking-tight text-on-surface">
+      <p className="mt-1 truncate font-mono text-3xl font-bold tracking-tight text-on-surface">
         {primaryValue}
       </p>
       <p className="mt-4 font-mono text-code-md tracking-wider text-on-surface-variant/70 uppercase">
@@ -319,7 +323,7 @@ function RconConsole({ server }: { server: ManagedServer }) {
               key={i}
               className={cn(
                 'whitespace-pre-wrap',
-                line.startsWith('$') && 'text-blue-300',
+                line.startsWith('$') && 'text-primary',
                 line.includes('RCON:') && 'text-success',
               )}
             >
