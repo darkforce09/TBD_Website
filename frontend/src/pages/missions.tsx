@@ -64,10 +64,13 @@ export function MissionLibraryPage() {
 
   return (
     <AuthGate>
-      {/* Full-bleed: the glass panel fills the available width/height and scrolls
-          internally — no floating max-width box with massive margins. */}
-      <div className="flex h-full w-full flex-col p-4 md:p-6">
-        <div className="flex h-full w-full flex-1 flex-col overflow-y-auto rounded-3xl border border-white/10 bg-surface-glass p-4 shadow-2xl backdrop-blur-xl md:p-8">
+      {/* Full-bleed: edge-to-edge frosted glass over the topo map fills the viewport
+          and scrolls internally — no floating rounded card with margins. */}
+      <div className="relative h-full w-full overflow-hidden">
+        {/* Global topo-map background */}
+        <div className="bg-topo-map bg-grid-overlay absolute inset-0 z-0" />
+        <div className="custom-scrollbar relative z-10 h-full w-full overflow-y-auto bg-surface-glass backdrop-blur-xl">
+        <div className="p-6 md:p-8">
         {/* Header + macOS segmented control */}
         <header className="mb-6">
           <h1 className="text-4xl font-bold tracking-tight text-on-surface uppercase">Mission Library</h1>
@@ -224,6 +227,7 @@ export function MissionLibraryPage() {
             </div>
           )}
         </QueryState>
+        </div>
         </div>
       </div>
 
