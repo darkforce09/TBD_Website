@@ -21,6 +21,12 @@ export function SheetTrigger(props: DialogPrimitive.Trigger.Props) {
 export function SheetClose(props: DialogPrimitive.Close.Props) {
   return <DialogPrimitive.Close {...props} />
 }
+export function SheetTitle(props: DialogPrimitive.Title.Props) {
+  return <DialogPrimitive.Title {...props} />
+}
+export function SheetDescription(props: DialogPrimitive.Description.Props) {
+  return <DialogPrimitive.Description {...props} />
+}
 
 interface SheetContentProps {
   children: ReactNode
@@ -30,6 +36,14 @@ interface SheetContentProps {
   className?: string
   /** Sticky footer (action bar) pinned to the bottom of the sheet. */
   footer?: ReactNode
+  /**
+   * Edge-to-edge body: drops the default padded scroll container and header/footer
+   * chrome so children own the full layout (e.g. a cinematic hero + internal scroll
+   * + overlaid action bar). Pair with `<SheetTitle>`/`<SheetClose>` inside children
+   * for accessibility. Width is controlled via `className` (twMerge overrides the
+   * default `max-w-md`).
+   */
+  bleed?: boolean
 }
 
 export function SheetContent({
@@ -39,6 +53,7 @@ export function SheetContent({
   side = 'right',
   className,
   footer,
+  bleed = false,
 }: SheetContentProps) {
   const sideClasses =
     side === 'right'
@@ -67,6 +82,10 @@ export function SheetContent({
           className,
         )}
       >
+        {bleed ? (
+          children
+        ) : (
+          <>
         {title != null && (
           <div className="flex items-start justify-between gap-4 border-b border-outline-variant/30 px-6 py-4">
             <div className="min-w-0">
@@ -90,6 +109,8 @@ export function SheetContent({
         <div className="custom-scrollbar flex-1 overflow-y-auto px-6 py-5">{children}</div>
         {footer != null && (
           <div className="border-t border-outline-variant/30 px-6 py-4">{footer}</div>
+        )}
+          </>
         )}
       </DialogPrimitive.Popup>
     </DialogPrimitive.Portal>

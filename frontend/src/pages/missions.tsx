@@ -5,9 +5,14 @@ import { OpsCard } from '@/components/OpsCard'
 import { PageHeader } from '@/components/PageHeader'
 import { AuthGate } from '@/components/AuthGate'
 import { QueryState } from '@/components/QueryState'
-import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Sheet } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetContent,
+  SheetClose,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet'
 import { useMission, useMissions } from '@/hooks/queries'
 import { useCreateMission } from '@/hooks/mutations'
 import { gameModeLabel, terrainLabel } from '@/lib/format'
@@ -132,7 +137,7 @@ export function MissionLibraryPage() {
                   alt=""
                   className="h-full w-full object-cover opacity-60 mix-blend-luminosity"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-surface to-transparent" />
               </div>
             </section>
           )}
@@ -231,80 +236,66 @@ export function MissionLibraryPage() {
 }
 
 /**
- * Bespoke "Slide-Over Dossier" drawer — wide frosted panel with an edge-to-edge
- * cinematic hero, scrollable body, and a sticky two-button action footer. Built
- * straight on the Base UI Dialog primitives (the shared SheetContent is too narrow
- * and is reused elsewhere, so we don't touch it).
+ * "Slide-Over Dossier" drawer — a wide cinematic variant of the shared Sheet.
+ * Uses `<SheetContent bleed>` so the frosted Popup/Backdrop, transitions, and a11y
+ * wiring come from the design-system primitive, while this component owns the
+ * edge-to-edge hero, scrollable body, and sticky two-button action footer.
  */
 function MissionDossierSheet({ id }: { id: string }) {
   const navigate = useNavigate()
   const { data: mission, isLoading, isError, error } = useMission(id)
 
   return (
-    <DialogPrimitive.Portal>
-      <DialogPrimitive.Backdrop
-        className={cn(
-          'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300',
-          'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
-        )}
-      />
-      <DialogPrimitive.Popup
-        className={cn(
-          'fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col overflow-hidden border-l border-white/10 bg-slate-900/60 shadow-2xl outline-none backdrop-blur-3xl md:w-[60vw]',
-          'transition-transform duration-300 ease-out',
-          'data-[starting-style]:translate-x-full data-[ending-style]:translate-x-full',
-        )}
-      >
-        {/* Edge-to-edge cinematic hero header */}
-        <div className="relative h-64 w-full shrink-0 md:h-80">
-          <img
-            src={mission?.thumbnail_url || PLACEHOLDER_ART}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent" />
-          <DialogPrimitive.Close
-            aria-label="Close"
-            className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/30 text-on-surface backdrop-blur-md transition-colors hover:bg-black/50"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </DialogPrimitive.Close>
-          <div className="absolute right-8 bottom-6 left-8">
-            <DialogPrimitive.Title className="text-4xl font-black tracking-tighter text-white uppercase">
-              {mission?.title ?? 'Mission Dossier'}
-            </DialogPrimitive.Title>
-            <DialogPrimitive.Description className="mt-1 font-mono text-label-md text-on-surface-variant">
-              {mission?.author_name ? `Authored by ${mission.author_name}` : 'Loading dossier…'}
-            </DialogPrimitive.Description>
-          </div>
+    <SheetContent side="right" bleed className="w-full max-w-none md:w-[60vw]">
+      {/* Edge-to-edge cinematic hero header */}
+      <div className="relative h-64 w-full shrink-0 md:h-80">
+        <img
+          src={mission?.thumbnail_url || PLACEHOLDER_ART}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface/90 to-transparent" />
+        <SheetClose
+          aria-label="Close"
+          className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/30 text-on-surface backdrop-blur-md transition-colors hover:bg-black/50"
+        >
+          <span className="material-symbols-outlined">close</span>
+        </SheetClose>
+        <div className="absolute right-8 bottom-6 left-8">
+          <SheetTitle className="text-4xl font-black tracking-tighter text-white uppercase">
+            {mission?.title ?? 'Mission Dossier'}
+          </SheetTitle>
+          <SheetDescription className="mt-1 font-mono text-label-md text-on-surface-variant">
+            {mission?.author_name ? `Authored by ${mission.author_name}` : 'Loading dossier…'}
+          </SheetDescription>
         </div>
+      </div>
 
-        {/* Scrollable content — pb-32 clears the sticky footer */}
-        <div className="custom-scrollbar flex-1 overflow-y-auto px-8 pt-6 pb-32">
-          <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-            {mission && <MissionDossierBody mission={mission} />}
-          </QueryState>
-        </div>
+      {/* Scrollable content — pb-32 clears the sticky footer */}
+      <div className="custom-scrollbar flex-1 overflow-y-auto px-8 pt-6 pb-32">
+        <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
+          {mission && <MissionDossierBody mission={mission} />}
+        </QueryState>
+      </div>
 
-        {/* Sticky action footer */}
-        <div className="absolute right-0 bottom-0 left-0 flex">
-          <button
-            type="button"
-            onClick={() => navigate('/missions/create')}
-            className="flex-1 bg-blue-600/90 py-5 font-bold tracking-wide text-white backdrop-blur-md transition-colors hover:bg-blue-500"
-          >
-            [ OPEN IN MISSION CREATOR ]
-          </button>
-          <button
-            type="button"
-            onClick={() => toast('2D Tactical Planner — coming soon')}
-            className="flex-1 border-t border-white/10 bg-slate-800/90 py-5 font-bold tracking-wide text-blue-300 backdrop-blur-md transition-colors hover:bg-slate-700"
-          >
-            [ LAUNCH TACTICAL PLANNER ]
-          </button>
-        </div>
-      </DialogPrimitive.Popup>
-    </DialogPrimitive.Portal>
+      {/* Sticky action footer */}
+      <div className="absolute right-0 bottom-0 left-0 flex">
+        <button
+          type="button"
+          onClick={() => navigate('/missions/create')}
+          className="flex-1 bg-action/90 py-5 font-bold tracking-wide text-on-action backdrop-blur-md transition-colors hover:bg-action"
+        >
+          [ OPEN IN MISSION CREATOR ]
+        </button>
+        <button
+          type="button"
+          onClick={() => toast('2D Tactical Planner — coming soon')}
+          className="flex-1 border-t border-white/10 bg-surface-container-high/90 py-5 font-bold tracking-wide text-primary backdrop-blur-md transition-colors hover:bg-surface-container-highest"
+        >
+          [ LAUNCH TACTICAL PLANNER ]
+        </button>
+      </div>
+    </SheetContent>
   )
 }
 
