@@ -229,8 +229,8 @@ export function DeploymentsPage() {
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <div className="bg-topo-map bg-grid-overlay flex h-full w-full flex-col overflow-hidden p-8">
-          <div className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-surface-glass shadow-2xl backdrop-blur-xl lg:flex-row">
+        <div className="bg-topo-map bg-grid-overlay h-full w-full overflow-hidden">
+          <div className="flex h-full w-full flex-col overflow-hidden bg-surface-glass backdrop-blur-xl lg:flex-row">
             {/* Left pane: telemetry dossier */}
             <aside className="custom-scrollbar flex shrink-0 flex-col gap-8 overflow-y-auto border-b border-white/10 bg-surface-container-lowest/40 p-8 lg:w-[30%] lg:border-b-0 lg:border-r">
               <header>
@@ -496,8 +496,8 @@ export function LeaderboardsPage() {
   return (
     <AuthGate>
       <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-        <div className="bg-topo-map bg-grid-overlay flex h-full w-full flex-col overflow-hidden p-8">
-          <div className="custom-scrollbar mx-auto flex h-full w-full max-w-7xl flex-col overflow-y-auto rounded-2xl border border-white/10 bg-surface-glass p-6 shadow-2xl backdrop-blur-xl md:p-10">
+        <div className="bg-topo-map bg-grid-overlay h-full w-full overflow-hidden">
+          <div className="custom-scrollbar flex h-full w-full flex-col overflow-y-auto bg-surface-glass p-6 backdrop-blur-xl md:p-10">
             <PageHeader
               title="Global Leaderboards"
               subtitle="Real-time tactical performance metrics across all active theaters."
