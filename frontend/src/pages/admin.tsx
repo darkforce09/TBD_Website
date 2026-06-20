@@ -8,6 +8,7 @@ import { MaterialIcon } from '@/components/MaterialIcon'
 import { SplitPane, SplitPaneEmpty } from '@/components/ui/split-pane'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import {
   useApprovals,
   useAuditLogs,
@@ -81,6 +82,8 @@ export function EventManagerPage() {
   const [open, setOpen] = useState(true) // registration open
   const [staged, setStaged] = useState<StagedMission[]>([])
   const [attachOpen, setAttachOpen] = useState(false)
+  // Frosted-glass create form (replaces the old form-beside-calendar layout).
+  const [formOpen, setFormOpen] = useState(false)
   // Which existing operation on the selected day is targeted by Delete.
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
 
@@ -156,6 +159,7 @@ export function EventManagerPage() {
       setName('')
       setStaged([])
       setOpen(true)
+      setFormOpen(false)
     } catch {
       toast.error('Failed to publish event')
     }
@@ -175,10 +179,28 @@ export function EventManagerPage() {
 
   return (
     <AdminGate>
-      <div className="h-full w-full flex-1 p-8">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+      <div className="mx-auto h-full w-full max-w-5xl">
+        {/* Header — primary action opens the frosted create form over the calendar. */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-headline-md tracking-tight text-on-surface">Operations Calendar</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Schedule operations for any day. ORBATs generate from each attached mission.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            className="flex items-center gap-2 rounded-full bg-action px-6 py-3 text-label-md font-bold text-on-action shadow-[0_0_30px_rgba(59,130,246,0.4)] transition hover:bg-action/90"
+          >
+            <MaterialIcon name="add" className="text-[18px]" />
+            Schedule Operation
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* ── Left: tactical calendar ─────────────────────────────── */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-8">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold tracking-tight text-white">
                 {MONTH_NAMES[viewMonth.getMonth()]} {viewMonth.getFullYear()}
@@ -228,9 +250,9 @@ export function EventManagerPage() {
                     className={cn(
                       'flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl text-sm transition',
                       isSelected
-                        ? 'bg-blue-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]'
+                        ? 'bg-action text-on-action shadow-[0_0_20px_rgba(59,130,246,0.4)]'
                         : 'text-on-surface hover:bg-white/5',
-                      !isSelected && isToday && 'font-bold text-blue-300',
+                      !isSelected && isToday && 'font-bold text-primary',
                     )}
                   >
                     <span>{cell.getDate()}</span>
@@ -240,7 +262,7 @@ export function EventManagerPage() {
                           key={op.id}
                           className={cn(
                             'h-1 w-4 rounded-full',
-                            isSelected ? 'bg-white/70' : 'bg-blue-500/50',
+                            isSelected ? 'bg-white/70' : 'bg-primary/50',
                           )}
                         />
                       ))}
@@ -251,20 +273,33 @@ export function EventManagerPage() {
             </div>
           </div>
 
-          {/* ── Right: schedule operation ───────────────────────────── */}
-          <div className="lg:col-span-5 lg:border-l lg:border-white/5 lg:pl-8">
-            <h2 className="text-xl font-bold tracking-tight text-white">Schedule Operation</h2>
-            <p className="mt-1 text-sm text-on-surface-variant">
-              Publish a new operation for the selected day. ORBATs generate from each attached
-              mission.
+          {/* ── Right: scheduled operations for the selected day ─────── */}
+          <div className="lg:col-span-4 lg:border-l lg:border-white/5 lg:pl-8">
+            <p className="font-mono text-xs tracking-wider text-on-surface-variant/70 uppercase">
+              {selectedDate.toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
             </p>
+            <h2 className="mt-1 mb-4 text-lg font-bold tracking-tight text-white">
+              Scheduled Operations
+            </h2>
 
-            {/* Existing ops on the selected day */}
-            {dayOps.length > 0 && (
-              <div className="mt-5 space-y-2">
-                <p className="font-mono text-xs tracking-wider text-on-surface-variant/70 uppercase">
-                  Scheduled this day
-                </p>
+            {dayOps.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">
+                No operations scheduled.{' '}
+                <button
+                  type="button"
+                  onClick={() => setFormOpen(true)}
+                  className="text-primary hover:underline"
+                >
+                  Schedule one.
+                </button>
+              </p>
+            ) : (
+              <div className="space-y-2">
                 {dayOps.map((op) => (
                   <button
                     key={op.id}
@@ -273,7 +308,7 @@ export function EventManagerPage() {
                     className={cn(
                       'flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition',
                       op.id === selectedEventId
-                        ? 'border-blue-500/60 bg-blue-600/15'
+                        ? 'border-primary/60 bg-primary/15'
                         : 'border-white/10 hover:bg-white/[0.03]',
                     )}
                   >
@@ -294,34 +329,47 @@ export function EventManagerPage() {
               </div>
             )}
 
-            {/* Selected date + start time pills */}
-            <div className="mt-6 flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 rounded-full bg-white/5 px-5 py-3 text-sm text-on-surface">
-                <MaterialIcon name="event" className="text-base text-on-surface-variant" />
-                {selectedDate.toLocaleDateString(undefined, {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </div>
-              <label className="flex items-center gap-2 rounded-full bg-white/5 px-5 py-3 text-sm text-on-surface focus-within:ring-1 focus-within:ring-blue-500/50">
-                <MaterialIcon name="schedule" className="text-base text-on-surface-variant" />
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="bg-transparent text-on-surface outline-none [color-scheme:dark]"
-                />
-              </label>
-            </div>
+            {selectedEventId && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteEvent.isPending}
+                className="mt-4 w-full rounded-full py-3 text-sm font-medium text-error-alert transition hover:bg-error-alert/10 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Delete Selected Operation
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Frosted create form — overlays the calendar, preserving context. */}
+        <Dialog open={formOpen} onOpenChange={setFormOpen}>
+          <DialogContent
+            title="Schedule Operation"
+            description={selectedDate.toLocaleDateString(undefined, {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          >
+            {/* Start time */}
+            <label className="flex w-fit items-center gap-2 rounded-full bg-white/5 px-5 py-3 text-sm text-on-surface focus-within:ring-1 focus-within:ring-primary/50">
+              <MaterialIcon name="schedule" className="text-base text-on-surface-variant" />
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="bg-transparent text-on-surface outline-none [color-scheme:dark]"
+              />
+            </label>
 
             {/* Operation name */}
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Operation name (e.g. Twin Theaters)"
-              className="mt-3 w-full rounded-full bg-white/5 px-5 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/60 outline-none focus:ring-1 focus:ring-blue-500/50"
+              className="mt-3 w-full rounded-full bg-white/5 px-5 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/60 outline-none focus:ring-1 focus:ring-primary/50"
             />
 
             {/* Mission multi-select */}
@@ -363,7 +411,7 @@ export function EventManagerPage() {
                   Attach Mission
                 </button>
                 {attachOpen && (
-                  <div className="absolute z-10 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-white/10 bg-slate-900/95 p-1 shadow-2xl backdrop-blur-xl">
+                  <div className="absolute z-10 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-white/10 bg-surface-container-high/95 p-1 shadow-2xl backdrop-blur-xl">
                     {availableMissions.length === 0 ? (
                       <p className="px-3 py-2 text-sm text-on-surface-variant">
                         No more missions in the library.
@@ -417,27 +465,17 @@ export function EventManagerPage() {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="mt-8 space-y-3">
-              <button
-                type="button"
-                onClick={handlePublish}
-                disabled={createEvent.isPending}
-                className="w-full rounded-full bg-blue-600 py-4 text-base font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition hover:bg-blue-500 disabled:opacity-50"
-              >
-                {createEvent.isPending ? 'Publishing…' : 'Publish Event'}
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={!selectedEventId || deleteEvent.isPending}
-                className="w-full rounded-full py-3 text-sm font-medium text-error-alert transition hover:bg-error-alert/10 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Delete Event
-              </button>
-            </div>
-          </div>
-        </div>
+            {/* Publish */}
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={createEvent.isPending}
+              className="mt-8 w-full rounded-full bg-action py-4 text-base font-bold text-on-action shadow-[0_0_30px_rgba(59,130,246,0.4)] transition hover:bg-action/90 disabled:opacity-50"
+            >
+              {createEvent.isPending ? 'Publishing…' : 'Publish Event'}
+            </button>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminGate>
   )
