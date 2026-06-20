@@ -54,7 +54,7 @@ open it in the browser to log in, or curl it and read `access_token` from the
 - Git: **commit directly to `main`; never create a branch.** End commit messages with
   the `Co-Authored-By` trailer. Commits are tagged `T-00x`.
 
-## Status (latest feature work: T-025 — 2026-06-20)
+## Status (latest feature work: T-032 — 2026-06-20)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
@@ -151,10 +151,44 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   - Verified: `npm run build` + `npm run lint` clean after every commit. Runtime layout of
     the migrated split-pane/full-bleed pages is worth an in-browser pass (`make web`).
 
-**Not yet built / next:**
-- The 2D mission editor UI (backend stores/serves `json_payload`; the visual editor
-  page is the big remaining frontend piece). The Event Hub "Open in Mission Planner"
-  button is a deliberate disabled stub until this lands.
+- T-029..T-032 **2D Mission Creator — Deck.gl editor (in progress)**. New self-contained
+  feature modules `frontend/src/features/tactical-map/` (terrain-agnostic engine) +
+  `frontend/src/features/mission-creator/` (editor wrapper), code-split lazy route
+  `/missions/:id/edit` (mission_maker+, `fullBleed`). Execution contract is
+  `Design_Docs/Mission_Creator_Architecture/03_engineering_ultra_plan.md`. New deps:
+  `deck.gl @deck.gl/core /layers /react @luma.gl/core yjs y-indexeddb comlink idb`.
+  - **T-029 Phase 0/1 — core viewport:** `<TacticalMap>` = `<DeckGL>` `OrthographicView`
+    + `COORDINATE_SYSTEM.CARTESIAN` (flat Arma meters, `flipY:false` → north-up, identity
+    projection). Self-contained vector grid base map (`LineLayer`, no tiles), clamped
+    pan/zoom, `FpsCounter` debug HUD. `coords/terrains.ts` per-terrain bounds (Everon
+    12.8km²).
+  - **T-030 Phase 4 — state foundation:** `state/` is the Y.Doc-backed normalized store
+    (source of truth) mirrored into Zustand (`useMapStore`) via `bindings.ts` `observeDeep`;
+    `ydoc.ts` actions wrap `transact(...LOCAL_ORIGIN)`; `undo.ts` = `Y.UndoManager`;
+    `y-indexeddb` persistence (per-mission, keyed `tbd-mission-<id>`, via
+    `hooks/useMissionDoc.ts`). Entities render through a GPU `IconLayer` (the 200-slot
+    answer). `schema.ts` = the §2 entity model.
+  - **T-031 Phase 3 — Aegis-glass shell:** full-bleed map (`z-0`) under a
+    `pointer-events-none` overlay of `pointer-events-auto` frosted panels (shared
+    `layout/overlay.ts` recipe — more transparent than `.glass`, Aegis tokens not slate).
+    Top Command Strip (title, Undo/Redo, gear→`MissionSettingsDialog`, disabled Export),
+    Bottom Toolbelt (Select/Ruler/LoS + mono X/Y/Z), Inspector (`SlotInspector`).
+  - **T-032 Phase 3 UI overhaul — Eden Editor tree paradigm (presentation/mock only):**
+    reusable recursive `layout/tree/TreeView.tsx`; Left = "Placed Entities" tree of
+    arbitrary custom folders (`placedEntitiesMock.ts`); Right = Asset Browser nested
+    catalog tree (`assetCatalogMock.ts`, NATO→Men→Rifleman); `AttributesModal` stub opened
+    by double-clicking a unit (manual dbl-click detect in `TacticalMap`). **The two trees
+    are mock/visual — NOT wired to the Y.Doc, and drag-and-drop is not implemented.**
+
+**Not yet built / next (Mission Creator):**
+- **Wire the trees to real state + drag-and-drop:** the Left "Placed Entities" tree and
+  Right Asset Browser are currently mock (`*Mock.ts`); back them with the Y.Doc and add
+  reparent / drag-asset-onto-map. (T-030's real slots still render/select/move on the map.)
+- Phase 2 **DEM / Z-axis** — blocked on hosted heightmap assets (see Ultra Plan §0.3).
+- Phase 5/6 **Asset Registry worker + Arsenal** (needs backend `GET /api/v1/registry`).
+- Phase 8 **tools & objectives** (ruler/LoS/viewshed GLSL); Phase 9 **compiler/export**
+  (`json_payload` superset; the Event Hub "Open in Mission Planner" stub points here).
+- Mission-version persistence/autosave for the editor is not wired yet (local-only Y.Doc).
 - Real Discord OAuth credentials are blank in `.env` (dev uses dev-login).
 - Telemetry is ingested via service-token endpoints; no live game-server bridge wired.
 - A fresh DB is empty of content (events, missions, etc.) — seed those via the API
