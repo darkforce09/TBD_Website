@@ -111,10 +111,10 @@ export function ServerIntelPage() {
                       Active Personnel
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-[30px] font-bold leading-tight text-tertiary-container">
+                      <span className="font-mono text-[30px] font-bold leading-tight text-tertiary-container">
                         {live?.player_count ?? 0}
                       </span>
-                      <span className="text-[20px] font-semibold text-on-surface-variant">
+                      <span className="font-mono text-[20px] font-semibold text-on-surface-variant">
                         / {live?.max_players ?? 0}
                       </span>
                     </div>

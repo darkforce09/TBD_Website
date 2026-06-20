@@ -96,7 +96,7 @@ export function DashboardPage() {
               </div>
               <div className="mt-2 flex flex-col">
                 <div className="mb-2 flex items-end justify-between">
-                  <span className="text-3xl font-light text-on-surface">
+                  <span className="font-mono text-3xl font-light text-on-surface">
                     {server?.player_count ?? 0}
                     <span className="text-lg text-on-surface-variant">/{server?.max_players ?? 0}</span>
                   </span>
