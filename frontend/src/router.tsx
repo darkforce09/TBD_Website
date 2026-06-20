@@ -106,7 +106,11 @@ export const router = createBrowserRouter([
         element: <VehicleDatabasePage />,
         ...breadcrumb('Doctrine & Info', 'Vehicle Database', { fullBleed: true }),
       },
-      { path: 'modpacks', element: <ModpacksPage />, ...breadcrumb('Doctrine & Info', 'Modpacks') },
+      {
+        path: 'modpacks',
+        element: <ModpacksPage />,
+        ...breadcrumb('Doctrine & Info', 'Modpacks', { fullBleed: true }),
+      },
       {
         path: 'tools/mortar',
         element: <MortarCalculatorPage />,
@@ -139,17 +143,17 @@ export const router = createBrowserRouter([
           {
             path: 'admin/server',
             element: <ServerControlPage />,
-            ...breadcrumb('Administration', 'Server Control'),
+            ...breadcrumb('Administration', 'Server Control', { fullBleed: true }),
           },
           {
             path: 'admin/personnel',
             element: <PersonnelRosterPage />,
-            ...breadcrumb('Administration', 'Personnel Roster'),
+            ...breadcrumb('Administration', 'Personnel Roster', { fullBleed: true }),
           },
           {
             path: 'admin/content',
             element: <ContentManagerPage />,
-            ...breadcrumb('Administration', 'Content Manager'),
+            ...breadcrumb('Administration', 'Comms Broadcaster', { fullBleed: true }),
           },
           {
             path: 'admin/audit',

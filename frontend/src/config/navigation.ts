@@ -57,7 +57,7 @@ export const navigation: NavSection[] = [
       { label: 'Mission Approvals', path: '/admin/approvals', icon: 'fact_check', minRole: 'admin' },
       { label: 'Server Control', path: '/admin/server', icon: 'settings_system_daydream', minRole: 'admin' },
       { label: 'Personnel Roster', path: '/admin/personnel', icon: 'groups', minRole: 'admin' },
-      { label: 'Content Manager', path: '/admin/content', icon: 'folder_managed', minRole: 'admin' },
+      { label: 'Comms Broadcaster', path: '/admin/content', icon: 'campaign', minRole: 'admin' },
       { label: 'Audit Logs', path: '/admin/audit', icon: 'receipt_long', minRole: 'admin' },
     ],
   },

@@ -1,82 +1,427 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { MaterialIcon } from '@/components/MaterialIcon'
 import { OpsCard } from '@/components/OpsCard'
 import { PageHeader } from '@/components/PageHeader'
 import { AuthGate } from '@/components/AuthGate'
-import { QueryState } from '@/components/QueryState'
-import { useCurrentModpack, useModpacks } from '@/hooks/queries'
 import { useSolveFireMission } from '@/hooks/mutations'
 import { formatBytes } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import type { ModpackDTO, ModpackMod } from '@/types/api'
+
+// ─── Server Modpacks ──────────────────────────────────────────────────────
+// "macOS Tactical" split-pane: a searchable modpack list on the left, an
+// App-Store-style dossier on the right with an admin Read/Edit toggle.
+// Mock-driven for now — swap MOCK_MODPACKS for `useModpacks()` data and wire
+// `onSave` to a mutation once the backend grows multi-pack editing.
+
+const mockMod = (modpackId: string, sort: number, name: string, required = false): ModpackMod => ({
+  id: `${modpackId}-${sort}`,
+  modpack_id: modpackId,
+  name,
+  is_key_dependency: required,
+  sort_order: sort,
+})
+
+const MOCK_MODPACKS: ModpackDTO[] = [
+  {
+    id: 'core-modern',
+    name: 'Core Modern Expansion',
+    version: '2.4.1',
+    total_size_bytes: 18_897_856_102,
+    workshop_url: 'https://reforger.armaplatform.com/workshop',
+    is_current: true,
+    created_at: '2026-05-02T00:00:00Z',
+    mods: [
+      mockMod('core-modern', 0, 'RHS: Status Quo', true),
+      mockMod('core-modern', 1, 'TFAR — Task Force Radio', true),
+      mockMod('core-modern', 2, 'ACE Reforged — Medical', true),
+      mockMod('core-modern', 3, 'Enhanced Movement Plus'),
+      mockMod('core-modern', 4, 'WCS — Weapon Customization Suite'),
+      mockMod('core-modern', 5, 'Everon Topographic Maps'),
+    ],
+  },
+  {
+    id: 'desert-storm',
+    name: 'Operation Desert Storm',
+    version: '1.1.0',
+    total_size_bytes: 12_348_030_976,
+    workshop_url: 'https://reforger.armaplatform.com/workshop',
+    is_current: false,
+    created_at: '2026-03-18T00:00:00Z',
+    mods: [
+      mockMod('desert-storm', 0, 'RHS: Gulf War Arsenal', true),
+      mockMod('desert-storm', 1, 'TFAR — Task Force Radio', true),
+      mockMod('desert-storm', 2, 'Sand & Heat Environment Pack'),
+      mockMod('desert-storm', 3, 'M1A1 Abrams Pack'),
+      mockMod('desert-storm', 4, 'Coalition Uniforms 1991'),
+    ],
+  },
+  {
+    id: 'cold-war-80s',
+    name: 'Cold War 1980s',
+    version: '0.9.3',
+    total_size_bytes: 9_663_676_416,
+    is_current: false,
+    created_at: '2026-01-09T00:00:00Z',
+    mods: [
+      mockMod('cold-war-80s', 0, 'RHS: GREF', true),
+      mockMod('cold-war-80s', 1, 'TFAR — Task Force Radio', true),
+      mockMod('cold-war-80s', 2, 'Spectrum Devices — Cold War Optics'),
+      mockMod('cold-war-80s', 3, 'Arland Winter Retexture'),
+    ],
+  },
+]
 
 export function ModpacksPage() {
-  const { data: current, isLoading: loadingCurrent } = useCurrentModpack()
-  const { data: all, isLoading: loadingAll, isError, error } = useModpacks()
-  const modpack = current ?? all?.find((m) => m.is_current) ?? all?.[0]
+  const [packs, setPacks] = useState<ModpackDTO[]>(MOCK_MODPACKS)
+  const [selectedId, setSelectedId] = useState(packs[0]?.id ?? '')
+  const [query, setQuery] = useState('')
+  const [mode, setMode] = useState<'read' | 'edit'>('read')
+  // Mocked admin flag — replace with the real role check (`useAuthStore`) later.
+  const isAdmin = true
+
+  const selected = packs.find((p) => p.id === selectedId) ?? packs[0]
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return packs
+    return packs.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.mods.some((m) => m.name.toLowerCase().includes(q)),
+    )
+  }, [packs, query])
+
+  function handleSave(updated: ModpackDTO) {
+    setPacks((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+    setMode('read')
+    toast.success(`Saved "${updated.name}"`)
+  }
 
   return (
     <AuthGate>
-      <QueryState
-        isLoading={loadingCurrent || loadingAll}
-        isError={isError}
-        error={error as Error}
-        isEmpty={!modpack}
-        emptyMessage="No modpack configured."
-      >
-        {modpack && (
-          <div className="mx-auto w-full max-w-3xl">
-            <PageHeader
-              title="Server Modpacks"
-              subtitle="Required dependencies for deployment. Arma Reforger handles mod downloads automatically when you connect."
-            />
-            <OpsCard glass>
-              <h2 className="text-xl font-semibold">
-                {modpack.name} (v{modpack.version})
-              </h2>
-              <p className="mt-2 text-sm text-on-surface-variant">
-                Total Size: {formatBytes(modpack.total_size_bytes)} — Mods Included:{' '}
-                {modpack.mods.length}
-              </p>
-              <ul className="mt-6 space-y-2">
-                {modpack.mods.map((m) => (
-                  <li
-                    key={m.id}
-                    className="flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container px-3 py-2 text-label-md"
-                  >
-                    <MaterialIcon name="extension" className="text-primary" />
-                    {m.name}
-                    {m.is_key_dependency && (
-                      <span className="ml-auto"><Badge variant="warning">Required</Badge></span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-                <button
-                  type="button"
-                  className="flex-1 rounded-lg bg-primary py-3 text-sm font-medium text-on-primary"
-                  onClick={() => toast.message('Launch requires the Reforger client')}
-                >
-                  Launch Game &amp; Auto-Download
-                </button>
-                {modpack.workshop_url && (
-                  <a
-                    href={modpack.workshop_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 rounded-lg border border-border-subtle py-3 text-center text-sm hover:bg-surface-container"
-                  >
-                    View Collection in Reforger Workshop
-                  </a>
-                )}
-              </div>
-            </OpsCard>
+      <div className="flex h-full w-full flex-1 overflow-hidden bg-surface-glass backdrop-blur-xl">
+        {/* Left sidebar — modpack list */}
+        <aside className="flex w-72 shrink-0 flex-col border-r border-white/10">
+          <div className="border-b border-white/10 p-4">
+            <h1 className="mb-3 text-lg font-bold tracking-tight text-on-surface">Modpacks</h1>
+            <div className="relative">
+              <MaterialIcon
+                name="search"
+                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-base text-on-surface-variant"
+              />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search packs & mods…"
+                className="w-full rounded-xl border border-white/10 bg-black/30 py-2.5 pr-3 pl-9 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-blue-500/60 focus:outline-none"
+              />
+            </div>
           </div>
-        )}
-      </QueryState>
+          <nav className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
+            {filtered.map((pack) => (
+              <button
+                key={pack.id}
+                type="button"
+                onClick={() => {
+                  setSelectedId(pack.id)
+                  setMode('read')
+                }}
+                className={cn(
+                  'group w-full rounded-xl border px-4 py-3 text-left transition',
+                  pack.id === selected?.id
+                    ? 'border-blue-500/60 bg-blue-600/20 shadow-[0_0_20px_rgba(37,99,235,0.15)]'
+                    : 'border-transparent hover:border-white/10 hover:bg-white/[0.03]',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="truncate font-semibold text-on-surface">{pack.name}</span>
+                  {pack.is_current && (
+                    <span className="ml-auto"><Badge variant="success">Active</Badge></span>
+                  )}
+                </div>
+                <p className="mt-1 font-mono text-xs text-on-surface-variant">
+                  v{pack.version} · {pack.mods.length} mods · {formatBytes(pack.total_size_bytes)}
+                </p>
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="px-3 py-6 text-center text-sm text-on-surface-variant">
+                No modpacks match “{query}”.
+              </p>
+            )}
+          </nav>
+        </aside>
+
+        {/* Right pane — dossier / editor */}
+        <main className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+          {selected ? (
+            mode === 'edit' ? (
+              <ModpackEditor
+                key={selected.id}
+                pack={selected}
+                onCancel={() => setMode('read')}
+                onSave={handleSave}
+              />
+            ) : (
+              <ModpackDossier
+                pack={selected}
+                isAdmin={isAdmin}
+                onEdit={() => setMode('edit')}
+              />
+            )
+          ) : (
+            <div className="flex h-full items-center justify-center text-on-surface-variant">
+              Select a modpack
+            </div>
+          )}
+        </main>
+      </div>
     </AuthGate>
+  )
+}
+
+/** Read-only "App Store" view of a modpack. */
+function ModpackDossier({
+  pack,
+  isAdmin,
+  onEdit,
+}: {
+  pack: ModpackDTO
+  isAdmin: boolean
+  onEdit: () => void
+}) {
+  return (
+    <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-8 py-10">
+      {/* Header */}
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-4xl font-bold tracking-tight text-on-surface">{pack.name}</h2>
+          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1 font-mono text-sm text-on-surface-variant">
+            <span>v{pack.version}</span>
+            <span>
+              <span className="text-on-surface">{formatBytes(pack.total_size_bytes)}</span> total
+            </span>
+            <span>
+              <span className="text-on-surface">{pack.mods.length}</span> mods included
+            </span>
+          </div>
+        </div>
+        {isAdmin && <ReadEditToggle mode="read" onChange={(m) => m === 'edit' && onEdit()} />}
+      </header>
+
+      {/* Mod list */}
+      <ul className="mt-8">
+        {pack.mods.map((mod) => (
+          <li
+            key={mod.id}
+            className="flex items-center gap-4 rounded-xl border-b border-white/5 px-4 py-5 transition hover:bg-white/[0.02]"
+          >
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-on-surface-variant">
+              <MaterialIcon name="extension" />
+            </div>
+            <span className="flex-1 font-medium text-on-surface">{mod.name}</span>
+            {mod.is_key_dependency && (
+              <span className="rounded-md border border-tactical-yellow/20 bg-tactical-yellow/10 px-2.5 py-1 font-mono text-xs tracking-wider text-tactical-yellow">
+                [ REQUIRED ]
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      {/* Action button */}
+      <div className="mt-10 pt-2">
+        <button
+          type="button"
+          onClick={() => toast.message('Launch requires the Reforger client')}
+          className="w-full rounded-full bg-blue-600 py-5 text-lg font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition hover:bg-blue-500"
+        >
+          [ Launch Game &amp; Auto-Download ]
+        </button>
+        {pack.workshop_url && (
+          <a
+            href={pack.workshop_url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 block text-center text-sm text-on-surface-variant transition hover:text-on-surface"
+          >
+            View collection in Reforger Workshop ↗
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Admin edit view: rename the pack and add/remove/flag mods. */
+function ModpackEditor({
+  pack,
+  onCancel,
+  onSave,
+}: {
+  pack: ModpackDTO
+  onCancel: () => void
+  onSave: (updated: ModpackDTO) => void
+}) {
+  const [name, setName] = useState(pack.name)
+  const [mods, setMods] = useState<ModpackMod[]>(pack.mods)
+  const [newMod, setNewMod] = useState('')
+
+  function addMod() {
+    const trimmed = newMod.trim()
+    if (!trimmed) return
+    setMods((prev) => [
+      ...prev,
+      {
+        id: `${pack.id}-new-${Date.now()}`,
+        modpack_id: pack.id,
+        name: trimmed,
+        is_key_dependency: false,
+        sort_order: prev.length,
+      },
+    ])
+    setNewMod('')
+  }
+
+  function removeMod(id: string) {
+    setMods((prev) => prev.filter((m) => m.id !== id))
+  }
+
+  function toggleRequired(id: string) {
+    setMods((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, is_key_dependency: !m.is_key_dependency } : m)),
+    )
+  }
+
+  return (
+    <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-8 py-10">
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <label className="mb-1 block font-mono text-xs tracking-wider text-on-surface-variant uppercase">
+            Modpack name
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-2xl font-bold tracking-tight text-on-surface focus:border-blue-500/60 focus:outline-none"
+          />
+        </div>
+        <ReadEditToggle mode="edit" onChange={(m) => m === 'read' && onCancel()} />
+      </header>
+
+      {/* Editable mod list */}
+      <ul className="mt-8">
+        {mods.map((mod) => (
+          <li
+            key={mod.id}
+            className="flex items-center gap-3 rounded-xl border-b border-white/5 px-4 py-4"
+          >
+            <MaterialIcon name="drag_indicator" className="text-on-surface-variant/50" />
+            <span className="flex-1 font-medium text-on-surface">{mod.name}</span>
+            <button
+              type="button"
+              onClick={() => toggleRequired(mod.id)}
+              className={cn(
+                'rounded-md border px-2.5 py-1 font-mono text-xs tracking-wider transition',
+                mod.is_key_dependency
+                  ? 'border-tactical-yellow/20 bg-tactical-yellow/10 text-tactical-yellow'
+                  : 'border-white/10 text-on-surface-variant hover:bg-white/5',
+              )}
+            >
+              [ REQUIRED ]
+            </button>
+            <button
+              type="button"
+              onClick={() => removeMod(mod.id)}
+              aria-label={`Remove ${mod.name}`}
+              className="flex size-8 items-center justify-center rounded-lg text-on-surface-variant transition hover:bg-error-alert/10 hover:text-error-alert"
+            >
+              <MaterialIcon name="close" />
+            </button>
+          </li>
+        ))}
+        {mods.length === 0 && (
+          <li className="px-4 py-6 text-center text-sm text-on-surface-variant">
+            No mods yet — add one below.
+          </li>
+        )}
+      </ul>
+
+      {/* Add-mod row */}
+      <div className="mt-4 flex gap-2">
+        <input
+          value={newMod}
+          onChange={(e) => setNewMod(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              addMod()
+            }
+          }}
+          placeholder="Add a mod (e.g. ACE Reforged)…"
+          className="flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-blue-500/60 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={addMod}
+          className="flex items-center gap-1.5 rounded-xl border border-white/10 px-4 text-sm font-medium text-on-surface transition hover:bg-white/5"
+        >
+          <MaterialIcon name="add" className="text-base" />
+          Add
+        </button>
+      </div>
+
+      {/* Save / cancel */}
+      <div className="mt-10 flex gap-3 pt-2">
+        <button
+          type="button"
+          onClick={() => onSave({ ...pack, name: name.trim() || pack.name, mods })}
+          className="flex-1 rounded-full bg-blue-600 py-4 text-lg font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition hover:bg-blue-500"
+        >
+          Save Changes
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-full border border-white/10 px-8 text-base font-medium text-on-surface-variant transition hover:bg-white/5 hover:text-on-surface"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** Segmented [ READ ] / [ EDIT ] pill toggle. */
+function ReadEditToggle({
+  mode,
+  onChange,
+}: {
+  mode: 'read' | 'edit'
+  onChange: (mode: 'read' | 'edit') => void
+}) {
+  return (
+    <div className="flex shrink-0 items-center rounded-full border border-white/10 bg-black/30 p-1 font-mono text-xs">
+      {(['read', 'edit'] as const).map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => onChange(m)}
+          className={cn(
+            'rounded-full px-4 py-1.5 tracking-wider uppercase transition',
+            mode === m
+              ? 'bg-blue-600/30 text-blue-200 shadow-[0_0_12px_rgba(37,99,235,0.25)]'
+              : 'text-on-surface-variant hover:text-on-surface',
+          )}
+        >
+          [ {m} ]
+        </button>
+      ))}
+    </div>
   )
 }
 
