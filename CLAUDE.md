@@ -54,7 +54,7 @@ open it in the browser to log in, or curl it and read `access_token` from the
 - Git: **commit directly to `main`; never create a branch.** End commit messages with
   the `Co-Authored-By` trailer. Commits are tagged `T-00x`.
 
-## Status (latest feature work: T-032 — 2026-06-20)
+## Status (latest feature work: T-033 — 2026-06-21)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
@@ -151,11 +151,13 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   - Verified: `npm run build` + `npm run lint` clean after every commit. Runtime layout of
     the migrated split-pane/full-bleed pages is worth an in-browser pass (`make web`).
 
-- T-029..T-032 **2D Mission Creator — Deck.gl editor (in progress)**. New self-contained
+- T-029..T-033 **2D Mission Creator — Deck.gl editor (in progress)**. New self-contained
   feature modules `frontend/src/features/tactical-map/` (terrain-agnostic engine) +
   `frontend/src/features/mission-creator/` (editor wrapper), code-split lazy route
-  `/missions/:id/edit` (mission_maker+, `fullBleed`). Execution contract is
-  `Design_Docs/Mission_Creator_Architecture/03_engineering_ultra_plan.md`. New deps:
+  `/missions/:id/edit` (mission_maker+, `fullBleed`). Execution authority is
+  `Design_Docs/Mission_Creator_Architecture/05_agent_execution_plan.md` (Eden docked-shell UX +
+  Decisions log; `04_eden_editor_ux_spec.md` restates it); `03_engineering_ultra_plan.md` remains
+  authoritative for the data model / workers / compiler / DEM. New deps:
   `deck.gl @deck.gl/core /layers /react @luma.gl/core yjs y-indexeddb comlink idb`.
   - **T-029 Phase 0/1 — core viewport:** `<TacticalMap>` = `<DeckGL>` `OrthographicView`
     + `COORDINATE_SYSTEM.CARTESIAN` (flat Arma meters, `flipY:false` → north-up, identity
@@ -179,11 +181,22 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     catalog tree (`assetCatalogMock.ts`, NATO→Men→Rifleman); `AttributesModal` stub opened
     by double-clicking a unit (manual dbl-click detect in `TacticalMap`). **The two trees
     are mock/visual — NOT wired to the Y.Doc, and drag-and-drop is not implemented.**
+  - **T-033 PRE-3.5 — wire Outliner + asset drag-to-map to the Y.Doc:** new `editorLayers`
+    entity map (the 10th) = workflow-only Outliner folders (`parentId` nesting, `entityIds`),
+    threaded through `schema`/`ydoc`/`bindings`/`useMapStore` (`activeLayerId` = drop target).
+    Left "Placed Entities" tree now reads the live Y.Doc (`buildTree`); select→`flyTo`,
+    folder→active layer, "+"→`addEditorLayer` (`placedEntitiesMock` deleted). Asset Browser
+    leaves are draggable; dropping one on `<TacticalMap>` unprojects the cursor and
+    `addSlot`s under the active layer (`ASSET_DND_MIME`/`AssetDropPayload`,
+    `onDragOver`/`onDrop`, `onAssetDrop`). **Still mock/deferred:** reparent DnD, `assetId`
+    persistence, and the always-on Asset Palette (right panel still swaps to `InspectorPanel`).
 
 **Not yet built / next (Mission Creator):**
-- **Wire the trees to real state + drag-and-drop:** the Left "Placed Entities" tree and
-  Right Asset Browser are currently mock (`*Mock.ts`); back them with the Y.Doc and add
-  reparent / drag-asset-onto-map. (T-030's real slots still render/select/move on the map.)
+- **Phase 3.5 — Eden docked shell (next):** fullscreen (hide platform `Sidebar`/`TopNav` on the
+  editor route), left `w-64` + right `w-80` panels docked flush, **always-on** Asset Palette
+  (remove the `InspectorPanel`→`SlotInspector` swap), Eden time slider, Spacebar-to-center. Then
+  7b (map drag-move + marquee multi-select), 7a (outliner reparent/rename/delete + wire `assetId`),
+  9 (compiler/export + autosave). Order + acceptance criteria in `05_agent_execution_plan.md`.
 - Phase 2 **DEM / Z-axis** — blocked on hosted heightmap assets (see Ultra Plan §0.3).
 - Phase 5/6 **Asset Registry worker + Arsenal** (needs backend `GET /api/v1/registry`).
 - Phase 8 **tools & objectives** (ruler/LoS/viewshed GLSL); Phase 9 **compiler/export**

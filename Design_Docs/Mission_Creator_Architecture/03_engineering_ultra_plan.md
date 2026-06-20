@@ -1,7 +1,14 @@
 # TBD Reforger — Mission Creator: The Engineering Ultra Plan
 **Document:** `03_engineering_ultra_plan.md`
-**Status:** Authoritative execution blueprint (supersedes the renderer/stack choices in `01_technical_specification.md`)
+**Status:** Authoritative engineering blueprint (supersedes the renderer/stack choices in `01_technical_specification.md`)
 **Audience:** Implementing engineers. Read `01_technical_specification.md` (problem statement) and `mission_creator_design.md` (product/UX) first; this document is *how we build it, file by file.*
+
+> **UX/layout authority is `05_agent_execution_plan.md` + `04_eden_editor_ux_spec.md`.**
+> The locked UX is the **Arma 3 Eden Editor docked shell** (fullscreen, panels flush to the
+> edges, always-on Asset Palette, Attributes modal on double-click). Where §5 of this file still
+> describes earlier explorations (floating panels, a right-panel inspector swap, a "popover"
+> inspector), the Eden Decisions log in 05/04 **wins**. This file remains authoritative for the
+> data model, workers, compiler, and DEM.
 
 ---
 
@@ -131,6 +138,11 @@ features/mission-creator/
 - Register the lazy route in the app router behind the `mission_maker` role gate (mirror the
   existing `RequireMinRole` pattern / `AdminGate` used elsewhere). Apply the `fullBleed` route
   handle so `AppLayout` runs the page full-height (same mechanism T-011 introduced).
+- **Fullscreen chrome escape (Phase 3.5, locked in 05/04):** the editor renders **without** the
+  platform `Sidebar` + `TopNav`. `AppLayout`'s `fullBleed` handle only changes `<main>` padding —
+  it does **not** hide chrome. Add a stronger escape: an `editorFullscreen` route handle that
+  suppresses `<Sidebar/>` + `<TopNav/>`, or mount `/missions/:id/edit` outside the `AppLayout`
+  `<Outlet/>`. `/missions/:id/edit` owns the entire viewport.
 - Point the editor entry in `pages/missions.tsx` and the **"Open in Mission Planner"** stub on
   the Event Hub (`pages/events.tsx`) at `/missions/:id/edit`.
 - Vite automatically code-splits the `React.lazy` route, so Deck.gl/Yjs/worker bundles never
@@ -170,6 +182,17 @@ export interface Faction {
   key: string                    // "BLUFOR" | "OPFOR" | "INDFOR" | "CIV" — export side key
   name: string                   // "US Army 2005"
   squadIds: ID[]
+}
+
+// Workflow-only Outliner folder (the Eden "Layers" / Left "Placed Entities" tree).
+// Users nest arbitrary folders to organize entities; layers DO NOT affect the export
+// (the compiler reads factions/squads/slots, not layers). null parentId = root.
+// Shipped T-033; the tenth entity map.
+export interface EditorLayer {
+  id: ID
+  name: string
+  parentId: ID | null
+  entityIds: ID[]                // slots/vehicles/markers filed directly in this folder
 }
 
 export interface Squad {
@@ -250,10 +273,14 @@ export interface MapStoreState {
   objectivesById: Record<ID, Objective>
   vehiclesById: Record<ID, Vehicle>
   markersById:  Record<ID, MapMarker>
+  editorLayersById: Record<ID, EditorLayer>   // Outliner folders (T-033)
   factionOrder: ID[]
 
   // UI/runtime (not persisted to json_payload)
+  // NOTE (Phase 7b): `selection` becomes multi-entity — `{ kind, ids: ID[] }` — to back
+  // marquee box-select and group move. T-033 ships the single-id form below.
   selection: { kind: 'none'|'slot'|'squad'|'objective'|'vehicle'|'marker'; id: ID | null }
+  activeLayerId: ID | null        // Outliner folder new entities are filed into (drop target)
   viewState: OrthographicViewState
   activeTool: ToolId
 }
@@ -264,7 +291,8 @@ change back into the store.
 
 ### 2.3 The Y.Doc layout — `state/ydoc.ts`
 - One `Y.Doc`. Top-level **`Y.Map`s** named `meta, factions, squads, slots, loadouts, items,
-  objectives, vehicles, markers`. Each is a `Y.Map<ID, Y.Map>` (an entity is a nested `Y.Map`).
+  objectives, vehicles, markers, editorLayers` (ten maps; `editorLayers` added T-033). Each is a
+  `Y.Map<ID, Y.Map>` (an entity is a nested `Y.Map`).
 - **Never use `Y.Array` of objects for entities** — ID-keyed `Y.Map`s make concurrent
   insert/delete/reparent commute, which is exactly what makes ADR-3's future multiplayer safe.
 - All writes wrap in `ydoc.transact(fn, origin)` so one user gesture = one undo step.
@@ -425,6 +453,12 @@ JetBrains-Mono readout). Tools: Select, Ruler, Line-of-Sight. (Unit placement is
 
 > The repo is an existing Vite app, so there is no `npm init`; Phase 0 begins at dependency
 > install. Each phase ends with a concrete, demoable deliverable.
+>
+> **Refined ordering (authoritative in `05_agent_execution_plan.md`):** Phases 0/1/4 and a first-cut
+> Phase 3 shell shipped as **T-029…T-032**; the Outliner↔Y.Doc + asset-drag wiring shipped as
+> **T-033 (PRE-3.5)**. The remaining near-term order is **DOC-0 → 3.5 (Eden docked shell) → 7b (map
+> drag + marquee) → 7a (outliner reparent/rename/delete) → 9 (compiler + autosave)**. Phases 2, 5,
+> 6, 8 stay blocked on external assets/backend. Use 05 for the live status of each sub-phase.
 
 **Phase 0 — Dependencies & scaffold**
 `npm i deck.gl @deck.gl/core @deck.gl/layers @deck.gl/react @luma.gl/core yjs y-indexeddb comlink idb`.

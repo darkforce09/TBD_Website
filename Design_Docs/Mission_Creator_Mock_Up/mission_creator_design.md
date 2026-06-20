@@ -32,12 +32,19 @@ Because the mission is saved as a strict JSON data contract, we can build true v
 - **Team Workflow:** Multiple creators can work on a massive campaign, visually reviewing each other's additions without ever looking at a line of code.
 
 ### UI Layout: The "macOS" Arma Editor
-The visual layout merges the classic layout of the Arma 2 Editor with the premium, native feel of macOS (frosted glass, rounded corners, and split-pane simplicity):
-- **Full-Bleed Map:** The interactive, topographical 2D map takes up 100% of the screen background.
-- **Top Bar (The Mac Menu Bar):** A thin, frosted-glass header containing global parameters (Time of Day slider, Weather toggles, Lore/Briefing editor).
-- **Left Sidebar (The Finder/Outliner):** A translucent, split-pane style sidebar on the left. This acts as the hierarchical tree view (like Mac Finder) of everything currently placed on the map.
-- **Right Sidebar (The Asset Palette):** A floating, frosted-glass panel containing categorized drag-and-drop assets (Factions, Vehicles, Markers, Triggers).
-- **Contextual Inspector (The Popover):** Clicking a unit doesn't open a clunky window. It opens a sleek, macOS-style popover or bottom panel to edit specific properties (Open Loadout Forge, Change Callsign).
+
+> **Authoritative UX is now `Design_Docs/Mission_Creator_Architecture/05_agent_execution_plan.md`
+> + `04_eden_editor_ux_spec.md`** (the **Arma 3 Eden Editor docked shell**, modernized with Aegis
+> glass). The product intent below still holds; two interaction details were superseded by the
+> locked Decisions log — see the **bold** notes. The `Mission_Creator_Mock_Up/**/code.html` and
+> `macOS_Blueprints/**` HTML mockups are **historical explorations only** — do not execute against them.
+
+The visual layout merges the classic layout of the Arma Eden Editor with the premium, native feel of macOS (frosted glass, rounded corners, and split-pane simplicity):
+- **Full-Bleed Map:** The interactive, topographical 2D map takes up 100% of the screen background. The editor runs **fullscreen** — the platform Sidebar/TopNav are hidden on `/missions/:id/edit`.
+- **Top Bar (The Mac Menu Bar):** A thin, frosted-glass header containing global parameters (Eden-style Time of Day slider/scrub, Weather toggles, Lore/Briefing editor).
+- **Left Sidebar (The Finder/Outliner):** A translucent sidebar **docked flush left** — the hierarchical tree view (like Mac Finder) of everything placed on the map (ORBAT on top, Editor Layers folders below).
+- **Right Sidebar (The Asset Palette):** A frosted-glass panel **docked flush right** with categorized drag-and-drop assets (Factions, Vehicles, Markers, Triggers). **The Asset Palette stays visible at all times — it does NOT swap to an inspector on selection.**
+- **Contextual editing (Attributes Modal):** **Superseded — double-clicking a unit opens the Aegis-glass Attributes Modal** (Transform / Identity / States / Arsenal tabs), not a popover/bottom panel. Single-click only selects; this keeps the always-on Asset Palette intact.
 - **Polygon Tools:** Clean, minimalist toolbar icons to draw the **Safe Start Area** directly onto the map.
 
 ---
