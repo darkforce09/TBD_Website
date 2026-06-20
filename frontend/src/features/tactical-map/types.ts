@@ -15,6 +15,19 @@ export interface MapViewState {
   maxZoom: number
 }
 
+/** dataTransfer MIME used to drag an Asset Browser leaf onto the map. */
+export const ASSET_DND_MIME = 'application/x-tbd-asset'
+
+/** Payload carried in dataTransfer when dragging a catalog asset onto the map. */
+export interface AssetDropPayload {
+  /** Catalog asset id (registry classname once the worker lands). */
+  assetId: string
+  /** Human role/label → the new slot's `role` until the registry feed exists. */
+  role: string
+  /** What entity to materialize. Only 'slot' is wired today. */
+  kind: 'slot'
+}
+
 export interface TacticalMapProps {
   /** Which terrain's world bounds the camera and base map are sized to. */
   terrain?: TerrainId
@@ -28,6 +41,8 @@ export interface TacticalMapProps {
   onReady?: (api: TacticalMapApi) => void
   /** Fired when an entity icon is double-clicked (e.g. open the Attributes modal). */
   onEntityActivate?: (id: string) => void
+  /** Fired when an Asset Browser leaf is dropped, with the unprojected world pos. */
+  onAssetDrop?: (payload: AssetDropPayload, world: { x: number; y: number }) => void
 }
 
 /** Imperative handle exposed via onReady. */

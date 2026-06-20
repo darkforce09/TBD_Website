@@ -5,6 +5,7 @@
 
 import { create } from 'zustand'
 import type {
+  EditorLayer,
   Faction,
   ID,
   InventoryItem,
@@ -30,17 +31,21 @@ export interface MapSnapshot {
   objectivesById: Record<ID, Objective>
   vehiclesById: Record<ID, Vehicle>
   markersById: Record<ID, MapMarker>
+  editorLayersById: Record<ID, EditorLayer>
 }
 
 export interface MapStoreState extends MapSnapshot {
   // UI / runtime (not persisted to json_payload)
   selection: Selection
   activeTool: ToolId
+  /** Outliner folder new entities are filed into (drop target). null → fallback. */
+  activeLayerId: ID | null
 
   // Internal: bindings push a fresh snapshot here on every Y.Doc change.
   _applySnapshot: (snapshot: MapSnapshot) => void
   setSelection: (selection: Selection) => void
   setActiveTool: (tool: ToolId) => void
+  setActiveLayer: (id: ID | null) => void
   reset: () => void
 }
 
@@ -54,6 +59,7 @@ const EMPTY_SNAPSHOT: MapSnapshot = {
   objectivesById: {},
   vehiclesById: {},
   markersById: {},
+  editorLayersById: {},
 }
 
 const NO_SELECTION: Selection = { kind: 'none', id: null }
@@ -62,8 +68,10 @@ export const useMapStore = create<MapStoreState>()((set) => ({
   ...EMPTY_SNAPSHOT,
   selection: NO_SELECTION,
   activeTool: 'select',
+  activeLayerId: null,
   _applySnapshot: (snapshot) => set(snapshot),
   setSelection: (selection) => set({ selection }),
   setActiveTool: (activeTool) => set({ activeTool }),
-  reset: () => set({ ...EMPTY_SNAPSHOT, selection: NO_SELECTION }),
+  setActiveLayer: (activeLayerId) => set({ activeLayerId }),
+  reset: () => set({ ...EMPTY_SNAPSHOT, selection: NO_SELECTION, activeLayerId: null }),
 }))

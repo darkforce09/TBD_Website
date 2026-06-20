@@ -23,6 +23,9 @@ interface TreeViewProps {
   selectedId?: string | null
   onSelect?: (id: string) => void
   onActivate?: (id: string) => void
+  /** Native HTML5 drag-start on a leaf (e.g. drag an asset onto the map). When
+   *  omitted, leaves are not draggable. */
+  onNodeDragStart?: (node: TreeNodeData, e: React.DragEvent) => void
 }
 
 function collectExpanded(nodes: TreeNodeData[], acc: Set<string>): Set<string> {
@@ -33,7 +36,13 @@ function collectExpanded(nodes: TreeNodeData[], acc: Set<string>): Set<string> {
   return acc
 }
 
-export function TreeView({ nodes, selectedId, onSelect, onActivate }: TreeViewProps) {
+export function TreeView({
+  nodes,
+  selectedId,
+  onSelect,
+  onActivate,
+  onNodeDragStart,
+}: TreeViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(() =>
     collectExpanded(nodes, new Set()),
   )
@@ -46,7 +55,7 @@ export function TreeView({ nodes, selectedId, onSelect, onActivate }: TreeViewPr
       return next
     })
 
-  const shared = { expanded, toggle, selectedId, onSelect, onActivate }
+  const shared = { expanded, toggle, selectedId, onSelect, onActivate, onNodeDragStart }
 
   return (
     <ul className="flex flex-col">
@@ -64,18 +73,29 @@ interface TreeNodeProps {
   selectedId?: string | null
   onSelect?: (id: string) => void
   onActivate?: (id: string) => void
+  onNodeDragStart?: (node: TreeNodeData, e: React.DragEvent) => void
 }
 
-function TreeNode({ node, expanded, toggle, selectedId, onSelect, onActivate }: TreeNodeProps) {
+function TreeNode({
+  node,
+  expanded,
+  toggle,
+  selectedId,
+  onSelect,
+  onActivate,
+  onNodeDragStart,
+}: TreeNodeProps) {
   const isFolder = !!node.children?.length
   const isOpen = expanded.has(node.id)
   const selected = selectedId === node.id
   const Icon = node.icon
+  const draggable = !isFolder && !!onNodeDragStart
 
   return (
     <li>
       <div
-        draggable={!isFolder}
+        draggable={draggable}
+        onDragStart={draggable ? (e) => onNodeDragStart!(node, e) : undefined}
         onClick={() => {
           onSelect?.(node.id)
           if (isFolder) toggle(node.id)
@@ -83,7 +103,7 @@ function TreeNode({ node, expanded, toggle, selectedId, onSelect, onActivate }: 
         onDoubleClick={() => !isFolder && onActivate?.(node.id)}
         className={cn(
           'group flex items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-label-md transition-colors',
-          !isFolder && 'cursor-grab',
+          draggable ? 'cursor-grab' : 'cursor-pointer',
           selected
             ? 'bg-primary/15 text-on-surface'
             : 'text-on-surface-variant hover:bg-white/5 hover:text-on-surface',
@@ -118,6 +138,7 @@ function TreeNode({ node, expanded, toggle, selectedId, onSelect, onActivate }: 
               selectedId={selectedId}
               onSelect={onSelect}
               onActivate={onActivate}
+              onNodeDragStart={onNodeDragStart}
             />
           ))}
         </ul>

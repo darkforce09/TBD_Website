@@ -14,7 +14,7 @@ import { useIconLayer } from './layers/useIconLayer'
 import { MapContextProvider, createMapContextValue } from './context/MapContext'
 import { useMapStore } from './state/useMapStore'
 import type { ID } from './state/schema'
-import type { MapViewState, TacticalMapProps } from './types'
+import { ASSET_DND_MIME, type AssetDropPayload, type MapViewState, type TacticalMapProps } from './types'
 
 export function TacticalMap({
   terrain: terrainId,
@@ -23,6 +23,7 @@ export function TacticalMap({
   onCursorMove,
   onReady,
   onEntityActivate,
+  onAssetDrop,
 }: TacticalMapProps) {
   const terrain = useMemo(() => getTerrain(terrainId), [terrainId])
   const { view, viewState, onViewStateChange, flyTo: viewFlyTo } =
@@ -32,6 +33,8 @@ export function TacticalMap({
   const setSelection = useMapStore((s) => s.setSelection)
   // Manual double-click detection (Deck has no onDblClick) for entity activation.
   const lastClick = useRef<{ id: string; ts: number } | null>(null)
+  // Drop zone: Deck's controller ignores HTML5 drag/drop, so they bubble here.
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const onClick = useCallback(
     (info: PickingInfo) => {
@@ -76,6 +79,41 @@ export function TacticalMap({
     [viewFlyTo],
   )
 
+  // Only accept our asset drags (lets every other drag fall through to the page).
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes(ASSET_DND_MIME)) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+  }, [])
+
+  // Unproject the drop point: build a viewport from the current view + container
+  // size and convert screen px → world meters (same flipY:false math as onClick's
+  // info.coordinate, so a drop lands exactly under the cursor).
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      const raw = e.dataTransfer.getData(ASSET_DND_MIME)
+      const el = containerRef.current
+      if (!raw || !el) return
+      e.preventDefault()
+      let payload: AssetDropPayload
+      try {
+        payload = JSON.parse(raw) as AssetDropPayload
+      } catch {
+        return
+      }
+      const rect = el.getBoundingClientRect()
+      const viewport = view.makeViewport({
+        width: rect.width,
+        height: rect.height,
+        viewState,
+      })
+      if (!viewport) return
+      const [x, y] = viewport.unproject([e.clientX - rect.left, e.clientY - rect.top])
+      onAssetDrop?.(payload, { x, y })
+    },
+    [view, viewState, onAssetDrop],
+  )
+
   // Expose flyTo to sibling panels (Outliner) that live outside MapContext.
   useEffect(() => onReady?.({ flyTo }), [onReady, flyTo])
 
@@ -86,7 +124,12 @@ export function TacticalMap({
 
   return (
     <MapContextProvider value={ctx}>
-      <div className={className ?? 'absolute inset-0'}>
+      <div
+        ref={containerRef}
+        className={className ?? 'absolute inset-0'}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+      >
         <DeckGL
           views={view}
           viewState={viewState}

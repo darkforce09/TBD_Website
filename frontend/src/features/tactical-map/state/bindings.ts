@@ -4,6 +4,7 @@
 // unbind fn. y-indexeddb durability is wired by the wrapper (useMissionDoc), not here.
 
 import type {
+  EditorLayer,
   Faction,
   ID,
   InventoryItem,
@@ -30,6 +31,7 @@ export function docToSnapshot(md: MissionDoc): MapSnapshot {
     objectivesById: e.objectives.toJSON() as Record<ID, Objective>,
     vehiclesById: e.vehicles.toJSON() as Record<ID, Vehicle>,
     markersById: e.markers.toJSON() as Record<ID, MapMarker>,
+    editorLayersById: e.editorLayers.toJSON() as Record<ID, EditorLayer>,
   }
 }
 

@@ -11,6 +11,7 @@ import {
   bindStoreToDoc,
   createMissionDoc,
   createUndoManager,
+  seedDefaultLayer,
   seedMeta,
   useMapStore,
   type MissionDoc,
@@ -38,9 +39,10 @@ export function useMissionDoc(missionId: string | undefined): MissionDocHandle {
     const persistence = new IndexeddbPersistence(dbName, md.doc)
     // Once the local snapshot has loaded, seed defaults if this is a fresh mission
     // (non-tracked origin → not an undo step). New keys flow in via observeDeep.
-    persistence.once('synced', () =>
-      seedMeta(md, { id: missionId ?? 'draft', title: 'Untitled Mission' }),
-    )
+    persistence.once('synced', () => {
+      seedMeta(md, { id: missionId ?? 'draft', title: 'Untitled Mission' })
+      seedDefaultLayer(md)
+    })
 
     return () => {
       unbind()

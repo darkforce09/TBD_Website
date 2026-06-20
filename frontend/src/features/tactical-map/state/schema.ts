@@ -25,6 +25,19 @@ export interface Faction {
   squadIds: ID[]
 }
 
+// An EditorLayer is a purely-organizational folder in the Left "Placed Entities"
+// tree — the Eden Editor paradigm (Ultra Plan §5.1). Users create arbitrary nested
+// folders to group entities; layers are workflow-only and DO NOT affect the exported
+// mission (the compiler reads factions/squads/slots, not layers). Nesting is by
+// `parentId` (null = root); `entityIds` lists the slots/vehicles/markers placed
+// directly in this folder.
+export interface EditorLayer {
+  id: ID
+  name: string
+  parentId: ID | null
+  entityIds: ID[]
+}
+
 export interface Squad {
   id: ID
   factionId: ID
@@ -116,7 +129,7 @@ export interface Selection {
   id: ID | null
 }
 
-/** Names of the nine top-level entity maps — shared by the Y.Doc and the store. */
+/** Names of the top-level entity maps — shared by the Y.Doc and the store. */
 export const ENTITY_MAPS = [
   'factions',
   'squads',
@@ -126,4 +139,5 @@ export const ENTITY_MAPS = [
   'objectives',
   'vehicles',
   'markers',
+  'editorLayers',
 ] as const

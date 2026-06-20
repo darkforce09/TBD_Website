@@ -5,7 +5,13 @@ export { TacticalMap } from './TacticalMap'
 export { useMapContext } from './context/MapContext'
 export { getTerrain, TERRAINS, DEFAULT_TERRAIN } from './coords/terrains'
 export type { TerrainDef, TerrainId } from './coords/terrains'
-export type { MapViewState, TacticalMapProps, TacticalMapApi } from './types'
+export { ASSET_DND_MIME } from './types'
+export type {
+  MapViewState,
+  TacticalMapProps,
+  TacticalMapApi,
+  AssetDropPayload,
+} from './types'
 
 // State foundation (Ultra Plan §2)
 export { useMapStore } from './state/useMapStore'
@@ -17,11 +23,14 @@ export {
   removeEntity,
   clearAll,
   seedMeta,
+  seedDefaultLayer,
   setTitle,
   updateEnvironment,
   updateSlot,
   addFaction,
   addSquad,
+  addEditorLayer,
+  ensureDefaultLayer,
   LOCAL_ORIGIN,
 } from './state/ydoc'
 export type { MissionDoc, EntityMapName } from './state/ydoc'
@@ -40,6 +49,7 @@ export type {
   Slot,
   Squad,
   Faction,
+  EditorLayer,
   Selection,
   SelectionKind,
   ToolId,

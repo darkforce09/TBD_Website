@@ -4,9 +4,10 @@
 // Settings + Attributes modals. The route carries the `fullBleed` handle so AppLayout
 // runs it full-height.
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { TacticalMap, moveEntity, useMapStore } from '@/features/tactical-map'
+import { TacticalMap, addSlot, moveEntity, useMapStore } from '@/features/tactical-map'
+import type { AssetDropPayload, TacticalMapApi } from '@/features/tactical-map'
 import { useMissionDoc } from './hooks/useMissionDoc'
 import { TopCommandStrip } from './layout/TopCommandStrip'
 import { BottomToolbelt } from './layout/BottomToolbelt'
@@ -22,6 +23,15 @@ export default function MissionCreatorPage() {
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null)
   const [attributesId, setAttributesId] = useState<string | null>(null)
 
+  // The map's imperative API (flyTo) — captured once for sibling panels to use.
+  const mapApi = useRef<TacticalMapApi | null>(null)
+  const onReady = useCallback((api: TacticalMapApi) => {
+    mapApi.current = api
+  }, [])
+  const flyTo = useCallback((world: { x: number; y: number }) => {
+    mapApi.current?.flyTo(world)
+  }, [])
+
   // Click empty map with a slot selected → reposition it. (Placement is drag-and-drop
   // from the Asset Browser; the Toolbelt no longer places — Ultra Plan §5.3.)
   const onMapClick = useCallback(
@@ -34,15 +44,30 @@ export default function MissionCreatorPage() {
     [md],
   )
 
+  // Drop an Asset Browser leaf onto the map → one Y.Doc transaction creates the slot
+  // (Arma defaults, Z=0 until the DEM lands) under the active Outliner folder, then
+  // selects it so the Inspector reflects the new entity.
+  const onAssetDrop = useCallback(
+    (payload: AssetDropPayload, world: { x: number; y: number }) => {
+      if (payload.kind !== 'slot') return
+      const layerId = useMapStore.getState().activeLayerId ?? undefined
+      const id = addSlot(md, world, { role: payload.role, layerId })
+      useMapStore.getState().setSelection({ kind: 'slot', id })
+    },
+    [md],
+  )
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-background">
       {/* Full-bleed map behind everything. */}
       <TacticalMap
         terrain="everon"
         className="absolute inset-0 z-0"
+        onReady={onReady}
         onMapClick={onMapClick}
         onCursorMove={setCursor}
         onEntityActivate={setAttributesId}
+        onAssetDrop={onAssetDrop}
       />
 
       {/* Floating overlay layer: spans the screen and ignores pointer events so
@@ -54,7 +79,7 @@ export default function MissionCreatorPage() {
         </div>
 
         <div className="absolute bottom-[5.5rem] left-4 top-[4.75rem]">
-          <OutlinerPanel />
+          <OutlinerPanel md={md} flyTo={flyTo} onActivateSlot={setAttributesId} />
         </div>
 
         <div className="absolute bottom-[5.5rem] right-4 top-[4.75rem]">

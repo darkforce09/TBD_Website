@@ -8,7 +8,7 @@
 
 import * as Y from 'yjs'
 import { ENTITY_MAPS } from './schema'
-import type { ID, MissionMeta, Slot } from './schema'
+import type { EditorLayer, ID, MissionMeta, Slot } from './schema'
 
 /** Origin tag stamped on every local mutation; tracked by the UndoManager. */
 export const LOCAL_ORIGIN = 'local-user'
@@ -90,16 +90,35 @@ export function ensureDefaultSquad(md: MissionDoc): ID {
   return squadId
 }
 
-/** Add a slot at a world position, into a given squad (or the default squad). */
+/** Ensure at least one Outliner folder exists; returns the id to file entities into.
+ *  No transact() of its own — call inside an existing transaction (e.g. addSlot). */
+export function ensureDefaultLayer(md: MissionDoc): ID {
+  const { editorLayers } = md.entities
+  let layerId = [...editorLayers.keys()][0]
+  if (!layerId) {
+    layerId = newId()
+    editorLayers.set(
+      layerId,
+      entityToYMap({ id: layerId, name: 'Default Layer', parentId: null, entityIds: [] }),
+    )
+  }
+  return layerId
+}
+
+/** Add a slot at a world position. One transaction (one undo step) that creates the
+ *  Slot with Arma defaults, attaches it to a squad (for the ORBAT export contract),
+ *  and files its id under an EditorLayer (the Outliner folder it appears in — the
+ *  active layer, or the default layer as a fallback). */
 export function addSlot(
   md: MissionDoc,
   position: { x: number; y: number },
-  opts?: { squadId?: ID; role?: string; tag?: string },
+  opts?: { squadId?: ID; layerId?: ID; role?: string; tag?: string },
 ): ID {
   let id = ''
   transact(md, () => {
     const targetSquad = opts?.squadId ?? ensureDefaultSquad(md)
-    const { slots, squads } = md.entities
+    const targetLayer = opts?.layerId ?? ensureDefaultLayer(md)
+    const { slots, squads, editorLayers } = md.entities
     const squad = squads.get(targetSquad)!
     const slotIds = squad.get('slotIds') as ID[]
     id = newId()
@@ -115,6 +134,8 @@ export function addSlot(
     }
     slots.set(id, entityToYMap(slot as unknown as Record<string, unknown>))
     squad.set('slotIds', [...slotIds, id])
+    const layer = editorLayers.get(targetLayer)
+    if (layer) layer.set('entityIds', [...(layer.get('entityIds') as ID[]), id])
   })
   return id
 }
@@ -140,12 +161,17 @@ export function removeEntity(
   mapName: EntityMapName,
   id: ID,
 ): void {
-  const { factions, squads, slots } = md.entities
+  const { factions, squads, slots, editorLayers } = md.entities
   transact(md, () => {
     if (mapName === 'slots') {
       const squadId = slots.get(id)?.get('squadId') as ID | undefined
       const squad = squadId ? squads.get(squadId) : undefined
       squad?.set('slotIds', (squad.get('slotIds') as ID[]).filter((s) => s !== id))
+      // Detach from whichever Outliner folder held it.
+      for (const layer of editorLayers.values()) {
+        const ids = layer.get('entityIds') as ID[]
+        if (ids.includes(id)) layer.set('entityIds', ids.filter((e) => e !== id))
+      }
     } else if (mapName === 'squads') {
       const squad = squads.get(id)
       for (const slotId of (squad?.get('slotIds') as ID[]) ?? []) slots.delete(slotId)
@@ -186,6 +212,31 @@ export function seedMeta(md: MissionDoc, opts: { id: ID; title: string }): void 
     const m = DEFAULT_META(opts.id, opts.title)
     for (const [k, v] of Object.entries(m)) md.meta.set(k, v)
   }, INIT_ORIGIN)
+}
+
+/** Seed a default Outliner folder if none exist. INIT_ORIGIN → NOT an undo step. */
+export function seedDefaultLayer(md: MissionDoc): void {
+  if (md.entities.editorLayers.size > 0) return
+  md.doc.transact(() => ensureDefaultLayer(md), INIT_ORIGIN)
+}
+
+/** Create a new (root or nested) Outliner folder; returns its id. */
+export function addEditorLayer(
+  md: MissionDoc,
+  opts?: { name?: string; parentId?: ID | null },
+): ID {
+  const id = newId()
+  transact(md, () => {
+    const n = md.entities.editorLayers.size + 1
+    const layer: EditorLayer = {
+      id,
+      name: opts?.name ?? `New Folder ${n}`,
+      parentId: opts?.parentId ?? null,
+      entityIds: [],
+    }
+    md.entities.editorLayers.set(id, entityToYMap(layer as unknown as Record<string, unknown>))
+  })
+  return id
 }
 
 export function setTitle(md: MissionDoc, title: string): void {
