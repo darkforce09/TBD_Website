@@ -52,6 +52,13 @@ Shorter variant:
 | **1** | **This file** (`05_agent_execution_plan.md`) | **Execution authority.** Phases, tasks, acceptance criteria, Decisions log. If anything else conflicts, **this file wins**. |
 | **2** | **Decisions log** (below) | Locked human choices. Do not re-litigate. |
 | **3** | `04_eden_editor_ux_spec.md` | UX contract — created in PHASE DOC-0; copies Decisions log + interaction table. |
+| **3b** | `00_feature_entry_schema.md` | **FEDS v2** — normative per-feature record format (UI Surface, Wiki anchor). |
+| **3c** | `06_tbd_mission_creator_feature_inventory.md` | **What TBD has** — code-evidenced feature inventory. |
+| **3d** | `07a_eden_ui_anatomy.md` | **Eden UI** — panel-by-panel layout (Asset Browser, Toolbar, Entity List). |
+| **3e** | `07b_eden_attribute_catalog.md` | **Eden attributes** — `ATTR-FIELD-*` per entity type. |
+| **3f** | `07_arma3_eden_editor_feature_reference.md` | **Eden interactions** — wiki-anchored FEDS (toolbar, compositions, connect, …). |
+| **3g** | `08_eden_gap_analysis.md` | **Gap + backlog** — ID-linked parity; P0–P3. |
+| **3h** | `09_eden_wiki_manifest.yaml` + `scripts/tools/scrape-eden-wiki.mjs` | Wiki scrape manifest + automation; cache in `artifacts/eden-wiki/`. |
 | **4** | `03_engineering_ultra_plan.md` | Engineering ADRs, Y.Doc schema, compiler/export contract, file tree. |
 | **5** | `CLAUDE.md` | Repo conventions, run commands, commit tags. |
 | **6** | Aegis design tokens | `frontend/src/index.css` + label/spacing scale (`text-label-sm`, `overlayPanel`, etc.). Glass palette only — **not layout**. |
@@ -259,6 +266,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Autosave** | **Debounced autosave** overwrites a single server **draft** on the mission. **Undo** = in-session. Manual **Save Version** creates semver snapshots for future Visual-Git/history. |
 | **Time of day** | Match **Arma 3 Eden** environment control (slider/scrub in environment UI — not preset-only dropdowns). Expose quick readout in top bar; fine control in Mission Settings. |
 | **Phase order** | **Commit/finish uncommitted tree wiring FIRST** (pre-3.5), then DOC-0 → 3.5 → 7b → 7a → 9. |
+| **Eden completeness** | **`00`–`09` docs** + scrape artifacts are the Eden parity checklist. Read `07a`/`07b` before implementing UI/attrs. Implement from `08` P0 backlog. New TBD features → FEDS row in `06`. Re-run `node scripts/tools/scrape-eden-wiki.mjs` when wiki updates. |
 
 ---
 
