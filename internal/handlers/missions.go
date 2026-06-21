@@ -74,8 +74,8 @@ func (h *Handler) ListMissions(c *gin.Context) {
 	case "bookmarked":
 		q = q.Where("id IN (?)", h.db.Model(&models.MissionBookmark{}).
 			Select("mission_id").Where("discord_id = ?", me))
-	default: // global = the live, approved library
-		q = q.Where("status = ?", models.MissionLive)
+	default: // global = all live missions plus the caller's own drafts/pending (mine ⊆ global)
+		q = q.Where("status = ? OR author_id = ?", models.MissionLive, me)
 	}
 
 	if t := c.Query("terrain"); t != "" && t != "all" {

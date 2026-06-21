@@ -234,6 +234,9 @@ the remaining phases are blocked on external assets/backend.
 - A fresh DB is empty of content (events, missions, etc.) — seed those via the API
   or `psql`. The one committed seed is the Discord role→permission mappings
   (`internal/db/seeds/discord_roles.sql`, applied with `make seed`).
+  `internal/db/seeds/mock_data.sql` (Operation Red Dawn etc., four fixed UUIDs) is **not**
+  run by `make seed` — only by the explicit `go run ./cmd/seed`. DEV_RUNBOOK.md has the
+  DELETE SQL to purge those mock missions if they leak into the live library.
 
 ## Verifying changes
 Source of truth for the API contract is the Go handlers + `internal/models` tags;

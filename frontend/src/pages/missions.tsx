@@ -13,11 +13,26 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
+import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog'
 import { useMission, useMissions } from '@/hooks/queries'
 import { useCreateMission } from '@/hooks/mutations'
+import { useAuthStore } from '@/store/useAuthStore'
 import { gameModeLabel, terrainLabel } from '@/lib/format'
 import type { MissionDetail } from '@/types/api'
 import { cn } from '@/lib/utils'
+
+// Mission visibility, derived from status until a dedicated review flag exists.
+// "Open for review" maps to pending_approval (the approval queue) for now.
+const VISIBILITY: Record<string, { label: string; variant: 'neutral' | 'warning' | 'success' }> = {
+  draft: { label: 'Draft', variant: 'neutral' },
+  pending_approval: { label: 'Open for review', variant: 'warning' },
+  live: { label: 'Live', variant: 'success' },
+}
+
+function VisibilityBadge({ status }: { status: string }) {
+  const v = VISIBILITY[status] ?? { label: status, variant: 'neutral' as const }
+  return <Badge variant={v.variant}>{v.label}</Badge>
+}
 
 const SCOPES = [
   { label: 'Global Missions', value: 'global' },
@@ -59,8 +74,11 @@ export function MissionLibraryPage() {
 
   const { data, isLoading, isError, error } = useMissions(scope, filters)
   const missions = data?.data ?? []
-  // The hero spotlights the most recent operation in view (list is ordered newest-first).
-  const featured = missions[0]
+  // The hero always spotlights the newest operation from the global library so it stays
+  // stable when switching tabs (grid still respects the active scope). The global list is
+  // ordered newest-first; on the global tab this query dedupes with the grid query above.
+  const { data: globalData } = useMissions('global', filters)
+  const featured = globalData?.data?.[0]
 
   return (
     <AuthGate>
@@ -200,6 +218,9 @@ export function MissionLibraryPage() {
                         {gameModeLabel(m.game_mode)}
                       </Badge>
                     </span>
+                    <span className="absolute top-3 right-3">
+                      <VisibilityBadge status={m.status} />
+                    </span>
                   </div>
                   <div className="p-4">
                     <div className="mb-3 flex items-center gap-2">
@@ -248,6 +269,16 @@ export function MissionLibraryPage() {
 function MissionDossierSheet({ id }: { id: string }) {
   const navigate = useNavigate()
   const { data: mission, isLoading, isError, error } = useMission(id)
+  const user = useAuthStore((s) => s.user)
+  const isMaker = useAuthStore((s) => s.hasMinRole('mission_maker'))
+  const isAdmin = useAuthStore((s) => s.hasMinRole('admin'))
+  const [commentsOpen, setCommentsOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
+
+  // Editing is owner-or-admin (invited-editor support is future work). The /edit route is
+  // itself gated to mission_maker+, so a non-maker never reaches the editor.
+  const isOwner = Boolean(mission && mission.author_id === user?.discord_id)
+  const canEdit = isMaker && (isOwner || isAdmin)
 
   return (
     <SheetContent side="right" bleed className="w-full max-w-none md:w-[60vw]">
@@ -266,6 +297,11 @@ function MissionDossierSheet({ id }: { id: string }) {
           <span className="material-symbols-outlined">close</span>
         </SheetClose>
         <div className="absolute right-8 bottom-6 left-8">
+          {mission && (
+            <span className="mb-2 inline-block">
+              <VisibilityBadge status={mission.status} />
+            </span>
+          )}
           <SheetTitle className="text-4xl font-black tracking-tighter text-white uppercase">
             {mission?.title ?? 'Mission Dossier'}
           </SheetTitle>
@@ -278,19 +314,60 @@ function MissionDossierSheet({ id }: { id: string }) {
       {/* Scrollable content — pb-32 clears the sticky footer */}
       <div className="custom-scrollbar flex-1 overflow-y-auto px-8 pt-6 pb-32">
         <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
-          {mission && <MissionDossierBody mission={mission} />}
+          {mission && (
+            <div className="space-y-8">
+              <MissionDossierBody mission={mission} />
+
+              {/* Collaboration — UI shell. Comments are suggestions only and do not yet
+                  mutate the mission; sharing/invites are backend-stubbed. */}
+              <section>
+                <h3 className="mb-2 font-mono text-label-md tracking-widest text-on-surface-variant uppercase">
+                  Collaboration
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCommentsOpen(true)}
+                    className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-label-md text-on-surface transition-colors hover:bg-white/10"
+                  >
+                    Comments
+                  </button>
+                  {canEdit && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => toast('Will allow anyone to view and comment')}
+                        className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-label-md text-on-surface transition-colors hover:bg-white/10"
+                      >
+                        Share for review
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInviteOpen(true)}
+                        className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-label-md text-on-surface transition-colors hover:bg-white/10"
+                      >
+                        Invite editor
+                      </button>
+                    </>
+                  )}
+                </div>
+              </section>
+            </div>
+          )}
         </QueryState>
       </div>
 
       {/* Sticky action footer */}
       <div className="absolute right-0 bottom-0 left-0 flex">
-        <button
-          type="button"
-          onClick={() => navigate('/missions/create')}
-          className="flex-1 bg-action/90 py-5 font-bold tracking-wide text-on-action backdrop-blur-md transition-colors hover:bg-action"
-        >
-          [ OPEN IN MISSION CREATOR ]
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => navigate(`/missions/${id}/edit`)}
+            className="flex-1 bg-action/90 py-5 font-bold tracking-wide text-on-action backdrop-blur-md transition-colors hover:bg-action"
+          >
+            [ OPEN IN MISSION CREATOR ]
+          </button>
+        )}
         <button
           type="button"
           onClick={() => toast('2D Tactical Planner — coming soon')}
@@ -299,6 +376,44 @@ function MissionDossierSheet({ id }: { id: string }) {
           [ LAUNCH TACTICAL PLANNER ]
         </button>
       </div>
+
+      {/* Comments — empty-state shell (no API yet) */}
+      <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
+        <SheetContent side="right" className="w-full max-w-none md:w-[28rem]">
+          <SheetTitle className="text-headline-sm text-on-surface">Comments</SheetTitle>
+          <SheetDescription className="mt-1 text-label-md text-on-surface-variant">
+            Suggestions on this mission — they don't change the mission until an editor applies them.
+          </SheetDescription>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center">
+            <span className="material-symbols-outlined text-4xl text-on-surface-variant">forum</span>
+            <p className="text-body-md text-on-surface-variant">Comments coming soon.</p>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Invite editor — stubbed dialog */}
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent
+          title="Invite editor"
+          description="Grant another mission maker edit access to this mission."
+        >
+          <label className="mb-2 block text-label-md text-on-surface-variant">
+            Email or Discord handle
+          </label>
+          <input
+            type="text"
+            disabled
+            placeholder="name@example.com or handle#0000"
+            className="mb-4 w-full cursor-not-allowed rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-label-md text-on-surface-variant opacity-60"
+          />
+          <p className="text-label-md text-on-surface-variant">Coming soon.</p>
+          <div className="mt-6 flex justify-end">
+            <DialogClose className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-label-md text-on-surface transition-colors hover:bg-white/10">
+              Close
+            </DialogClose>
+          </div>
+        </DialogContent>
+      </Dialog>
     </SheetContent>
   )
 }

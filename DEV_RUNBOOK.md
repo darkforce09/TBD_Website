@@ -52,3 +52,20 @@ make db-down      # stops Postgres, keeps volume
   Events/missions must be seeded via the API or `psql`.
 - Frontend checks: `cd frontend && npm run build` (tsc+vite), `npm run lint`.
 - Integration tests: `make test-it` (needs `make db-up`).
+
+## Mock data (optional, not run by `make seed`)
+
+`internal/db/seeds/mock_data.sql` (Operation Red Dawn etc.) is **only** applied by the
+explicit `go run ./cmd/seed` command — `make seed` does not touch it. The Mission Library
+renders live API data, so these four fixed-UUID missions show up as real entries. To purge
+them (children first; there are no ON DELETE CASCADE FKs):
+
+```bash
+docker compose exec -T db psql -U tbd -d tbd_reforger <<'SQL'
+DELETE FROM mission_versions  WHERE mission_id IN ('00000000-0000-4000-c000-000000000001','00000000-0000-4000-c000-000000000002','00000000-0000-4000-c000-000000000003','00000000-0000-4000-c000-000000000004');
+DELETE FROM mission_armories  WHERE mission_id IN ('00000000-0000-4000-c000-000000000001','00000000-0000-4000-c000-000000000002','00000000-0000-4000-c000-000000000003','00000000-0000-4000-c000-000000000004');
+DELETE FROM mission_bookmarks WHERE mission_id IN ('00000000-0000-4000-c000-000000000001','00000000-0000-4000-c000-000000000002','00000000-0000-4000-c000-000000000003','00000000-0000-4000-c000-000000000004');
+UPDATE missions SET current_version_id = NULL WHERE id IN ('00000000-0000-4000-c000-000000000001','00000000-0000-4000-c000-000000000002','00000000-0000-4000-c000-000000000003','00000000-0000-4000-c000-000000000004');
+DELETE FROM missions WHERE id IN ('00000000-0000-4000-c000-000000000001','00000000-0000-4000-c000-000000000002','00000000-0000-4000-c000-000000000003','00000000-0000-4000-c000-000000000004');
+SQL
+```

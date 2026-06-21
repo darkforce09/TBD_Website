@@ -80,10 +80,16 @@ func TestMissionLifecycleIntegration(t *testing.T) {
 		t.Fatalf("submit = %d, body=%s", w.Code, w.Body.String())
 	}
 
-	// --- mission must NOT yet appear in the global (live) library ---
+	// --- another user must NOT yet see the pending mission in the global library ---
 	w = do(r, "GET", "/api/v1/missions?scope=global&terrain=everon", reqOpt{bearer: otherTok})
 	if containsMission(t, w, mid) {
-		t.Fatal("pending mission should not appear in global library")
+		t.Fatal("pending mission should not appear in another user's global library")
+	}
+
+	// --- but the author DOES see their own pending mission in global (mine ⊆ global) ---
+	w = do(r, "GET", "/api/v1/missions?scope=global&terrain=everon", reqOpt{bearer: makerTok})
+	if !containsMission(t, w, mid) {
+		t.Fatal("author should see their own pending mission in the global library")
 	}
 
 	// --- it appears in the admin approvals queue ---
