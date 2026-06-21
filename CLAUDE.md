@@ -68,23 +68,24 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 | New/changed route | Matching `frontend/docs/pages/*.md` + row in `frontend/docs/INDEX.md`; verify against `frontend/src/router.tsx` |
 | UI surface (no new route) | Relevant page doc + `Live source:` path to `frontend/src/pages/` or `features/` |
 | API / model change | `internal/models/` tags + matching `frontend/src/types/`; note handler if behavior changed |
-| Mission Creator | MC README, `05` Decisions log, and/or `06` inventory — only if editor contract or Eden parity changed |
+| Mission Creator | MC README, `agent_execution.md` Decisions log, and/or `feature_inventory.md` — only if editor contract or Eden parity changed |
 | Frontend deferred work | **FD-0xx** in `frontend/docs/TRACKING.md` — never reuse T-0xx for deferred items |
 
-**Doc hub:** [`docs/README.md`](docs/README.md) → [`docs/frontend/README.md`](docs/frontend/README.md) / [`docs/backend/README.md`](docs/backend/README.md). Tag glossary: [`docs/TAGS.md`](docs/TAGS.md).
+**Doc hub:** [`docs/README.md`](docs/README.md) → domain **`ROADMAP.md`** files. Tag glossary: [`docs/TAGS.md`](docs/TAGS.md).
 
 **Do not update** blueprint HTML, stitch exports, or mock-up HTML — archive tier only. Live UI = `frontend/src/pages` + `features/`.
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-043 — 2026-06-20)
+## Status (latest feature work: T-045 — 2026-06-20)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-045 **Roadmap-centric naming** — each domain gets **`ROADMAP.md`** (FE, BE, Mission Creator); MC docs renamed to descriptive names (`engineering_plan.md`, `agent_execution.md`, …); stubs at old numbered paths.
 - T-043 **Platform documentation reorg** — [`docs/README.md`](docs/README.md) hub with
   frontend/backend/archive master indexes; platform docs moved to `docs/platform/` and
-  `docs/backend/architecture.md`; Mission Creator corpus reorg (`eden/`, `reference/`,
-  `02_roadmap.md`); FD-0xx vs T-0xx split in [`docs/TAGS.md`](docs/TAGS.md); frontend
+  `docs/backend/architecture.md`; Mission Creator corpus reorg (`eden/`, `reference/`);
+  FD-0xx vs T-0xx split in [`docs/TAGS.md`](docs/TAGS.md); frontend
   surface specs refreshed (SplitPane events, mission editor route, §Documentation rule here).
 - T-001 initial backend (full schema + all handlers) + frontend scaffold.
 - T-002 Discord OAuth2 callback end-to-end.
@@ -183,8 +184,8 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   feature modules `frontend/src/features/tactical-map/` (terrain-agnostic engine) +
   `frontend/src/features/mission-creator/` (editor wrapper), code-split lazy route
   `/missions/:id/edit` (mission_maker+, `fullBleed`). Execution authority is
-  `Design_Docs/Mission_Creator_Architecture/05_agent_execution_plan.md` (Eden docked-shell UX +
-  Decisions log; `04_eden_ux_spec.md` restates it); `03_engineering_ultra_plan.md` remains
+  `Design_Docs/Mission_Creator_Architecture/ROADMAP.md` (Tracks A/B/C) +
+  `agent_execution.md` (Eden UX Decisions log); `engineering_plan.md` remains
   authoritative for the data model / workers / compiler / DEM. New deps:
   `deck.gl @deck.gl/core /layers /react @luma.gl/core yjs y-indexeddb comlink idb`.
   - **T-029 Phase 0/1 — core viewport:** `<TacticalMap>` = `<DeckGL>` `OrthographicView`

@@ -55,3 +55,17 @@ Old → new paths. Stubs remain at old locations where noted.
 ## Tag rename
 
 Frontend deferred work: `T-001..T-009` in `frontend/docs/TRACKING.md` → `FD-001..FD-009`.
+
+## T-045 — Roadmap-centric naming
+
+| Old | New |
+|-----|-----|
+| `02_roadmap.md` | **`ROADMAP.md`** |
+| `01_problem_statement.md` | `problem_statement.md` |
+| `03_engineering_ultra_plan.md` | `engineering_plan.md` |
+| `04_eden_ux_spec.md` | `ux_spec.md` |
+| `05_agent_execution_plan.md` | `agent_execution.md` |
+| `06_tbd_feature_inventory.md` | `feature_inventory.md` |
+| *(new)* | `docs/frontend/ROADMAP.md`, `docs/backend/ROADMAP.md` |
+
+Stubs at all old numbered MC paths.
