@@ -8,7 +8,7 @@
 | Backend | [`docs/backend/ROADMAP.md`](backend/ROADMAP.md) |
 | Mission Creator | [`Design_Docs/Mission_Creator_Architecture/ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) |
 
-**Status:** living · **Updated:** 2026-06-20
+**Status:** living · **Updated:** 2026-06-21
 
 Central index. For backlog and doc links, open the **ROADMAP** for your domain.
 
@@ -21,6 +21,7 @@ Central index. For backlog and doc links, open the **ROADMAP** for your domain.
 | [Mission Creator ROADMAP](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) | Editor Tracks A/B/C |
 | [Archive master](archive/README.md) | Historical HTML mockups |
 | [TAGS.md](TAGS.md) | Naming + T / FD / BE / A-B-C glossary |
+| [AGENT_COMMIT_CHECKLIST.md](AGENT_COMMIT_CHECKLIST.md) | Same-commit doc sync for AI agents |
 | [CLAUDE.md](../CLAUDE.md) | Agent runtime, doc-on-commit rule |
 | [DEV_RUNBOOK.md](../DEV_RUNBOOK.md) | Local stack commands |
 

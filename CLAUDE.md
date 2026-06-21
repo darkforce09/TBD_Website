@@ -71,16 +71,26 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 | Mission Creator | MC README, `agent_execution.md` Decisions log, and/or `feature_inventory.md` — only if editor contract or Eden parity changed |
 | Frontend deferred work | **FD-0xx** in `frontend/docs/TRACKING.md` — never reuse T-0xx for deferred items |
 
-**Doc hub:** [`docs/README.md`](docs/README.md) → domain **`ROADMAP.md`** files. Tag glossary: [`docs/TAGS.md`](docs/TAGS.md).
+**Doc hub:** [`docs/README.md`](docs/README.md) → domain **`ROADMAP.md`** files. Tag glossary: [`docs/TAGS.md`](docs/TAGS.md). **Commit checklist:** [`docs/AGENT_COMMIT_CHECKLIST.md`](docs/AGENT_COMMIT_CHECKLIST.md).
 
 **Do not update** blueprint HTML, stitch exports, or mock-up HTML — archive tier only. Live UI = `frontend/src/pages` + `features/`.
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-047 — 2026-06-21)
+## Status (latest feature work: T-048 — 2026-06-21)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-048 **Mission create from Library (macOS Dialog)** — the standalone `/missions/create`
+  full-page wizard is replaced by a transient `CreateMissionDialog`
+  (`frontend/src/features/mission-creator/CreateMissionDialog.tsx`) launched from the Mission
+  Library: a **New Mission** header button + a **My Missions** true-empty-state CTA + **Cmd/Ctrl+N**,
+  all `mission_maker+` only (enlisted see nothing). Opening create closes the dossier Sheet first
+  (one overlay at a time); the form resets on every close. The `/missions/create` route, the
+  `MissionCreatorPage` wizard export in `pages/missions.tsx`, the sidebar nav item, and the
+  stitch-map entry are removed. **Mission Creator** naming stays on the dossier CTA
+  (`OPEN IN MISSION CREATOR`) and the `/missions/:id/edit` breadcrumb — only the wizard tab went
+  away. `POST /missions` unchanged. Verified: frontend build + lint clean.
 - T-047 **Doc authority alignment** — `agent_execution.md` Decisions log + agent rules now point agents at **`ROADMAP.md`** for open work and state the shell phases (PRE-3.5–9) are complete (T-033–T-040), replacing the old strict-phase-order / `00`–`09` numbered shorthand; `eden/wiki_manifest.yaml` deduped (`Eden_Editor:_Scenario_Attributes` was listed twice → 28 unique pages). (T-046 was the link-integrity pass: stale numbered cross-refs + relative link depths.)
 - T-045 **Roadmap-centric naming** — each domain gets **`ROADMAP.md`** (FE, BE, Mission Creator); MC docs renamed to descriptive names (`engineering_plan.md`, `agent_execution.md`, …); stubs at old numbered paths.
 - T-043 **Platform documentation reorg** — [`docs/README.md`](docs/README.md) hub with

@@ -38,9 +38,17 @@ To achieve the "Big Brain" macOS methodology without touching your beloved Sideb
 - **Interaction:** If an admin needs to toggle `published`, `pinned`, or `signupsOpen`, they do not open an edit modal. They just click a toggle switch directly on the list row. 
 - **macOS Vibe:** Status changes (Draft/Published/Live/Completed) will be handled via an inline dropdown menu on the list item itself. It saves instantly in the background, exactly like renaming a file in macOS Finder.
 
-## User Review Required
+---
 
-> [!IMPORTANT]
-> **This is the exact blueprint for ripping out the Web 2.0 friction and replacing it with macOS native flows.**
-> - Does this Split-Pane and Modal refactoring for the Events and Admin pages align perfectly with your methodology?
-> - Once you approve, I will begin rewriting the React components to implement this architecture!
+## Shipped macOS patterns (reference)
+
+These pages already follow the methodology — use as implementation references:
+
+| Pattern | Example | Spec |
+|---------|---------|------|
+| Split-pane master/detail | Event Schedule, Announcements, Wiki | [`event-schedule.md`](../../frontend/docs/pages/event-schedule.md) |
+| Create-over-list Dialog | Event Manager "Schedule Operation" | [`event-manager.md`](../../frontend/docs/pages/event-manager.md), `admin.tsx` |
+| Slide-over dossier (no route replace) | Mission Library card → Sheet | [`mission-library.md`](../../frontend/docs/pages/mission-library.md) |
+| **Create-over-list Dialog (T-048)** | Mission Library **+ New Mission** → `CreateMissionDialog` | [`t048_library_create_dialog.md`](../../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) |
+
+**Anti-pattern removed by T-048:** standalone `/missions/create` full-page wizard + sidebar "Mission Creator" tab — creation is a transient action on the library surface, not a nav destination.

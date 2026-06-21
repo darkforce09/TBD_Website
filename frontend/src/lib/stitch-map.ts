@@ -7,7 +7,6 @@ export const stitchMap: Record<string, string | null> = {
   '/leaderboards': 'global_leaderboards_player_rankings',
   '/missions': 'mission_library_tactical_browser',
   '/missions/:id': 'operation_enduring_freedom_mission_overview',
-  '/missions/create': 'mission_creator_setup_wizard',
   '/missions/:id/edit': null,
   '/events': 'upcoming_operations_event_schedule',
   '/events/:id': null,

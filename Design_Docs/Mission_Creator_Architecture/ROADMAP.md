@@ -27,8 +27,10 @@
 | **[`scripts/tools/scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs)** | Regenerate wiki cache from manifest |
 | **[`artifacts/eden-feds-draft.jsonl`](../../artifacts/eden-feds-draft.jsonl)** | Draft FEDS entries derived from wiki research |
 | **[`artifacts/README.md`](../../artifacts/README.md)** | Generated artifacts policy |
+| **[`t048_library_create_dialog.md`](t048_library_create_dialog.md)** | **T-048** — create mission from Library dialog (planned) |
+| [`frontend/docs/pages/mission-library.md`](../../frontend/docs/pages/mission-library.md) | Surface spec for `/missions` (+ create dialog T-048) |
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Surface spec for `/missions/:id/edit` |
-| [`frontend/docs/pages/mission-creator.md`](../../frontend/docs/pages/mission-creator.md) | Setup wizard `/missions/create` |
+| [`frontend/docs/pages/mission-creator.md`](../../frontend/docs/pages/mission-creator.md) | Archived — wizard moved into library (T-048) |
 | [`CLAUDE.md`](../../CLAUDE.md) §Status | Git milestones T-029–T-040 shipped work |
 
 ---
@@ -89,6 +91,16 @@ Tracks A and B can progress in parallel once map assets exist. **Track C is its 
 ### Documentation & Eden wiki research (T-042)
 - FEDS inventory ([`feature_inventory.md`](feature_inventory.md)), Eden reference ([`eden/`](eden/))
 - **Arma 3 Eden Editor wiki scrape:** 28 pages in [`artifacts/eden-wiki/`](../../artifacts/eden-wiki/) via [`eden/wiki_manifest.yaml`](eden/wiki_manifest.yaml) + [`scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs); feeds [`eden/interactions.md`](eden/interactions.md), [`eden/ui_anatomy.md`](eden/ui_anatomy.md), [`eden/attributes.md`](eden/attributes.md), [`eden/gap_analysis.md`](eden/gap_analysis.md)
+
+---
+
+## DONE — T-048 (platform UX)
+
+| Item | Spec | Deliverable |
+|------|------|-------------|
+| **Create from Library** | [`t048_library_create_dialog.md`](t048_library_create_dialog.md) | ✅ `CreateMissionDialog` on `/missions` (header button + My-Missions empty-state CTA + Cmd/Ctrl+N, `mission_maker+`); `/missions/create` route + sidebar nav removed |
+
+Did not block Track A/B/C editor work; "Mission Creator" labels remain on the dossier CTA + `/missions/:id/edit` breadcrumb (only the standalone wizard tab was removed).
 
 ---
 

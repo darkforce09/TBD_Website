@@ -12,11 +12,7 @@ import {
 import { EventHubPage, OrbatSelectionPage } from '@/pages/events'
 import { DashboardPage } from '@/pages/Dashboard'
 import { ServerIntelPage } from '@/pages/ServerIntel'
-import {
-  MissionCreatorPage,
-  MissionLibraryPage,
-  MissionOverviewPage,
-} from '@/pages/missions'
+import { MissionLibraryPage, MissionOverviewPage } from '@/pages/missions'
 import {
   ModpacksPage,
   MortarCalculatorPage,
@@ -126,11 +122,6 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute minRole="mission_maker" />,
         children: [
-          {
-            path: 'missions/create',
-            element: <MissionCreatorPage />,
-            ...breadcrumb('Mission Hub', 'Mission Creator'),
-          },
           {
             path: 'missions/:id/edit',
             element: (

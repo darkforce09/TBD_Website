@@ -17,6 +17,7 @@
 | **[Mission Creator ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md)** | 2D editor Tracks A/B/C |
 | **[`docs/platform/macos_ux_architecture.md`](../platform/macos_ux_architecture.md)** | Split-pane / frictionlessness methodology |
 | **[`CLAUDE.md`](../../CLAUDE.md)** | Agent runtime, T-0xx status, doc-on-commit rule |
+| **[`docs/AGENT_COMMIT_CHECKLIST.md`](../AGENT_COMMIT_CHECKLIST.md)** | Same-commit doc sync — read before every T-0xx |
 | **[Archive](../archive/README.md)** | Historical stitch/blueprint HTML (reference only) |
 
 ---
@@ -33,9 +34,8 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/announcements` | [announcements.md](../../frontend/docs/pages/announcements.md) | Live: `operations.tsx` |
 | `/deployments` | [deployments.md](../../frontend/docs/pages/deployments.md) | Live: `operations.tsx` |
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
-| `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | |
+| `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/create` | [mission-creator.md](../../frontend/docs/pages/mission-creator.md) | Setup wizard → edit route |
 | `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — Eden editor shipped; DEM/registry blocked |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
@@ -70,10 +70,16 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 ---
 
+## Recently shipped
+
+| Item | Spec | Notes |
+|------|------|-------|
+| **T-048 Library create dialog** | [t048_library_create_dialog.md](../../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) | `CreateMissionDialog` on `/missions` (header button + My-Missions empty-state CTA + Cmd/Ctrl+N, `mission_maker+`); `/missions/create` route + sidebar item removed; macOS frosted modal |
+
 ## Recommended next work
 
-1. **FD-001** — when backend exposes server/RCON endpoints
-2. **Mission editor Track A** — follow [MC ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) phases 1–4 (terrain, DEM, Z)
+1. **Mission editor Track A** — follow [MC ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) phases 1–4 (terrain, DEM, Z)
+2. **FD-001** — when backend exposes server/RCON endpoints
 3. **FD-008** — wiki markdown (low risk, high UX)
 4. **FD-007** — CMS editor (admin-only)
 

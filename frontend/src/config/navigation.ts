@@ -34,7 +34,6 @@ export const navigation: NavSection[] = [
     title: 'Mission Hub',
     items: [
       { label: 'Mission Library', path: '/missions', icon: 'library_books', minRole: 'enlisted' },
-      { label: 'Mission Creator', path: '/missions/create', icon: 'map', minRole: 'mission_maker' },
     ],
   },
   {

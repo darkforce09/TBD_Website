@@ -30,30 +30,29 @@
 | 11 | Nav item | link | My Deployments | Service record | `military_tech` | `/deployments` | enlisted |
 | 12 | Nav item | link | Global Leaderboards | Stats | `leaderboard` | `/leaderboards` | enlisted |
 | 13 | Section header | h3 | Mission Hub | Nav group | Static |
-| 14 | Nav item | link | Mission Library | Mission DB | `library_books` | `/missions` | enlisted |
-| 15 | Nav item | link | Mission Creator | New mission wizard | `map` | `/missions/create` | mission_maker (hidden otherwise) |
-| 16 | Section header | h3 | Field Tools | Nav group | Static |
-| 17 | Nav item | link | Mortar Calculator | Ballistics tool | `calculate` | `/tools/mortar` | enlisted |
-| 18 | Section header | h3 | Doctrine & Info | Nav group | Static |
-| 19 | Nav item | link | SOPs & Manuals | Wiki | `menu_book` | `/wiki` | enlisted |
-| 20 | Nav item | link | Modpacks | Dependencies | `extension` | `/modpacks` | enlisted |
-| 21 | Admin container | div | — | Red-tinted border box | Static |
-| 22 | Section header | h3 | Administration | Admin group | Static |
-| 23 | Nav item | link | Event Manager | Schedule ops | `event_available` | `/admin/events` | admin |
-| 24 | Nav item | link | Mission Approvals | QC queue | `fact_check` | `/admin/approvals` | admin |
-| 25 | Nav item | link | Server Control | RCON panel | `settings_system_daydream` | `/admin/server` | admin |
-| 26 | Nav item | link | Personnel Roster | User admin | `groups` | `/admin/personnel` | admin |
-| 27 | Nav item | link | Content Manager | CMS | `folder_managed` | `/admin/content` | admin |
-| 28 | Nav item | link | Audit Logs | System log | `receipt_long` | `/admin/audit` | admin |
-| 29 | Active state | class | nav-item-active | Current route highlight | React Router |
-| 30 | Mobile hamburger | button | `menu` | Opens drawer <1280px | Static |
+| 14 | Nav item | link | Mission Library | Mission DB + create (T-048 dialog) | `library_books` | `/missions` | enlisted |
+| 15 | Section header | h3 | Field Tools | Nav group | Static |
+| 16 | Nav item | link | Mortar Calculator | Ballistics tool | `calculate` | `/tools/mortar` | enlisted |
+| 17 | Section header | h3 | Doctrine & Info | Nav group | Static |
+| 18 | Nav item | link | SOPs & Manuals | Wiki | `menu_book` | `/wiki` | enlisted |
+| 19 | Nav item | link | Modpacks | Dependencies | `extension` | `/modpacks` | enlisted |
+| 20 | Admin container | div | — | Red-tinted border box | Static |
+| 21 | Section header | h3 | Administration | Admin group | Static |
+| 22 | Nav item | link | Event Manager | Schedule ops | `event_available` | `/admin/events` | admin |
+| 23 | Nav item | link | Mission Approvals | QC queue | `fact_check` | `/admin/approvals` | admin |
+| 24 | Nav item | link | Server Control | RCON panel | `settings_system_daydream` | `/admin/server` | admin |
+| 25 | Nav item | link | Personnel Roster | User admin | `groups` | `/admin/personnel` | admin |
+| 26 | Nav item | link | Content Manager | CMS | `folder_managed` | `/admin/content` | admin |
+| 27 | Nav item | link | Audit Logs | System log | `receipt_long` | `/admin/audit` | admin |
+| 28 | Active state | class | nav-item-active | Current route highlight | React Router |
+| 29 | Mobile hamburger | button | `menu` | Opens drawer <1280px | Static |
 
 ## Behavior
 
 ### Primary flow
 1. User sees sidebar on desktop (fixed 320px) or hamburger on tablet/mobile.
 2. Clicking a link navigates; active item gets `nav-item-active` glow.
-3. Mission Creator hidden unless `hasMinRole('mission_maker')`.
+3. Mission creation is on Mission Library (**+ New Mission** dialog, T-048) — not a sidebar item.
 4. Administration block hidden unless `hasMinRole('admin')`.
 
 ### States
@@ -71,7 +70,8 @@
 ### M1 — Shell
 - [x] Sidebar renders with all sections per inventory
 - [x] NavLink active states work
-- [x] Role filtering for Mission Creator and Administration
+- [x] Role filtering for Administration
+- [x] T-048: Mission Creator nav item removed; create on Library
 
 ### M2 — Static Stitch
 - [ ] Visual match to Stitch (texture, glow, scrollbar)
@@ -88,7 +88,7 @@
 ### Manual
 1. Load app → sidebar shows 6 sections; brand reads "TBD Reforger".
 2. Click Server Intel → item highlights with primary glow; route changes.
-3. Log in as enlisted → Mission Creator and Administration hidden.
+3. Log in as enlisted → Administration hidden; no **+ New Mission** on Library (T-048).
 
 ### Automated (future)
 - `describe('Sidebar', () => { ... })`

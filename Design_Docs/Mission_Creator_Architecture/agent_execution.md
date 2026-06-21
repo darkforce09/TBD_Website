@@ -88,8 +88,8 @@ Visual target: **Arma 3 Eden Editor** layout + interactions, **modernized with A
 | Code | Route |
 |------|-------|
 | `frontend/src/features/mission-creator/` + `frontend/src/features/tactical-map/` | `/missions/:id/edit` |
-| `frontend/src/pages/missions.tsx` | Mission library (entry to editor) |
-| `frontend/docs/pages/mission-creator.md` | Setup wizard spec (`/missions/create`) — **separate track** |
+| `frontend/src/pages/missions.tsx` | Mission library (entry to editor) + **CreateMissionDialog** launch (T-048) |
+| `frontend/src/features/mission-creator/CreateMissionDialog.tsx` | Create-mission dialog on `/missions` (T-048; replaced the `/missions/create` wizard) |
 
 **STEP 0:** Done — this file is in the repo. Shell phases PRE-3.5–9 are DONE (T-033–T-040); new sessions start at **[`ROADMAP.md`](ROADMAP.md)** and execute only OPEN items.
 
@@ -148,8 +148,8 @@ Key shell files: `MissionCreatorPage.tsx`, `layout/{TopCommandStrip,BottomToolbe
 | Path | Role |
 |------|------|
 | `CLAUDE.md` (T-029–T-032) | Shipped status snapshot — update in DOC-0 |
-| `frontend/docs/pages/mission-creator.md` | `/missions/create` setup wizard (T-003) |
-| `frontend/src/stitch-exports/mission_creator_setup_wizard/` | Wizard HTML mock |
+| `frontend/docs/pages/mission-library.md` | Create-mission dialog spec (T-048; superseded the `/missions/create` wizard) |
+| `frontend/src/stitch-exports/mission_creator_setup_wizard/` | Wizard HTML mock (archived) |
 
 ---
 
@@ -204,7 +204,7 @@ flowchart LR
 | 2 | DEM / Z-axis | Blocked | Heightmap assets |
 | 5–6 | Registry + Arsenal | Blocked | `GET /api/v1/registry` |
 | 8 | Tools + objectives | Blocked | Ruler, zones, LoS GLSL |
-| T-003 | Setup wizard | Separate | `/missions/create` → POST mission → open editor |
+| T-048 | Create dialog | Done | `CreateMissionDialog` on `/missions` → POST mission → open editor (replaced `/missions/create`) |
 
 ```mermaid
 flowchart TD
@@ -274,6 +274,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Load conflict** | When API `json_payload` and local IndexedDB disagree → **prompt user** to choose which to keep. |
 | **Autosave** | **Debounced autosave** overwrites a single server **draft** on the mission. **Undo** = in-session. Manual **Save Version** creates semver snapshots for future Visual-Git/history. |
 | **Time of day** | Match **Arma 3 Eden** environment control (slider/scrub in environment UI — not preset-only dropdowns). Expose quick readout in top bar; fine control in Mission Settings. |
+| **Mission create entry** | **No standalone `/missions/create` route or sidebar tab** (T-048). `mission_maker+` creates from **New Mission** header (tooltip **⌘N/Ctrl+N**), **My Missions true-empty CTA** (no filters active), or **Cmd/Ctrl+N**. Close dossier Sheet before opening dialog. Form resets on every dialog close. Editor surfaces keep **Mission Creator** naming. |
 | **Phase order** | Shell phases **PRE-3.5 → DOC-0 → 3.5 → 7b → 7a → 9 are complete** (T-033–T-040). Historically the tree wiring landed before shell fidelity, but that is done — there is no mandatory next shell phase. For open work see **`ROADMAP.md`**: Tracks A/B/C, Phase 2 DEM, Phases 5–6 registry, Phase 8 tools. |
 | **Eden completeness** | Eden parity checklist = `eden/interactions.md`, `eden/ui_anatomy.md`, `eden/attributes.md`, `eden/gap_analysis.md` + scrape artifacts. Read `eden/ui_anatomy.md` / `eden/attributes.md` before implementing UI/attrs. Implement the P0 backlog from `eden/gap_analysis.md`. Feature status lives in `feature_inventory.md` + `reference/feds_schema.md`; new TBD features → FEDS row in `feature_inventory.md`. Wiki cache = `eden/wiki_manifest.yaml` + `artifacts/eden-wiki/`; regenerate via `node scripts/tools/scrape-eden-wiki.mjs` when the wiki updates. |
 
@@ -444,7 +445,6 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | 2 DEM / Z-axis | Hosted 16-bit heightmaps + topo tiles; `dem/*`, `useDemLayer.ts` |
 | 5–6 Registry + Arsenal | `GET /api/v1/registry`; `registry.worker.ts`, `ArsenalInspector`, paper-doll |
 | 8 Tools + objectives | Ruler, LoS GLSL, zones, `useLineLayer`, `usePolygonLayer`; needs DEM for LoS |
-| T-003 Setup wizard | `/missions/create` → `POST /missions` → navigate to editor |
 | Product (future) | Visual-Git diff ghosts, Mission Planner, in-game Briefing UI, multiplayer y-websocket — see `mission_creator_design.md` |
 
 ---

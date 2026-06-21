@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { OpsCard } from '@/components/OpsCard'
 import { PageHeader } from '@/components/PageHeader'
 import { AuthGate } from '@/components/AuthGate'
+import { MaterialIcon } from '@/components/MaterialIcon'
 import { QueryState } from '@/components/QueryState'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -14,12 +15,16 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet'
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog'
+import { CreateMissionDialog } from '@/features/mission-creator/CreateMissionDialog'
 import { useMission, useMissions } from '@/hooks/queries'
-import { useCreateMission } from '@/hooks/mutations'
 import { useAuthStore } from '@/store/useAuthStore'
 import { gameModeLabel, terrainLabel } from '@/lib/format'
 import type { MissionDetail } from '@/types/api'
 import { cn } from '@/lib/utils'
+
+// Tooltip + shortcut hint adapt to platform (⌘N on macOS, Ctrl+N elsewhere).
+const IS_MAC = typeof navigator !== 'undefined' && /Mac|iP(hone|ad|od)/.test(navigator.platform)
+const NEW_MISSION_HINT = IS_MAC ? 'New Mission (⌘N)' : 'New Mission (Ctrl+N)'
 
 // Mission visibility, derived from status until a dedicated review flag exists.
 // "Open for review" maps to pending_approval (the approval queue) for now.
@@ -65,6 +70,8 @@ export function MissionLibraryPage() {
   const [mode, setMode] = useState('')
   const [players, setPlayers] = useState('')
   const [previewId, setPreviewId] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const isMaker = useAuthStore((s) => s.hasMinRole('mission_maker'))
   const scope = SCOPES[scopeIdx]?.value ?? 'global'
   const filters: Record<string, string> = {}
   if (terrain) filters.terrain = terrain
@@ -80,6 +87,33 @@ export function MissionLibraryPage() {
   const { data: globalData } = useMissions('global', filters)
   const featured = globalData?.data?.[0]
 
+  // Create is a transient action on the library surface (no /missions/create route).
+  // Close the dossier Sheet first so only one overlay is open at a time.
+  const openCreate = () => {
+    setPreviewId(null)
+    setCreateOpen(true)
+  }
+
+  // Cmd/Ctrl+N opens the create dialog (mission_maker+ only), unless a field is focused.
+  useEffect(() => {
+    if (!isMaker) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== 'n' || !(e.metaKey || e.ctrlKey)) return
+      const el = document.activeElement
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) return
+      if (createOpen) return
+      e.preventDefault()
+      openCreate()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isMaker, createOpen])
+
+  // "True empty" My Missions = mine scope, zero results, and no active filters/search.
+  const noFilters = !q && !terrain && !mode && !players
+  const showEmptyCreateCta =
+    isMaker && scope === 'mine' && missions.length === 0 && noFilters && !isLoading
+
   return (
     <AuthGate>
       {/* Full-bleed: edge-to-edge frosted glass over the topo map fills the viewport
@@ -90,28 +124,41 @@ export function MissionLibraryPage() {
         <div className="custom-scrollbar relative z-10 h-full w-full overflow-y-auto bg-surface-glass backdrop-blur-xl">
         <div className="p-6 md:p-8">
         {/* Header + macOS segmented control */}
-        <header className="mb-6">
-          <h1 className="text-4xl font-bold tracking-tight text-on-surface uppercase">Mission Library</h1>
-          <p className="mt-1 text-body-md text-on-surface-variant">
-            Browse, filter, and deploy active operations across the theater.
-          </p>
-          <div className="mt-5 inline-flex gap-1 rounded-full border border-white/5 bg-black/20 p-1">
-            {SCOPES.map((tab, i) => (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => setScopeIdx(i)}
-                className={cn(
-                  'rounded-full px-4 py-1.5 text-label-md font-medium transition-all',
-                  i === scopeIdx
-                    ? 'bg-surface-glass text-on-surface shadow-md'
-                    : 'text-on-surface-variant hover:text-on-surface',
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight text-on-surface uppercase">Mission Library</h1>
+            <p className="mt-1 text-body-md text-on-surface-variant">
+              Browse, filter, and deploy active operations across the theater.
+            </p>
+            <div className="mt-5 inline-flex gap-1 rounded-full border border-white/5 bg-black/20 p-1">
+              {SCOPES.map((tab, i) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setScopeIdx(i)}
+                  className={cn(
+                    'rounded-full px-4 py-1.5 text-label-md font-medium transition-all',
+                    i === scopeIdx
+                      ? 'bg-surface-glass text-on-surface shadow-md'
+                      : 'text-on-surface-variant hover:text-on-surface',
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
+          {isMaker && (
+            <button
+              type="button"
+              onClick={openCreate}
+              title={NEW_MISSION_HINT}
+              className="flex items-center gap-2 rounded-full bg-action px-6 py-3 text-label-md font-bold text-on-action shadow-[0_0_30px_rgba(59,130,246,0.4)] transition hover:bg-action/90"
+            >
+              <MaterialIcon name="add" className="text-[18px]" />
+              New Mission
+            </button>
+          )}
         </header>
 
         <QueryState isLoading={isLoading} isError={isError} error={error as Error}>
@@ -197,7 +244,27 @@ export function MissionLibraryPage() {
 
           {/* Mission grid */}
           {missions.length === 0 ? (
-            <p className="py-12 text-center text-on-surface-variant">No missions found.</p>
+            showEmptyCreateCta ? (
+              <div className="mx-auto my-12 flex max-w-md flex-col items-center gap-4 rounded-2xl border border-dashed border-white/15 bg-white/5 px-8 py-16 text-center">
+                <MaterialIcon name="map" className="text-4xl text-on-surface-variant" />
+                <div>
+                  <p className="text-headline-sm font-bold text-on-surface">No missions yet</p>
+                  <p className="mt-1 text-body-md text-on-surface-variant">
+                    Create a draft to open the Mission Creator.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={openCreate}
+                  className="flex items-center gap-2 rounded-full bg-action px-6 py-3 text-label-md font-bold text-on-action transition hover:bg-action/90"
+                >
+                  <MaterialIcon name="add" className="text-[18px]" />
+                  New Mission
+                </button>
+              </div>
+            ) : (
+              <p className="py-12 text-center text-on-surface-variant">No missions found.</p>
+            )
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {missions.map((m) => (
@@ -256,6 +323,9 @@ export function MissionLibraryPage() {
       <Sheet open={previewId != null} onOpenChange={(o) => !o && setPreviewId(null)}>
         {previewId && <MissionDossierSheet id={previewId} />}
       </Sheet>
+
+      {/* Transient create dialog (replaces the old /missions/create wizard) */}
+      <CreateMissionDialog open={createOpen} onOpenChange={setCreateOpen} />
     </AuthGate>
   )
 }
@@ -514,134 +584,6 @@ export function MissionOverviewPage() {
           </div>
         )}
       </QueryState>
-    </AuthGate>
-  )
-}
-
-export function MissionCreatorPage() {
-  const navigate = useNavigate()
-  const create = useCreateMission()
-  const [title, setTitle] = useState('')
-  const [terrain, setTerrain] = useState('everon')
-  const [gameMode, setGameMode] = useState('pve_coop')
-  const [weather, setWeather] = useState('clear')
-  const [timeOfDay, setTimeOfDay] = useState('14:00')
-  const [maxPlayers, setMaxPlayers] = useState(64)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim()) {
-      toast.error('Title is required')
-      return
-    }
-    create.mutate(
-      {
-        title: title.trim(),
-        terrain,
-        game_mode: gameMode,
-        weather,
-        time_of_day: timeOfDay,
-        max_players: maxPlayers,
-      },
-      {
-        onSuccess: (data: { id?: string }) => {
-          toast.success('Mission created')
-          if (data?.id) navigate(`/missions/${data.id}/edit`)
-        },
-        onError: (e: unknown) =>
-          toast.error(
-            (e as { response?: { data?: { error?: string } } }).response?.data?.error ??
-              'Failed to create mission',
-          ),
-      },
-    )
-  }
-
-  return (
-    <AuthGate>
-      <div className="mx-auto w-full max-w-2xl">
-        <PageHeader
-          title="Initialize New Mission"
-          subtitle="Define the environment parameters before launching the 2D Editor Canvas."
-        />
-        <OpsCard className="bg-surface-container-high">
-          <form onSubmit={handleSubmit}>
-            <label className="mb-2 block text-sm font-medium">Operation Designation</label>
-            <input
-              type="text"
-              placeholder="Enter operation designation..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="mb-6 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm"
-            />
-            <p className="mb-3 text-sm font-medium">Terrain</p>
-            <div className="mb-6 grid gap-3 sm:grid-cols-2">
-              {(['everon', 'arland'] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTerrain(t)}
-                  className={cn(
-                    'rounded-lg border p-4 text-left',
-                    terrain === t
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border-subtle bg-surface-container',
-                  )}
-                >
-                  <span className="font-semibold">{terrainLabel(t)}</span>
-                </button>
-              ))}
-            </div>
-            <label className="mb-2 block text-sm font-medium">Game Mode</label>
-            <select
-              value={gameMode}
-              onChange={(e) => setGameMode(e.target.value)}
-              className="mb-4 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm"
-            >
-              <option value="pve_coop">Co-op PvE</option>
-              <option value="pvp">PvP</option>
-              <option value="zeus">Zeus</option>
-            </select>
-            <label className="mb-2 block text-sm font-medium">Insertion Time</label>
-            <input
-              type="time"
-              value={timeOfDay}
-              onChange={(e) => setTimeOfDay(e.target.value)}
-              className="mb-4 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm"
-            />
-            <label className="mb-2 block text-sm font-medium">Weather</label>
-            <select
-              value={weather}
-              onChange={(e) => setWeather(e.target.value)}
-              className="mb-4 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm"
-            >
-              <option value="clear">Clear (Default)</option>
-              <option value="overcast">Overcast</option>
-              <option value="heavy_rain">Heavy Rain</option>
-              <option value="dense_fog">Dense Fog</option>
-            </select>
-            <label className="mb-2 block text-sm font-medium">Max Players</label>
-            <select
-              value={maxPlayers}
-              onChange={(e) => setMaxPlayers(Number(e.target.value))}
-              className="mb-6 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm"
-            >
-              {[16, 32, 48, 64, 96, 128].map((n) => (
-                <option key={n} value={n}>
-                  {n} Operators
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              disabled={create.isPending}
-              className="w-full rounded-lg bg-primary py-3 text-sm font-medium text-on-primary disabled:opacity-50"
-            >
-              {create.isPending ? 'Creating…' : 'Create Mission Draft'}
-            </button>
-          </form>
-        </OpsCard>
-      </div>
     </AuthGate>
   )
 }

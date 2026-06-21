@@ -30,7 +30,7 @@
 ## Behavior
 
 ### Primary flow
-1. Navigate from wizard (`/missions/create`) or mission dossier Edit action → `/missions/:id/edit`.
+1. Navigate from Mission Library **+ New Mission** dialog (T-048) or dossier **OPEN IN MISSION CREATOR** → `/missions/:id/edit`.
 2. `useMissionDoc` hydrates Y.Doc from y-indexeddb; `useMissionEditor` loads current version from API with conflict prompt.
 3. Author places entities via palette drop, moves selection on map, organizes layers in outliner.
 4. **Save Version** → `POST /missions/:id/versions` with compiled `json_payload`.

@@ -20,6 +20,7 @@ Supporting docs use **descriptive snake_case** filenames (no numeric prefixes): 
 | Prefix | Meaning | Where |
 |--------|---------|-------|
 | **T-0xx** | Platform git milestones | [`CLAUDE.md`](../CLAUDE.md) §Status |
+| **T-048** | Library create dialog (in progress) | [`t048_library_create_dialog.md`](../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) |
 | **FD-0xx** | Frontend deferred work | [`frontend/docs/TRACKING.md`](../frontend/docs/TRACKING.md) |
 | **BE-0xx** | Backend deferred work | [`docs/backend/ROADMAP.md`](backend/ROADMAP.md) |
 | **P0–P3** | Eden parity backlog | MC `eden/gap_analysis.md` |

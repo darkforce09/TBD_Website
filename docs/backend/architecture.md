@@ -111,7 +111,7 @@ CREATE INDEX idx_link_codes_discord ON identity_link_codes(discord_id) WHERE con
 
 ### 1.5 `missions` + `mission_versions` — Mission Library / Creator / Overview
 
-Drives: Mission Library cards, Mission Creator wizard, Mission Overview, Mission Approvals. Versioning (`v1.2.0` seen in Overview) handled by a child table; `missions` points at the current live version.
+Drives: Mission Library cards, Library create dialog, Mission Overview, Mission Approvals. Versioning (`v1.2.0` seen in Overview) handled by a child table; `missions` points at the current live version.
 
 ```sql
 CREATE TABLE missions (
@@ -544,7 +544,7 @@ Authorization helpers: `RequireAuth`, `RequireRole(mission_maker)`, `RequireRole
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/missions` | user | Library w/ filters `?terrain=&mode=&player_count=&scope=global\|mine\|bookmarked&q=` |
-| POST | `/missions` | mission_maker | Mission Creator wizard → create `draft` + initial version |
+| POST | `/missions` | mission_maker | Library create dialog → create `draft` + initial version |
 | GET | `/missions/:id` | user | Overview: briefing, armory, ORBAT template, version, command actions |
 | PATCH | `/missions/:id` | author/admin | Update metadata |
 | POST | `/missions/:id/versions` | author/admin | Save new `json_payload` version from 2D editor |
