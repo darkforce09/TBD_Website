@@ -22,6 +22,11 @@
 | **[`eden/ui_anatomy.md`](eden/ui_anatomy.md)** | Panel-by-panel Eden UI |
 | **[`eden/attributes.md`](eden/attributes.md)** | Attribute catalog |
 | **[`eden/gap_analysis.md`](eden/gap_analysis.md)** | Eden parity backlog (P0–P3) |
+| **[`eden/wiki_manifest.yaml`](eden/wiki_manifest.yaml)** | Scrape manifest — 28 Bohemia Eden Editor wiki pages |
+| **[`artifacts/eden-wiki/`](../../artifacts/eden-wiki/)** | **Cached wiki markdown** (generated; do not hand-edit) |
+| **[`scripts/tools/scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs)** | Regenerate wiki cache from manifest |
+| **[`artifacts/eden-feds-draft.jsonl`](../../artifacts/eden-feds-draft.jsonl)** | Draft FEDS entries derived from wiki research |
+| **[`artifacts/README.md`](../../artifacts/README.md)** | Generated artifacts policy |
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Surface spec for `/missions/:id/edit` |
 | [`frontend/docs/pages/mission-creator.md`](../../frontend/docs/pages/mission-creator.md) | Setup wizard `/missions/create` |
 | [`CLAUDE.md`](../../CLAUDE.md) §Status | Git milestones T-029–T-040 shipped work |
@@ -81,8 +86,9 @@ Tracks A and B can progress in parallel once map assets exist. **Track C is its 
 - Semver Save Version to API; IndexedDB vs server conflict dialog
 - Hydrate from server `json_payload` (or lossy ORBAT-only fallback)
 
-### Documentation
-- FEDS inventory ([`feature_inventory.md`](feature_inventory.md)), Eden reference ([`eden/`](eden/)), wiki scrape ([`eden/wiki_manifest.yaml`](eden/wiki_manifest.yaml), 28 pages)
+### Documentation & Eden wiki research (T-042)
+- FEDS inventory ([`feature_inventory.md`](feature_inventory.md)), Eden reference ([`eden/`](eden/))
+- **Arma 3 Eden Editor wiki scrape:** 28 pages in [`artifacts/eden-wiki/`](../../artifacts/eden-wiki/) via [`eden/wiki_manifest.yaml`](eden/wiki_manifest.yaml) + [`scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs); feeds [`eden/interactions.md`](eden/interactions.md), [`eden/ui_anatomy.md`](eden/ui_anatomy.md), [`eden/attributes.md`](eden/attributes.md), [`eden/gap_analysis.md`](eden/gap_analysis.md)
 
 ---
 
