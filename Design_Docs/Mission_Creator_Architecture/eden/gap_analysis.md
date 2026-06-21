@@ -57,7 +57,7 @@
 | TOOLBAR-INTEL-001 | TOP-SETTINGS-001 | partial | P1 | Scenario attrs partial |
 | TOOLBAR-MAP-001 | MAP-VIEW-001 | partial | — | TBD 2D-only always |
 | TOOLBAR-GRID-MOVE-001 | — | missing | P2 | Snap grid |
-| TOOLBAR-UNDO-001 | TOP-UNDO-001 | partial | P1 | No Ctrl+Z |
+| TOOLBAR-UNDO-001 | TOP-UNDO-001 | match | P1 | ✅ T-052 — Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard + toolbar buttons |
 
 ---
 
@@ -135,7 +135,7 @@
 
 7. **P1-01** Ctrl+LMB additive select (`SEL-MOD-001`)
 8. **P1-02** Ctrl+C/V copy paste (`ACTION-CopyUnit` / `PasteUnit`)
-9. **P1-03** Ctrl+Z/Y (`TOP-UNDO-001`)
+9. ~~**P1-03** Ctrl+Z/Y (`TOP-UNDO-001`)~~ — ✅ shipped T-052
 10. **P1-04** Asset browser search (`RIGHT-SEARCH-001`)
 11. **P1-05** Ctrl multi-place (`PLACE-004`)
 12. **P1-06** Map rotation / Shift rotate (`XFORM-SHIFT-001`)

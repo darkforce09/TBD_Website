@@ -77,10 +77,21 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-050 — 2026-06-22)
+## Status (latest feature work: T-052 — 2026-06-22)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-052 **Mission Creator — undo/redo keyboard shortcuts (Eden P1-03)**. The editor toolbar's
+  Undo/Redo buttons already drove the `Y.UndoManager`; this adds the matching keyboard shortcuts
+  to the host keydown handler in `MissionCreatorPage` (reusing the existing `UndoController` — no
+  second stack): **Cmd/Ctrl+Z** undo, **Cmd/Ctrl+Shift+Z** or **Ctrl+Y** redo. Skipped while focus
+  is in an `INPUT`/`SELECT`/`TEXTAREA`/contentEditable field (so Ctrl+Z in an Attributes number
+  field edits the field, not the map); `preventDefault` on a match, but only drives the stack when
+  `canUndo()`/`canRedo()`. Closes gap_analysis P1-03 / `KEY-UNDO-001`. Also fixed a `useMissionDoc`
+  React 19 StrictMode lifecycle bug that left undo dead in dev: the setup→cleanup→setup double-invoke
+  destroyed the memoized `Y.UndoManager` while `useMemo` returned the same dead instance (`canUndo()`
+  always false) — a one-shot `instanceKey` bump on teardown now forces a fresh `md`+`UndoController` so
+  dev undo tracks edits. Verified: frontend build + lint clean.
 - T-050 **Mission Creator — cursor Z readout**. One-line follow-up to T-049: the bottom
   toolbelt's **CUR** (cursor) mode now shows **X/Y/Z** instead of X/Y with a dimmed `—` for Z.
   The engine `onCursorMove` payload (`tactical-map/types.ts`) gained `z`; `TacticalMap` `onHover`

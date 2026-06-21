@@ -23,6 +23,8 @@ Supporting docs use **descriptive snake_case** filenames (no numeric prefixes): 
 | **T-048** | Library create dialog (shipped) | [`t048_library_create_dialog.md`](../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) |
 | **T-049** | Track A quick P0 (shipped) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) |
 | **T-050** | Cursor Z readout (shipped) | [`t050_cursor_z_readout.md`](../Design_Docs/Mission_Creator_Architecture/t050_cursor_z_readout.md) |
+| **T-052** | Eden P1 undo keyboard shortcuts (shipped) | [`t052_eden_p1_undo_shortcuts.md`](../Design_Docs/Mission_Creator_Architecture/t052_eden_p1_undo_shortcuts.md) |
+| **T-051** | Title PATCH sync (**deferred**, not started) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) amendment |
 | **FD-0xx** | Frontend deferred work | [`frontend/docs/TRACKING.md`](../frontend/docs/TRACKING.md) |
 | **BE-0xx** | Backend deferred work | [`docs/backend/ROADMAP.md`](backend/ROADMAP.md) |
 | **P0–P3** | Eden parity backlog | MC `eden/gap_analysis.md` |

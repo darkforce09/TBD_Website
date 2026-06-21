@@ -59,12 +59,33 @@ export default function MissionCreatorPage() {
     [md],
   )
 
-  // Keyboard: Spacebar centers on the selection centroid (no auto-fly on click —
-  // Decisions log); Delete/Backspace removes the selection in one undoable step.
+  // Keyboard: Cmd/Ctrl+Z/Y undo-redo (reuses the existing UndoController); Spacebar centers
+  // on the selection centroid (no auto-fly on click — Decisions log); Delete/Backspace removes
+  // the selection in one undoable step. All skipped while a form field is focused.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable)) {
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'SELECT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return
+      }
+      // Undo/redo: Cmd/Ctrl+Z = undo, Cmd/Ctrl+Shift+Z or Ctrl+Y = redo. preventDefault on a
+      // match (stops the browser's "undo typing" from bleeding into page chrome) but only
+      // drives the stack when there's something to undo/redo.
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && !e.altKey && e.code === 'KeyZ' && !e.shiftKey) {
+        e.preventDefault()
+        if (undo.canUndo()) undo.undo()
+        return
+      }
+      if (mod && !e.altKey && ((e.code === 'KeyZ' && e.shiftKey) || e.code === 'KeyY')) {
+        e.preventDefault()
+        if (undo.canRedo()) undo.redo()
         return
       }
       const { selection, slotsById, setSelection } = useMapStore.getState()
@@ -85,7 +106,7 @@ export default function MissionCreatorPage() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [md])
+  }, [md, undo])
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-background">

@@ -131,5 +131,6 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 ## Related
 
 - Prior: [t049_track_a_quick_p0.md](t049_track_a_quick_p0.md)
-- Next (deferred): **T-051** — optional `PATCH` title sync on Save Version / debounced strip edit
+- Next: [**t052_eden_p1_undo_shortcuts.md**](t052_eden_p1_undo_shortcuts.md) — Eden P1-03 keyboard undo/redo (shipped)
+- Deferred: **T-051** — optional `PATCH` title sync on Save Version / debounced strip edit
 - Phase 2: DEM (A-03) feeds real cursor + slot Z — blocked on hosted heightmaps

@@ -19,7 +19,7 @@
 | # | Element | Type | Text / Content | Purpose | Data source |
 |---|---------|------|----------------|---------|-------------|
 | 1 | Map viewport | canvas | Tactical grid + entities | Primary editor surface | Y.Doc + Deck.gl |
-| 2 | Top strip | bar | Title, undo/redo, time/weather scrubber, settings, Export | Command chrome | Mission metadata |
+| 2 | Top strip | bar | Title, undo/redo, time/weather scrubber, settings, Export | Command chrome; Undo/Redo buttons + **keyboard shortcuts** (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Ctrl+Y) (T-052) | Mission metadata |
 | 3 | Left dock | panel | ORBAT tree + Editor Layers | Outliner / drop target | `editorLayers` map |
 | 4 | Right dock | panel | Asset Palette tabs | Drag assets to map | Mock catalog (registry pending) |
 | 5 | Toolbelt | bar | Select, Ruler, LoS + X/Y/Z readout | Map tools; **selection-aware** coords (SEL = single slot X/Y/Z, CUR = cursor X/Y/Z, Z=0 flat until DEM) (T-049, T-050) | Tool state + selection |
@@ -42,6 +42,18 @@
 - **Dirty:** Local autosave to y-indexeddb; server save is manual semver POST.
 - **Blocked phases:** DEM/Z-axis (Phase 2), asset registry (Phase 5/6), ruler/LoS viewshed (Phase 8).
 
+### Keyboard (host — `/missions/:id/edit`)
+| Shortcut | Action |
+|----------|--------|
+| Space | Center camera on selection |
+| Delete / Backspace | Remove selected slots (undoable) |
+| Cmd/Ctrl+Z | Undo last edit |
+| Cmd/Ctrl+Shift+Z or Ctrl+Y | Redo |
+
+Skipped when focus is in an input, select, textarea, or contentEditable field (T-052).
+
+Undo/redo applies to **session edits only** (drop, drag, delete, title/env changes via `LOCAL_ORIGIN`). Entities loaded from IndexedDB or server hydrate are not on the undo stack.
+
 ## API Dependencies
 
 | Endpoint | Method | When called | Response shape |
@@ -58,6 +70,7 @@
 ### M3 — [x] Map drag, multi-select, outliner ops, compiler + Save/Export
 ### M3.5 — [x] T-049 terrain wired to viewport; row title/terrain/env hydrate; editable Transform X/Y/Z/rotation; selection-aware toolbelt
 ### M3.6 — [x] T-050 cursor readout shows X/Y/Z (Z=0 on the flat map until DEM)
+### M3.7 — [x] T-052 undo/redo keyboard shortcuts (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Ctrl+Y)
 ### M4 — [ ] DEM, registry worker, ruler/LoS tools (blocked on external assets/API)
 
 ## Test Plan
@@ -66,6 +79,7 @@
 2. Drop asset from palette → slot appears on map and in active layer.
 3. Save Version with new semver → 201; duplicate semver → 409 with error surfaced.
 4. Export downloads JSON without POST.
+5. Drop or drag a unit → Undo enables → Cmd/Ctrl+Z reverts; redo restores.
 
 ## Open Questions / Blockers
 

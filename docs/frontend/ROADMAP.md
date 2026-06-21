@@ -74,6 +74,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 | Item | Spec | Notes |
 |------|------|-------|
+| **T-052 Eden P1 undo keyboard** | [t052_eden_p1_undo_shortcuts.md](../../Design_Docs/Mission_Creator_Architecture/t052_eden_p1_undo_shortcuts.md) | Keyboard undo/redo + `useMissionDoc` StrictMode lifecycle fix; focus-guarded; session edits only |
 | **T-050 Cursor Z readout** | [t050_cursor_z_readout.md](../../Design_Docs/Mission_Creator_Architecture/t050_cursor_z_readout.md) | Editor toolbelt CUR mode shows cursor X/Y/**Z** (Z=0 on the flat map until DEM); off-map → dashes; SEL mode unchanged |
 | **T-049 Track A quick P0** | [t049_track_a_quick_p0.md](../../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) | Terrain wired to viewport; mission row title/terrain/env hydrate on load; editable X/Y/Z/rotation in Attributes Transform; selection-aware toolbelt readout |
 | **T-048 Library create dialog** | [t048_library_create_dialog.md](../../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) | `CreateMissionDialog` on `/missions` (header button + My-Missions empty-state CTA + Cmd/Ctrl+N, `mission_maker+`); `/missions/create` route + sidebar item removed; macOS frosted modal |
@@ -81,8 +82,9 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 ## Recommended next work
 
 1. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — blocked on assets
-2. **FD-008** — wiki markdown (low risk, high UX)
-3. **FD-001** — when backend exposes server/RCON endpoints
+2. **Eden P1 code-only** — P1-01 Ctrl+LMB additive select, P1-04 asset browser search
+3. **FD-008** — wiki markdown (low risk, high UX)
+4. **FD-001** — when backend exposes server/RCON endpoints
 
 ---
 

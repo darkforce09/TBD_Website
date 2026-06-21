@@ -934,17 +934,17 @@
 |-------|-------|
 | **Domain** | KEY |
 | **Goal** | Revert last edit |
-| **Trigger** | Click Undo |
+| **Trigger** | Click Undo **or Cmd/Ctrl+Z** (T-052) |
 | **Preconditions** | `canUndo()` |
 | **Procedure** | `UndoController.undo()` Yjs stack |
 | **Postconditions** | Prior state restored |
-| **Inputs** | Button |
+| **Inputs** | Button / keyboard |
 | **Outputs** | Y.Doc revert |
-| **Edge cases** | Hydrate not undoable; no Ctrl+Z |
-| **Acceptance** | `- [ ] Undo after move` |
+| **Edge cases** | Hydrate not undoable; keyboard skipped while a form field is focused (T-052) |
+| **Acceptance** | `- [x] Undo after move (button + Cmd/Ctrl+Z)` |
 | **Eden parity** | Eden:KEY-UNDO-001 |
 | **Status** | working |
-| **Evidence** | `TopCommandStrip.tsx`, `undo.ts`, `useMissionDoc.ts` |
+| **Evidence** | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx` keydown, `undo.ts`, `useMissionDoc.ts` (StrictMode `instanceKey`) |
 
 #### TOP-REDO-001 — Redo button
 
@@ -952,17 +952,17 @@
 |-------|-------|
 | **Domain** | KEY |
 | **Goal** | Reapply undone edit |
-| **Trigger** | Click Redo |
+| **Trigger** | Click Redo **or Cmd/Ctrl+Shift+Z / Ctrl+Y** (T-052) |
 | **Preconditions** | `canRedo()` |
 | **Procedure** | `UndoController.redo()` |
 | **Postconditions** | State forward |
-| **Inputs** | Button |
+| **Inputs** | Button / keyboard |
 | **Outputs** | Y.Doc |
-| **Edge cases** | No Ctrl+Y |
-| **Acceptance** | `- [ ] Redo after undo` |
+| **Edge cases** | Keyboard skipped while a form field is focused (T-052) |
+| **Acceptance** | `- [x] Redo after undo (button + Cmd/Ctrl+Shift+Z / Ctrl+Y)` |
 | **Eden parity** | Eden:KEY-REDO-001 |
 | **Status** | working |
-| **Evidence** | `TopCommandStrip.tsx` |
+| **Evidence** | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx` keydown |
 
 #### TOP-SAVE-001 — Save Version dialog + POST
 
@@ -1272,7 +1272,7 @@
 |----|--------|---------|----------|
 | KEY-SPACE-001 | working | `Space` → flyTo selection | `MissionCreatorPage.tsx` |
 | KEY-DEL-001 | working | Delete/Backspace → remove slots | `MissionCreatorPage.tsx` |
-| KEY-UNDO-001 | partial | Buttons only; no Ctrl+Z | `TopCommandStrip.tsx` |
+| KEY-UNDO-001 | working | Buttons + Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
 | KEY-COPY-001 | not_built | Ctrl+C/V | — |
 | KEY-SELALL-001 | not_built | Ctrl+A | — |
 
@@ -1456,6 +1456,6 @@ Items verified in code + scrape cross-check; added after initial `06` draft.
 
 | ID | Status | Trigger | Evidence |
 |----|--------|---------|----------|
-| KEY-REDO-001 | partial | Buttons only; no Ctrl+Y | `TopCommandStrip.tsx` |
+| KEY-REDO-001 | working | Buttons + Cmd/Ctrl+Shift+Z / Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
 | KEY-RENAME-001 | working | Enter/Escape in tree rename | `TreeView.tsx` L216–221 |
 | KEY-DIALOG-001 | working | Conflict dialog cannot dismiss without choice | `MissionCreatorPage.tsx` `onOpenChange` noop |

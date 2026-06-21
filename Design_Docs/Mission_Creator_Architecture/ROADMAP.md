@@ -27,8 +27,9 @@
 | **[`scripts/tools/scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs)** | Regenerate wiki cache from manifest |
 | **[`artifacts/eden-feds-draft.jsonl`](../../artifacts/eden-feds-draft.jsonl)** | Draft FEDS entries derived from wiki research |
 | **[`artifacts/README.md`](../../artifacts/README.md)** | Generated artifacts policy |
-| **[`t049_track_a_quick_p0.md`](t049_track_a_quick_p0.md)** | **T-049** — Track A quick P0: terrain + title hydrate + numeric position (planned) |
-| **[`t049_track_a_quick_p0.md`](t049_track_a_quick_p0.md)** | **T-049** — Track A quick P0: terrain + title + numeric position (planned) |
+| **[`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md)** | **T-052** — Eden P1-03: Ctrl/Cmd+Z/Y undo-redo keyboard (shipped) |
+| **[`t050_cursor_z_readout.md`](t050_cursor_z_readout.md)** | **T-050** — Cursor Z readout (shipped) |
+| **[`t049_track_a_quick_p0.md`](t049_track_a_quick_p0.md)** | **T-049** — Track A quick P0: terrain + title + numeric position (shipped) |
 | **[`t048_library_create_dialog.md`](t048_library_create_dialog.md)** | T-048 — Library create dialog (shipped) |
 | [`frontend/docs/pages/mission-library.md`](../../frontend/docs/pages/mission-library.md) | Surface spec for `/missions` (+ create dialog T-048) |
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Surface spec for `/missions/:id/edit` |
@@ -77,7 +78,7 @@ Tracks A and B can progress in parallel once map assets exist. **Track C is its 
 - Vector grid base map (no satellite/topo imagery yet)
 - Pan/zoom with bounds clamp; cursor X/Y/Z in toolbelt (Z=0 flat until DEM, T-050)
 - Icon layer for placed **slots**; selection highlight; marquee select + live overlay
-- Drag-move slots with live preview + Y.Doc commit; undo/redo
+- Drag-move slots with live preview + Y.Doc commit; undo/redo (buttons + keyboard Cmd/Ctrl+Z/Y, T-052)
 
 ### Placement (Track B — partial, slots only)
 - Mock asset palette (Factions tab); HTML5 drag-drop → `addSlot`
@@ -93,6 +94,16 @@ Tracks A and B can progress in parallel once map assets exist. **Track C is its 
 ### Documentation & Eden wiki research (T-042)
 - FEDS inventory ([`feature_inventory.md`](feature_inventory.md)), Eden reference ([`eden/`](eden/))
 - **Arma 3 Eden Editor wiki scrape:** 28 pages in [`artifacts/eden-wiki/`](../../artifacts/eden-wiki/) via [`eden/wiki_manifest.yaml`](eden/wiki_manifest.yaml) + [`scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs); feeds [`eden/interactions.md`](eden/interactions.md), [`eden/ui_anatomy.md`](eden/ui_anatomy.md), [`eden/attributes.md`](eden/attributes.md), [`eden/gap_analysis.md`](eden/gap_analysis.md)
+
+---
+
+## DONE — T-052 (Eden P1 undo keyboard)
+
+| Item | Spec | Deliverable |
+|------|------|-------------|
+| **Ctrl/Cmd+Z/Y undo-redo** | [`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **P1-03** / KEY-UNDO-001. |
+
+**Next (code-only Eden P1):** P1-01 Ctrl+LMB additive select, P1-04 asset browser search. **Deferred:** T-051 title PATCH sync.
 
 ---
 
