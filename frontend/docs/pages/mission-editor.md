@@ -12,7 +12,7 @@
 - **Live source:** `frontend/src/features/mission-creator/` (wrapper) + `frontend/src/features/tactical-map/` (engine); lazy route in `frontend/src/router.tsx`
 - **Stitch reference:** none
 - **Min role:** `mission_maker` (owner or admin)
-- **Blueprint ref:** [Mission Creator ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md), [feature inventory](../../Design_Docs/Mission_Creator_Architecture/feature_inventory.md)
+- **Blueprint ref:** [Mission Creator ROADMAP](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md), [feature inventory](../../../Design_Docs/Mission_Creator_Architecture/feature_inventory.md)
 
 ## Element Inventory
 
@@ -67,4 +67,4 @@
 
 ## Open Questions / Blockers
 
-- [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../Design_Docs/Mission_Creator_Architecture/README.md).
+- [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).

@@ -1,1 +1,1 @@
-> **Moved:** [`aegis_tokens/`](aegis_tokens/)
+> **Moved:** [`aegis_tokens/`](../aegis_tokens/)
