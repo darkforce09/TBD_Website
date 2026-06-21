@@ -155,37 +155,65 @@ export function moveEntity(
   })
 }
 
-/** Remove an entity, cascading children (faction→squads→slots) and detaching refs. */
-export function removeEntity(
+/** Move several positioned entities by a shared world delta in ONE transaction (one
+ *  undo step) — the atomic group move behind Eden's drag-to-move (Phase 7b). */
+export function moveEntities(
   md: MissionDoc,
-  mapName: EntityMapName,
-  id: ID,
+  ids: ID[],
+  delta: { x: number; y: number },
 ): void {
-  const { factions, squads, slots, editorLayers } = md.entities
+  if (!ids.length) return
+  const map = md.entities.slots
   transact(md, () => {
-    if (mapName === 'slots') {
-      const squadId = slots.get(id)?.get('squadId') as ID | undefined
-      const squad = squadId ? squads.get(squadId) : undefined
-      squad?.set('slotIds', (squad.get('slotIds') as ID[]).filter((s) => s !== id))
-      // Detach from whichever Outliner folder held it.
-      for (const layer of editorLayers.values()) {
-        const ids = layer.get('entityIds') as ID[]
-        if (ids.includes(id)) layer.set('entityIds', ids.filter((e) => e !== id))
-      }
-    } else if (mapName === 'squads') {
-      const squad = squads.get(id)
-      for (const slotId of (squad?.get('slotIds') as ID[]) ?? []) slots.delete(slotId)
-      const factionId = squad?.get('factionId') as ID | undefined
-      const faction = factionId ? factions.get(factionId) : undefined
-      faction?.set('squadIds', (faction.get('squadIds') as ID[]).filter((s) => s !== id))
-    } else if (mapName === 'factions') {
-      for (const squadId of (factions.get(id)?.get('squadIds') as ID[]) ?? []) {
-        const squad = squads.get(squadId)
-        for (const slotId of (squad?.get('slotIds') as ID[]) ?? []) slots.delete(slotId)
-        squads.delete(squadId)
-      }
+    for (const id of ids) {
+      const entity = map.get(id)
+      if (!entity) continue
+      const prev = (entity.get('position') as Record<string, number>) ?? {}
+      entity.set('position', { ...prev, x: (prev.x ?? 0) + delta.x, y: (prev.y ?? 0) + delta.y })
     }
-    md.entities[mapName].delete(id)
+  })
+}
+
+/** Inner remove (no transaction) — cascades children and detaches refs. Call inside
+ *  an existing transaction (removeEntity / removeEntities). */
+function removeEntityInner(md: MissionDoc, mapName: EntityMapName, id: ID): void {
+  const { factions, squads, slots, editorLayers } = md.entities
+  if (mapName === 'slots') {
+    const squadId = slots.get(id)?.get('squadId') as ID | undefined
+    const squad = squadId ? squads.get(squadId) : undefined
+    squad?.set('slotIds', (squad.get('slotIds') as ID[]).filter((s) => s !== id))
+    // Detach from whichever Outliner folder held it.
+    for (const layer of editorLayers.values()) {
+      const ids = layer.get('entityIds') as ID[]
+      if (ids.includes(id)) layer.set('entityIds', ids.filter((e) => e !== id))
+    }
+  } else if (mapName === 'squads') {
+    const squad = squads.get(id)
+    for (const slotId of (squad?.get('slotIds') as ID[]) ?? []) slots.delete(slotId)
+    const factionId = squad?.get('factionId') as ID | undefined
+    const faction = factionId ? factions.get(factionId) : undefined
+    faction?.set('squadIds', (faction.get('squadIds') as ID[]).filter((s) => s !== id))
+  } else if (mapName === 'factions') {
+    for (const squadId of (factions.get(id)?.get('squadIds') as ID[]) ?? []) {
+      const squad = squads.get(squadId)
+      for (const slotId of (squad?.get('slotIds') as ID[]) ?? []) slots.delete(slotId)
+      squads.delete(squadId)
+    }
+  }
+  md.entities[mapName].delete(id)
+}
+
+/** Remove an entity, cascading children (faction→squads→slots) and detaching refs. */
+export function removeEntity(md: MissionDoc, mapName: EntityMapName, id: ID): void {
+  transact(md, () => removeEntityInner(md, mapName, id))
+}
+
+/** Remove several entities from one map in ONE transaction (one undo step) — Eden's
+ *  Delete/Backspace on a multi-selection (Phase 7b). */
+export function removeEntities(md: MissionDoc, mapName: EntityMapName, ids: ID[]): void {
+  if (!ids.length) return
+  transact(md, () => {
+    for (const id of ids) removeEntityInner(md, mapName, id)
   })
 }
 

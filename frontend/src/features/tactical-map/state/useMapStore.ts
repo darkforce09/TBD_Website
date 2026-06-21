@@ -34,18 +34,41 @@ export interface MapSnapshot {
   editorLayersById: Record<ID, EditorLayer>
 }
 
+/** Transient drag-move preview (Phase 7b): the dragging ids + world delta. Lives in the
+ *  store so the IconLayer can offset previews live, but is NEVER written to the Y.Doc —
+ *  the move is committed once on pointer-up. */
+export interface DragState {
+  ids: ID[]
+  dx: number
+  dy: number
+}
+
+/** Transient marquee box in world meters (Phase 7b); null when not box-selecting. */
+export interface MarqueeRect {
+  x0: number
+  y0: number
+  x1: number
+  y1: number
+}
+
 export interface MapStoreState extends MapSnapshot {
   // UI / runtime (not persisted to json_payload)
   selection: Selection
   activeTool: ToolId
   /** Outliner folder new entities are filed into (drop target). null → fallback. */
   activeLayerId: ID | null
+  /** Live drag-move preview offset; null when not dragging. */
+  drag: DragState | null
+  /** Live marquee box (world meters); null when not box-selecting. */
+  marquee: MarqueeRect | null
 
   // Internal: bindings push a fresh snapshot here on every Y.Doc change.
   _applySnapshot: (snapshot: MapSnapshot) => void
   setSelection: (selection: Selection) => void
   setActiveTool: (tool: ToolId) => void
   setActiveLayer: (id: ID | null) => void
+  setDrag: (drag: DragState | null) => void
+  setMarquee: (marquee: MarqueeRect | null) => void
   reset: () => void
 }
 
@@ -62,16 +85,21 @@ const EMPTY_SNAPSHOT: MapSnapshot = {
   editorLayersById: {},
 }
 
-const NO_SELECTION: Selection = { kind: 'none', id: null }
+const NO_SELECTION: Selection = { kind: 'none', ids: [] }
 
 export const useMapStore = create<MapStoreState>()((set) => ({
   ...EMPTY_SNAPSHOT,
   selection: NO_SELECTION,
   activeTool: 'select',
   activeLayerId: null,
+  drag: null,
+  marquee: null,
   _applySnapshot: (snapshot) => set(snapshot),
   setSelection: (selection) => set({ selection }),
   setActiveTool: (activeTool) => set({ activeTool }),
   setActiveLayer: (activeLayerId) => set({ activeLayerId }),
-  reset: () => set({ ...EMPTY_SNAPSHOT, selection: NO_SELECTION, activeLayerId: null }),
+  setDrag: (drag) => set({ drag }),
+  setMarquee: (marquee) => set({ marquee }),
+  reset: () =>
+    set({ ...EMPTY_SNAPSHOT, selection: NO_SELECTION, activeLayerId: null, drag: null, marquee: null }),
 }))

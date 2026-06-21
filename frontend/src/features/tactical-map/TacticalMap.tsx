@@ -6,11 +6,14 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import DeckGL from '@deck.gl/react'
+import type { DeckGLRef } from '@deck.gl/react'
 import type { PickingInfo } from '@deck.gl/core'
 import { getTerrain } from './coords/terrains'
 import { useOrthographicView } from './view/useOrthographicView'
 import { useBaseMapLayer } from './layers/useBaseMapLayer'
 import { useIconLayer } from './layers/useIconLayer'
+import { useSelectionLayer } from './layers/useSelectionLayer'
+import { useSelectTool } from './tools/useSelectTool'
 import { MapContextProvider, createMapContextValue } from './context/MapContext'
 import { useMapStore } from './state/useMapStore'
 import type { ID } from './state/schema'
@@ -20,28 +23,41 @@ export function TacticalMap({
   terrain: terrainId,
   showGrid = false,
   className,
-  onMapClick,
   onCursorMove,
   onReady,
   onEntityActivate,
   onAssetDrop,
+  onEntitiesMove,
 }: TacticalMapProps) {
   const terrain = useMemo(() => getTerrain(terrainId), [terrainId])
   const { view, viewState, onViewStateChange, flyTo: viewFlyTo } =
     useOrthographicView(terrain)
   const baseMap = useBaseMapLayer(terrain)
   const iconLayer = useIconLayer()
+  const selectionLayer = useSelectionLayer()
   const setSelection = useMapStore((s) => s.setSelection)
   // Manual double-click detection (Deck has no onDblClick) for entity activation.
   const lastClick = useRef<{ id: string; ts: number } | null>(null)
-  // Drop zone: Deck's controller ignores HTML5 drag/drop, so they bubble here.
+  // Drop zone + pointer-gesture host: Deck's controller ignores HTML5 drag/drop and
+  // (with dragPan off) our custom drags, so both bubble to this container.
   const containerRef = useRef<HTMLDivElement>(null)
+  const deckRef = useRef<DeckGLRef | null>(null)
+
+  const noopMove = useCallback(() => {}, [])
+  const selectTool = useSelectTool({
+    deckRef,
+    containerRef,
+    view,
+    viewState,
+    onViewStateChange,
+    onEntitiesMove: onEntitiesMove ?? noopMove,
+  })
 
   const onClick = useCallback(
     (info: PickingInfo) => {
       if (info.layer?.id === 'slot-icons' && info.object) {
         const id = (info.object as { id: ID }).id
-        setSelection({ kind: 'slot', id })
+        setSelection({ kind: 'slot', ids: [id] })
         const prev = lastClick.current
         const now = Date.now()
         if (prev && prev.id === id && now - prev.ts < 350) {
@@ -53,13 +69,10 @@ export function TacticalMap({
         return
       }
       lastClick.current = null
-      // Empty-map click: let the host act (e.g. move the selected slot), then clear.
-      if (info.coordinate) {
-        onMapClick?.({ x: info.coordinate[0], y: info.coordinate[1] })
-      }
-      setSelection({ kind: 'none', id: null })
+      // Empty-map click only deselects (no teleport — Phase 7b removed it).
+      setSelection({ kind: 'none', ids: [] })
     },
-    [setSelection, onMapClick, onEntityActivate],
+    [setSelection, onEntityActivate],
   )
 
   const onHover = useCallback(
@@ -130,15 +143,21 @@ export function TacticalMap({
         className={className ?? 'absolute inset-0'}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        onPointerDown={selectTool.onPointerDown}
+        onPointerMove={selectTool.onPointerMove}
+        onPointerUp={selectTool.onPointerUp}
+        onContextMenu={selectTool.onContextMenu}
       >
         <DeckGL
+          ref={deckRef}
           views={view}
           viewState={viewState}
           onViewStateChange={(params) =>
             onViewStateChange({ viewState: params.viewState as MapViewState })
           }
-          controller={{ doubleClickZoom: false }}
-          layers={showGrid ? [baseMap, iconLayer] : [iconLayer]}
+          // dragPan off: left-drag is select/move, middle/right-drag pans (useSelectTool).
+          controller={{ dragPan: false, doubleClickZoom: false }}
+          layers={[...(showGrid ? [baseMap] : []), iconLayer, selectionLayer]}
           onClick={onClick}
           onHover={onHover}
           getCursor={({ isHovering }) => (isHovering ? 'pointer' : 'grab')}

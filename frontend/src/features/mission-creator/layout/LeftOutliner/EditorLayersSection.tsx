@@ -55,15 +55,18 @@ export function EditorLayersSection({ md, onActivateSlot }: EditorLayersSectionP
 
   const nodes = useMemo(() => buildTree(layersById, slotsById), [layersById, slotsById])
 
-  // Highlight the selected slot, or — when nothing is selected — the active folder.
-  const selectedId = selection.kind === 'slot' ? selection.id : activeLayerId
+  // Highlight selected slots (multi-select) plus the active folder.
+  const selectedIds = useMemo(
+    () => (selection.kind === 'slot' ? new Set(selection.ids) : undefined),
+    [selection],
+  )
 
   const onSelect = (id: string) => {
     if (layersById[id]) {
       setActiveLayer(id)
       return
     }
-    if (slotsById[id]) setSelection({ kind: 'slot', id })
+    if (slotsById[id]) setSelection({ kind: 'slot', ids: [id] })
   }
 
   const onActivate = (id: string) => {
@@ -92,7 +95,8 @@ export function EditorLayersSection({ md, onActivateSlot }: EditorLayersSectionP
       ) : (
         <TreeView
           nodes={nodes}
-          selectedId={selectedId}
+          selectedId={activeLayerId}
+          selectedIds={selectedIds}
           onSelect={onSelect}
           onActivate={onActivate}
         />

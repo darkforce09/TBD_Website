@@ -21,6 +21,8 @@ export interface TreeNodeData {
 interface TreeViewProps {
   nodes: TreeNodeData[]
   selectedId?: string | null
+  /** Multi-select highlight set (Phase 7b); a node is selected if it's here OR === selectedId. */
+  selectedIds?: ReadonlySet<string>
   onSelect?: (id: string) => void
   onActivate?: (id: string) => void
   /** Native HTML5 drag-start on a leaf (e.g. drag an asset onto the map). When
@@ -39,6 +41,7 @@ function collectExpanded(nodes: TreeNodeData[], acc: Set<string>): Set<string> {
 export function TreeView({
   nodes,
   selectedId,
+  selectedIds,
   onSelect,
   onActivate,
   onNodeDragStart,
@@ -55,7 +58,7 @@ export function TreeView({
       return next
     })
 
-  const shared = { expanded, toggle, selectedId, onSelect, onActivate, onNodeDragStart }
+  const shared = { expanded, toggle, selectedId, selectedIds, onSelect, onActivate, onNodeDragStart }
 
   return (
     <ul className="flex flex-col">
@@ -71,6 +74,7 @@ interface TreeNodeProps {
   expanded: Set<string>
   toggle: (id: string) => void
   selectedId?: string | null
+  selectedIds?: ReadonlySet<string>
   onSelect?: (id: string) => void
   onActivate?: (id: string) => void
   onNodeDragStart?: (node: TreeNodeData, e: React.DragEvent) => void
@@ -81,13 +85,14 @@ function TreeNode({
   expanded,
   toggle,
   selectedId,
+  selectedIds,
   onSelect,
   onActivate,
   onNodeDragStart,
 }: TreeNodeProps) {
   const isFolder = !!node.children?.length
   const isOpen = expanded.has(node.id)
-  const selected = selectedId === node.id
+  const selected = selectedId === node.id || (selectedIds?.has(node.id) ?? false)
   // Folders show an "open" glyph when expanded; leaves keep their own icon.
   const Icon = isFolder && isOpen ? FolderOpen : node.icon
   const draggable = !isFolder && !!onNodeDragStart
@@ -137,6 +142,7 @@ function TreeNode({
               expanded={expanded}
               toggle={toggle}
               selectedId={selectedId}
+              selectedIds={selectedIds}
               onSelect={onSelect}
               onActivate={onActivate}
               onNodeDragStart={onNodeDragStart}

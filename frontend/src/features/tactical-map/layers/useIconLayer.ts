@@ -39,7 +39,11 @@ function getMarkerIcon(): string {
 export function useIconLayer(): IconLayer<SlotIcon> {
   const slotsById = useMapStore((s) => s.slotsById)
   const selection = useMapStore((s) => s.selection)
-  const icons = selectSlotIcons(slotsById, selection)
+  const drag = useMapStore((s) => s.drag)
+  const icons = selectSlotIcons(slotsById, selection, drag)
+  // Stable keys so size/colour/position refresh on selection or live drag changes.
+  const selectionKey = selection.ids.join(',')
+  const dragKey = drag ? `${drag.ids.join(',')}:${drag.dx},${drag.dy}` : ''
 
   return useMemo(
     () =>
@@ -66,10 +70,11 @@ export function useIconLayer(): IconLayer<SlotIcon> {
         sizeUnits: 'pixels',
         pickable: true,
         updateTriggers: {
-          getSize: selection.id,
-          getColor: selection.id,
+          getPosition: dragKey,
+          getSize: selectionKey,
+          getColor: selectionKey,
         },
       }),
-    [icons, selection.id],
+    [icons, selectionKey, dragKey],
   )
 }

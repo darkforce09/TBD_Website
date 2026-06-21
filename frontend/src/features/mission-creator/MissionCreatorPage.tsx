@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { TacticalMap, addSlot, moveEntity, useMapStore } from '@/features/tactical-map'
+import { TacticalMap, addSlot, moveEntities, removeEntities, useMapStore } from '@/features/tactical-map'
 import type { AssetDropPayload, TacticalMapApi } from '@/features/tactical-map'
 import { useMissionDoc } from './hooks/useMissionDoc'
 import { TopCommandStrip } from './layout/TopCommandStrip'
@@ -29,17 +29,16 @@ export default function MissionCreatorPage() {
     mapApi.current = api
   }, [])
 
-  // Click empty map with a slot selected → reposition it. (Click-drag-to-move replaces
-  // this in Phase 7b; placement is drag-and-drop from the Asset Palette.)
-  const onMapClick = useCallback(
-    (world: { x: number; y: number }) => {
-      const { selection } = useMapStore.getState()
-      if (selection.kind === 'slot' && selection.id) {
-        moveEntity(md, 'slots', selection.id, world)
-      }
-    },
+  // Drag-move release → commit the group move in one Y.Doc transaction (one undo step).
+  const onEntitiesMove = useCallback(
+    (ids: string[], delta: { x: number; y: number }) => moveEntities(md, ids, delta),
     [md],
   )
+
+  // Double-click opens the Attributes modal only for a single-entity selection.
+  const onEntityActivate = useCallback((id: string) => {
+    if (useMapStore.getState().selection.ids.length <= 1) setAttributesId(id)
+  }, [])
 
   // Drop an Asset Palette leaf onto the map → one Y.Doc transaction creates the slot
   // (Arma defaults, Z=0 until the DEM lands) under the active Outliner folder, then
@@ -49,45 +48,51 @@ export default function MissionCreatorPage() {
       if (payload.kind !== 'slot') return
       const layerId = useMapStore.getState().activeLayerId ?? undefined
       const newId = addSlot(md, world, { role: payload.role, layerId })
-      useMapStore.getState().setSelection({ kind: 'slot', id: newId })
+      useMapStore.getState().setSelection({ kind: 'slot', ids: [newId] })
     },
     [md],
   )
 
-  // Spacebar centers the camera on the current selection (no auto-fly on click —
-  // Decisions log). Centroid of a multi-selection is Phase 7b; single slot for now.
+  // Keyboard: Spacebar centers on the selection centroid (no auto-fly on click —
+  // Decisions log); Delete/Backspace removes the selection in one undoable step.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return
       const target = e.target as HTMLElement | null
       if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable)) {
         return
       }
-      const { selection, slotsById } = useMapStore.getState()
-      if (selection.kind === 'slot' && selection.id) {
-        const slot = slotsById[selection.id]
-        if (slot) {
-          e.preventDefault()
-          mapApi.current?.flyTo(slot.position)
-        }
+      const { selection, slotsById, setSelection } = useMapStore.getState()
+      if (e.code === 'Space') {
+        if (selection.kind === 'none') return
+        const slots = selection.ids.map((sid) => slotsById[sid]).filter(Boolean) as { position: { x: number; y: number } }[]
+        if (!slots.length) return
+        e.preventDefault()
+        const cx = slots.reduce((a, s) => a + s.position.x, 0) / slots.length
+        const cy = slots.reduce((a, s) => a + s.position.y, 0) / slots.length
+        mapApi.current?.flyTo({ x: cx, y: cy })
+      } else if (e.code === 'Delete' || e.code === 'Backspace') {
+        if (selection.kind === 'none' || !selection.ids.length) return
+        e.preventDefault()
+        removeEntities(md, 'slots', selection.ids)
+        setSelection({ kind: 'none', ids: [] })
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [md])
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-background">
       {/* Full-bleed map behind everything. */}
       <TacticalMap
         terrain="everon"
-        showGrid={false}
+        showGrid
         className="absolute inset-0 z-0 bg-background"
         onReady={onReady}
-        onMapClick={onMapClick}
         onCursorMove={setCursor}
-        onEntityActivate={setAttributesId}
+        onEntityActivate={onEntityActivate}
         onAssetDrop={onAssetDrop}
+        onEntitiesMove={onEntitiesMove}
       />
 
       {/* Overlay layer: spans the screen and ignores pointer events so the map gap pans;

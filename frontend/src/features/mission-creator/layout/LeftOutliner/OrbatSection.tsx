@@ -55,10 +55,13 @@ export function OrbatSection() {
     [factionsById, squadsById, slotsById],
   )
 
-  const selectedId = selection.kind === 'slot' ? selection.id : null
+  const selectedIds = useMemo(
+    () => (selection.kind === 'slot' ? new Set(selection.ids) : undefined),
+    [selection],
+  )
 
   const onSelect = (id: string) => {
-    if (slotsById[id]) setSelection({ kind: 'slot', id })
+    if (slotsById[id]) setSelection({ kind: 'slot', ids: [id] })
   }
 
   return (
@@ -68,7 +71,7 @@ export function OrbatSection() {
           No factions yet. Placed units are filed under a default squad.
         </p>
       ) : (
-        <TreeView nodes={nodes} selectedId={selectedId} onSelect={onSelect} />
+        <TreeView nodes={nodes} selectedIds={selectedIds} onSelect={onSelect} />
       )}
     </Section>
   )

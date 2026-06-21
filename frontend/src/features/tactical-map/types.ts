@@ -35,8 +35,6 @@ export interface TacticalMapProps {
   showGrid?: boolean
   /** Extra classes for the absolutely-positioned canvas container. */
   className?: string
-  /** Fired on an empty-map click with the world (meters) position picked. */
-  onMapClick?: (world: { x: number; y: number }) => void
   /** Fired on hover with the world (meters) cursor position, or null when off-map. */
   onCursorMove?: (world: { x: number; y: number } | null) => void
   /** Receives the imperative map API (e.g. flyTo) for use by sibling panels. */
@@ -45,6 +43,8 @@ export interface TacticalMapProps {
   onEntityActivate?: (id: string) => void
   /** Fired when an Asset Browser leaf is dropped, with the unprojected world pos. */
   onAssetDrop?: (payload: AssetDropPayload, world: { x: number; y: number }) => void
+  /** Commit a drag-move of one or more entities by a world-meter delta (Phase 7b). */
+  onEntitiesMove?: (ids: string[], delta: { x: number; y: number }) => void
 }
 
 /** Imperative handle exposed via onReady. */

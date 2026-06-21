@@ -126,7 +126,8 @@ export type SelectionKind =
 
 export interface Selection {
   kind: SelectionKind
-  id: ID | null
+  /** Selected entity ids (multi-select via marquee, Phase 7b). Empty when kind==='none'. */
+  ids: ID[]
 }
 
 /** Names of the top-level entity maps — shared by the Y.Doc and the store. */
