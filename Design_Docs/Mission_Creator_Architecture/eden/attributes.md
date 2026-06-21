@@ -1,9 +1,9 @@
 # Eden Editor — Attribute Field Catalog
 
-**Document:** `07b_eden_attribute_catalog.md`  
+**Document:** `eden/attributes.md`  
 **Schema:** [reference/feds_schema.md](../reference/feds_schema.md) — `ATTR-FIELD-{TYPE}-{NAME}` IDs  
 **Source:** [Setting Attributes](https://community.bistudio.com/wiki/Eden_Editor:_Setting_Attributes), per-type wiki pages, scrape `artifacts/eden-wiki/`.  
-**Interactions:** [07](./07_arma3_eden_editor_feature_reference.md). **UI:** [07a](./07a_eden_ui_anatomy.md).
+**Interactions:** [interactions.md](./interactions.md). **UI:** [ui_anatomy.md](./ui_anatomy.md).
 
 Attributes are edited via **double-click** → Attributes dialog, or indirectly via drag/widget. Scripting: `set3DENAttribute` / `set3DENAttributes` (editor workspace only).
 

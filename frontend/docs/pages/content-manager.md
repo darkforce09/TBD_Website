@@ -1,4 +1,4 @@
-# Content Manager (Admin CMS)
+# Content Manager / Comms Broadcaster (Admin CMS)
 
 ## Status
 
@@ -8,10 +8,10 @@
 
 - **What:** CMS for announcements and wiki pages with rich editor.
 - **Why:** Admins publish news and update SOPs without code deploys.
-- **Route:** `/admin/content`
+- **Route:** `/admin/content` (nav label: **Comms Broadcaster**)
 - **Stitch reference:** `frontend/src/stitch-exports/content_manager_admin_cms/code.html`
 - **Min role:** `admin`
-- **Blueprint ref:** §4.11
+- **Blueprint ref:** [docs/platform/context_handoff.md](../../../docs/platform/context_handoff.md) §4.11 Content Manager
 
 ## Element Inventory
 

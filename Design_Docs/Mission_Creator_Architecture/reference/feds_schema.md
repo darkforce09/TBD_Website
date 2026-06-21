@@ -199,7 +199,7 @@ The markdown FEDS block remains authoritative.
 |------|------|
 | `reference/feds_schema.md` | This file — normative schema (FEDS v2) |
 | `06_tbd_mission_creator_feature_inventory.md` | TBD implementation inventory |
-| `07a_eden_ui_anatomy.md` | Eden workspace layout — what you see per panel |
+| `eden/ui_anatomy.md` | Eden workspace layout — what you see per panel |
 | `07b_eden_attribute_catalog.md` | Per-entity-type attribute fields (`ATTR-FIELD-*`) |
 | `07_arma3_eden_editor_feature_reference.md` | Eden interaction reference (wiki-anchored) |
 | `08_eden_gap_analysis.md` | ID-linked parity matrix + backlog |

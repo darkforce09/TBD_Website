@@ -12,7 +12,7 @@
 - **Live source:** `frontend/src/features/mission-creator/` (wrapper) + `frontend/src/features/tactical-map/` (engine); lazy route in `frontend/src/router.tsx`
 - **Stitch reference:** none
 - **Min role:** `mission_maker` (owner or admin)
-- **Blueprint ref:** [Mission Creator 02 — roadmap](../../Design_Docs/Mission_Creator_Architecture/02_roadmap.md), [06 — feature inventory](../../Design_Docs/Mission_Creator_Architecture/06_tbd_mission_creator_feature_inventory.md)
+- **Blueprint ref:** [Mission Creator 02 — roadmap](../../Design_Docs/Mission_Creator_Architecture/02_roadmap.md), [06 — feature inventory](../../Design_Docs/Mission_Creator_Architecture/06_tbd_feature_inventory.md)
 
 ## Element Inventory
 

@@ -12,7 +12,7 @@
 - **Live source:** `frontend/src/pages/missions.tsx` (`MissionCreatorPage`)
 - **Stitch reference:** `frontend/src/stitch-exports/mission_creator_setup_wizard/code.html` (archived)
 - **Min role:** `mission_maker`
-- **Blueprint ref:** [docs/platform/context_handoff.md](../../../docs/platform/context_handoff.md) §3 Mission Library
+- **Blueprint ref:** [docs/platform/context_handoff.md](../../../docs/platform/context_handoff.md) §4.5 Mission Library
 
 ## Element Inventory
 

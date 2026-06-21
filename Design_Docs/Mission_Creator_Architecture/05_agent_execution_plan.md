@@ -104,16 +104,20 @@ Every Mission Creator-related folder and its role. **Execution authority remains
 |------|------|
 | `05_agent_execution_plan.md` | **This file** — phases, decisions, acceptance criteria |
 | `03_engineering_ultra_plan.md` | ADRs, full file tree, phases 0–9, Y.Doc schema, compiler JSON §8, workers |
-| `01_technical_specification.md` | Problem statement (200-slot DOM, DEM, nesting, registry) |
-| `04_eden_editor_ux_spec.md` | *(Create in DOC-0)* — human-readable UX contract copied from Decisions log |
+| `01_problem_statement.md` | Problem statement (200-slot DOM, DEM, nesting, registry) |
+| `04_eden_ux_spec.md` | Human-readable UX contract copied from Decisions log |
+| `02_roadmap.md` | Master roadmap — Tracks A/B/C |
+| `06_tbd_feature_inventory.md` | Code-evidenced feature inventory |
+| `eden/` | Eden parity research (interactions, UI, attributes, gaps) |
+| `reference/feds_schema.md` | FEDS v2 schema |
 
 ### `Design_Docs/Mission_Creator_Mock_Up/` — product + early UI explorations
 
 | Path | Role |
 |------|------|
 | `mission_creator_design.md` | Product blueprint: Forge, Loadout Forge, Visual-Git, Briefing UI, JSON sync |
-| `Mission ccreator/DESIGN.md` | Aegis tokens + panel dimensions (256 / 320) |
-| `Mission ccreator/code.html` + `screen.png` | Historical layout exploration — **do not execute against** |
+| `aegis_tokens/DESIGN.md` | Aegis tokens + panel dimensions (256 / 320) |
+| `aegis_tokens/code.html` + `screen.png` | Historical layout exploration — **do not execute against** |
 | `Arsenal/DESIGN.md` | Arsenal / Loadout Forge visual tokens (Phase 5–6) |
 
 ### `Design_Docs/macOS_Blueprints/` — editor-adjacent references
@@ -190,12 +194,12 @@ flowchart LR
 | 0–1 | Viewport | **Done** | Deck.gl orthographic map, pan/zoom, procedural grid |
 | 4 | State foundation | **Done** | Y.Doc, Zustand mirror, undo, IconLayer, y-indexeddb |
 | 3a | Shell scaffold | **Done** | Floating panels, TreeView, modals (T-031/032) |
-| PRE-3.5 | Land tree wiring | **Next** | Verify/commit editorLayers + palette DnD baseline |
-| DOC-0 | Doc alignment | Pending | `04_eden_editor_ux_spec.md` + patch ultra plan, CLAUDE, design |
-| **3.5** | **Eden shell** | Pending | Fullscreen, docked sidebars, palette tabs, modal inspector |
-| **7b** | **Map manipulation** | Pending | Drag-move, marquee, Spacebar, Delete |
-| **7a** | **Outliner ops** | Pending | Reparent, rename, delete folders/slots |
-| **9** | **Compiler + save** | Pending | `json_payload` export, draft autosave, Save Version |
+| PRE-3.5 | Land tree wiring | **Done** (T-033) | editorLayers + palette DnD baseline |
+| DOC-0 | Doc alignment | **Done** (T-034) | `04_eden_ux_spec.md` + patch ultra plan, CLAUDE, design |
+| **3.5** | **Eden shell** | **Done** (T-035) | Fullscreen, docked sidebars, palette tabs, modal inspector |
+| **7b** | **Map manipulation** | **Done** (T-036) | Drag-move, marquee, Spacebar, Delete |
+| **7a** | **Outliner ops** | **Done** (T-037) | Reparent, rename, delete folders/slots |
+| **9** | **Compiler + save** | **Done** (T-038) | `json_payload` export, Save Version |
 | 2 | DEM / Z-axis | Blocked | Heightmap assets |
 | 5–6 | Registry + Arsenal | Blocked | `GET /api/v1/registry` |
 | 8 | Tools + objectives | Blocked | Ruler, zones, LoS GLSL |
@@ -315,7 +319,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 **Goal:** Docs agree on Eden layout + interactions before more code.
 
 **Tasks:**
-1. Create `04_eden_editor_ux_spec.md` — copy **Decisions log**, **Interaction contract**, layout diagram from this file
+1. ~~Create `04_eden_ux_spec.md`~~ — **Done (T-034)**
 2. Update `03_engineering_ultra_plan.md`: docked shell, fullscreen, phases PRE-3.5/3.5/7b/7a, `EditorLayer`, multi-select `Selection`, point UX authority to this file
 3. Update `mission_creator_design.md` §1: Attributes dialog; palette always visible; note HTML mockups are historical
 4. Update `CLAUDE.md`: T-033, current phase status, uncommitted wiring note

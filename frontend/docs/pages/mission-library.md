@@ -11,7 +11,7 @@
 - **Route:** `/missions`
 - **Stitch reference:** `frontend/src/stitch-exports/mission_library_tactical_browser/code.html`
 - **Min role:** `public-nav`
-- **Blueprint ref:** §4.5
+- **Blueprint ref:** [docs/platform/context_handoff.md](../../../docs/platform/context_handoff.md) §4.5 Mission Library
 
 ## Element Inventory
 

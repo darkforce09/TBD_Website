@@ -12,7 +12,7 @@
 - **Route:** `/wiki` and `/wiki/:slug`
 - **Stitch reference:** `frontend/src/stitch-exports/sop_wiki_vehicle_database_iff/code.html`
 - **Min role:** `public-nav`
-- **Blueprint ref:** §4.6
+- **Blueprint ref:** [docs/platform/context_handoff.md](../../../docs/platform/context_handoff.md) §4.6 Wiki
 
 ## Element Inventory
 

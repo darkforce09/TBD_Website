@@ -1,4 +1,4 @@
-/** Route → Stitch folder mapping for Composer handoff. See frontend/docs/INDEX.md */
+/** Historical reference mapping for Stitch folders; prefer live routes in frontend/src/pages. See frontend/docs/INDEX.md */
 export const stitchMap: Record<string, string | null> = {
   '/': 'tbd_reforger_dashboard_content',
   '/server-intel': 'server_intel_dashboard',
@@ -8,7 +8,11 @@ export const stitchMap: Record<string, string | null> = {
   '/missions': 'mission_library_tactical_browser',
   '/missions/:id': 'operation_enduring_freedom_mission_overview',
   '/missions/create': 'mission_creator_setup_wizard',
+  '/missions/:id/edit': null,
   '/events': 'upcoming_operations_event_schedule',
+  '/events/:id': null,
+  '/events/:id/missions/:emid/orbat': null,
+  '/vehicles': null,
   '/modpacks': 'server_modpacks_deployment_dependencies',
   '/wiki': 'sop_wiki_vehicle_database_iff',
   '/tools/mortar': 'mortar_calculator_tactical_view',
@@ -18,4 +22,7 @@ export const stitchMap: Record<string, string | null> = {
   '/admin/personnel': 'personnel_roster_admin_management',
   '/admin/content': 'content_manager_admin_cms',
   '/admin/audit': 'system_audit_logs_admin_console',
+  '/settings': null,
+  '/login': null,
+  '/auth/callback': null,
 }

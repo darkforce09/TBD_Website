@@ -12,7 +12,7 @@
 - **Live source:** `frontend/src/pages/operations.tsx` (`DeploymentsPage`)
 - **Stitch reference:** `frontend/src/stitch-exports/my_deployments_service_record/code.html` (archived)
 - **Min role:** `public-nav` (personal data requires auth)
-- **Blueprint ref:** §4.3
+- **Blueprint ref:** [docs/platform/context_handoff.md](../../../docs/platform/context_handoff.md) §4.3 Deployments
 
 ## Element Inventory
 

@@ -1,11 +1,11 @@
 # Arma 3 Eden Editor — Feature Reference (Interactions)
 
-**Document:** `07_arma3_eden_editor_feature_reference.md`  
+**Document:** `eden/interactions.md`  
 **Schema:** [reference/feds_schema.md](../reference/feds_schema.md) (FEDS v2)  
-**UI layout:** [07a_eden_ui_anatomy.md](./07a_eden_ui_anatomy.md)  
-**Attribute fields:** [07b_eden_attribute_catalog.md](./07b_eden_attribute_catalog.md)  
+**UI layout:** [ui_anatomy.md](./ui_anatomy.md)  
+**Attribute fields:** [attributes.md](./attributes.md)  
 **Scrape cache:** `artifacts/eden-wiki/` (28 pages, 2026-06-20)  
-**Gap analysis:** [08_eden_gap_analysis.md](./08_eden_gap_analysis.md)
+**Gap analysis:** [gap_analysis.md](./gap_analysis.md)
 
 Scope: **Arma 3 Eden Editor** (3D). TBD is 2D flat — 3D-only items marked `N/A (3D)`.
 
@@ -13,7 +13,7 @@ Scope: **Arma 3 Eden Editor** (3D). TBD is 2D flat — 3D-only items marked `N/A
 
 ## Glossary
 
-See [07a](07a_eden_ui_anatomy.md) and [Terminology](https://community.bistudio.com/wiki/Eden_Editor:_Terminology).
+See [ui_anatomy.md](../eden/ui_anatomy.md) and [Terminology](https://community.bistudio.com/wiki/Eden_Editor:_Terminology).
 
 ---
 
@@ -368,7 +368,7 @@ See [07a](07a_eden_ui_anatomy.md) and [Terminology](https://community.bistudio.c
 
 ## TOOLBAR — Index
 
-See [07a § Toolbar](07a_eden_ui_anatomy.md). IDs: `TOOLBAR-NEW-001` … `TOOLBAR-TUTORIAL-001` (New, Open, Save, Workshop, Undo, Redo, widgets, snap, grids, intel, map, flashlight, vision, phase, tutorials).
+See [ui_anatomy § Toolbar](../eden/ui_anatomy.md). IDs: `TOOLBAR-NEW-001` … `TOOLBAR-TUTORIAL-001` (New, Open, Save, Workshop, Undo, Redo, widgets, snap, grids, intel, map, flashlight, vision, phase, tutorials).
 
 Wiki: https://community.bistudio.com/wiki/Eden_Editor:_Toolbar
 
