@@ -54,7 +54,7 @@ open it in the browser to log in, or curl it and read `access_token` from the
 - Git: **commit directly to `main`; never create a branch.** End commit messages with
   the `Co-Authored-By` trailer. Commits are tagged `T-00x`.
 
-## Status (latest feature work: T-033 — 2026-06-21)
+## Status (latest feature work: T-040 — 2026-06-21)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
@@ -151,7 +151,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   - Verified: `npm run build` + `npm run lint` clean after every commit. Runtime layout of
     the migrated split-pane/full-bleed pages is worth an in-browser pass (`make web`).
 
-- T-029..T-033 **2D Mission Creator — Deck.gl editor (in progress)**. New self-contained
+- T-029..T-040 **2D Mission Creator — Deck.gl editor (Eden editor shipped; phases 2/5/6/8 blocked)**. New self-contained
   feature modules `frontend/src/features/tactical-map/` (terrain-agnostic engine) +
   `frontend/src/features/mission-creator/` (editor wrapper), code-split lazy route
   `/missions/:id/edit` (mission_maker+, `fullBleed`). Execution authority is
@@ -190,18 +190,45 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     `addSlot`s under the active layer (`ASSET_DND_MIME`/`AssetDropPayload`,
     `onDragOver`/`onDrop`, `onAssetDrop`). **Still mock/deferred:** reparent DnD, `assetId`
     persistence, and the always-on Asset Palette (right panel still swaps to `InspectorPanel`).
+  - **T-034 DOC-0 — doc alignment:** created `04_eden_editor_ux_spec.md` (UX contract), tracked
+    `05_agent_execution_plan.md` (execution authority), patched `03_engineering_ultra_plan.md` +
+    `mission_creator_design.md` to the Eden docked-shell UX. Docs-only.
+  - **T-035 Phase 3.5 — Eden docked shell:** fullscreen via an `AppLayout` `chromeless` route
+    handle (no platform `Sidebar`/`TopNav` on `/missions/:id/edit`); left `w-64` + right `w-80`
+    panels docked flush, map full-bleed behind (`overlayDocked` recipe). Top strip = menu stubs +
+    Eden time scrubber/weather + undo/redo + settings + Export. Left = ORBAT + Editor Layers
+    sections (`LeftSidebar`/`OrbatSection`/`EditorLayersSection`). Right = always-on `AssetPalette`
+    (tabs; removed the `InspectorPanel`→`SlotInspector` swap). `AttributesModal` editable
+    (Transform/Identity/States/Arsenal, role/tag/stance via `updateSlot`). Spacebar centers; one
+    Deck.gl base grid over a flat `bg-background`.
+  - **T-036 Phase 7b — map drag + multi-select:** `Selection` is now `{ kind, ids[] }`. New
+    `tools/useSelectTool.ts` pointer state machine (Deck `dragPan` off): left-drag icon = move
+    (transient preview → one `moveEntities` transact on release), left-drag empty = marquee
+    (`layers/useSelectionLayer.ts` + GPU `pickObjects`), middle/right-drag = pan. `ydoc`
+    `moveEntities`/`removeEntities` (atomic group ops). Removed click-to-teleport; Delete/Backspace
+    removes selection; Spacebar centers on the selection centroid.
+  - **T-037 Phase 7a — outliner tree ops:** `ydoc` `renameEditorLayer`/`reparentEditorLayer`
+    (cycle-guarded)/`moveSlotToLayer` + **destructive** `removeEditorLayer` (deletes a folder's
+    whole subtree, one transact, keeps ≥1 layer). `TreeView` gains opt-in DnD (data-driven
+    `isFolder` so **empty** folders are drop targets), inline rename, hover row actions.
+    `EditorLayersSection` wires reparent/refile/rename/delete + a "Move folder to root" dropzone.
+    `Slot.assetId` persisted from the palette drop.
+  - **T-038 Phase 9 — compiler + persistence:** `compiler/compile.ts` → `json_payload` superset
+    (backend-compatible `orbat[]` + an editor-only `editor` block for lossless reload);
+    `compiler/exportSchema.ts` camelCase mod envelope; `ydoc.hydrateMissionDoc`; `useMissionEditor`
+    (load current version, conflict prompt, dirty tracking, **manual Save Version** → POST, Export
+    download). Autosave stays **local** (y-indexeddb) — the versions API is immutable (unique
+    semver, no overwrite). Live-verified: POST 201, dup semver 409, ORBAT round-trips.
+  - **T-039 / T-040 — wiring fixes:** Save Version surfaces the backend `response.data.error` +
+    an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
+    uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):**
-- **Phase 3.5 — Eden docked shell (next):** fullscreen (hide platform `Sidebar`/`TopNav` on the
-  editor route), left `w-64` + right `w-80` panels docked flush, **always-on** Asset Palette
-  (remove the `InspectorPanel`→`SlotInspector` swap), Eden time slider, Spacebar-to-center. Then
-  7b (map drag-move + marquee multi-select), 7a (outliner reparent/rename/delete + wire `assetId`),
-  9 (compiler/export + autosave). Order + acceptance criteria in `05_agent_execution_plan.md`.
+**Not yet built / next (Mission Creator):** the Eden editor (phases 3.5/7b/7a/9) is shipped;
+the remaining phases are blocked on external assets/backend.
 - Phase 2 **DEM / Z-axis** — blocked on hosted heightmap assets (see Ultra Plan §0.3).
-- Phase 5/6 **Asset Registry worker + Arsenal** (needs backend `GET /api/v1/registry`).
-- Phase 8 **tools & objectives** (ruler/LoS/viewshed GLSL); Phase 9 **compiler/export**
-  (`json_payload` superset; the Event Hub "Open in Mission Planner" stub points here).
-- Mission-version persistence/autosave for the editor is not wired yet (local-only Y.Doc).
+- Phase 5/6 **Asset Registry worker + Arsenal** (needs backend `GET /api/v1/registry`); until then
+  the Asset Palette catalog + slot `loadout` export are mock/empty.
+- Phase 8 **tools & objectives** (ruler/LoS/viewshed GLSL; needs DEM for LoS).
 - Real Discord OAuth credentials are blank in `.env` (dev uses dev-login).
 - Telemetry is ingested via service-token endpoints; no live game-server bridge wired.
 - A fresh DB is empty of content (events, missions, etc.) — seed those via the API
