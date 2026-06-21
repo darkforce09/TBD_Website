@@ -26,7 +26,7 @@ Ship the **code-only** slice of Eden P0 / Track A Phase 1 — no map tiles, no D
 |----------|--------|
 | Position fields | **X + Y + Z + rotation** all editable (manual Z; no DEM) |
 | Title ↔ PostgreSQL | **Hydrate on load only** — strip edits live in Y.Doc; no `PATCH /missions/:id` in T-049 (see rationale below) |
-| Toolbelt coords | **Selection-aware** — when exactly **one slot** selected, show entity X/Y/Z; otherwise show **cursor** X/Y (cursor Z stays `—` until DEM) |
+| Toolbelt coords | **Selection-aware** — when exactly **one slot** selected, show entity X/Y/Z; otherwise show **cursor** X/Y. _(Superseded by **T-050**: CUR mode now shows cursor X/Y/**Z** with Z=0 on the flat map.)_ |
 | Build order | **P0-07 → P0-06 → P0-04** (terrain first — unblocks Arland missions) |
 | State rule | All entity/meta mutations via `ydoc.ts` `transact()` / `INIT_ORIGIN` for hydrate |
 | Inspector rule | Attributes modal on dbl-click only — unchanged |
@@ -36,7 +36,7 @@ Ship the **code-only** slice of Eden P0 / Track A Phase 1 — no map tiles, no D
 - Editor autosave is **local IndexedDB**; versions API stores `json_payload`, not mission row metadata.
 - `PATCH /missions/:id` exists (`UpdateMission`) but wiring debounced title sync is a separate product decision (risk: row vs Y.Doc drift).
 - **T-049:** `GET` row → `meta.title`; user can still edit in top strip; **Save Version** compiles payload only (title in export via `exportSchema` from meta).
-- **Future T-050 (optional):** `PATCH` title on Save Version or debounced strip edit.
+- **Future T-051 (optional):** `PATCH` title on Save Version or debounced strip edit. _(T-050 was used for the cursor Z readout — see [`t050_cursor_z_readout.md`](t050_cursor_z_readout.md).)_
 
 ---
 

@@ -22,7 +22,7 @@ export default function MissionCreatorPage() {
   const editor = useMissionEditor(id)
   const { md, undo } = editor
 
-  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null)
+  const [cursor, setCursor] = useState<{ x: number; y: number; z: number } | null>(null)
   const [attributesId, setAttributesId] = useState<string | null>(null)
 
   // Terrain comes from the hydrated mission meta (Everon 12.8km vs Arland 10.24km); the

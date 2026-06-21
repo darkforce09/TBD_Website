@@ -22,7 +22,7 @@
 | 2 | Top strip | bar | Title, undo/redo, time/weather scrubber, settings, Export | Command chrome | Mission metadata |
 | 3 | Left dock | panel | ORBAT tree + Editor Layers | Outliner / drop target | `editorLayers` map |
 | 4 | Right dock | panel | Asset Palette tabs | Drag assets to map | Mock catalog (registry pending) |
-| 5 | Toolbelt | bar | Select, Ruler, LoS + X/Y/Z readout | Map tools; **selection-aware** coords (SEL = single slot X/Y/Z, CUR = cursor X/Y) (T-049) | Tool state + selection |
+| 5 | Toolbelt | bar | Select, Ruler, LoS + X/Y/Z readout | Map tools; **selection-aware** coords (SEL = single slot X/Y/Z, CUR = cursor X/Y/Z, Z=0 flat until DEM) (T-049, T-050) | Tool state + selection |
 | 6 | Inspector | panel | Slot fields on double-click | `AttributesModal`; **Transform X/Y/Z/rotation editable** (T-049) | Selected slot |
 | 7 | Save Version | button | POST new semver | Immutable versions API | `useMissionEditor` |
 | 8 | Export | button | Download mod envelope | Compiler | `compiler/exportSchema.ts` |
@@ -57,6 +57,7 @@
 ### M2 — [x] Y.Doc state, map viewport, Eden docked panels
 ### M3 — [x] Map drag, multi-select, outliner ops, compiler + Save/Export
 ### M3.5 — [x] T-049 terrain wired to viewport; row title/terrain/env hydrate; editable Transform X/Y/Z/rotation; selection-aware toolbelt
+### M3.6 — [x] T-050 cursor readout shows X/Y/Z (Z=0 on the flat map until DEM)
 ### M4 — [ ] DEM, registry worker, ruler/LoS tools (blocked on external assets/API)
 
 ## Test Plan

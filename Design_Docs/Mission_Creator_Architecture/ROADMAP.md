@@ -75,7 +75,7 @@ Tracks A and B can progress in parallel once map assets exist. **Track C is its 
 - Deck.gl orthographic viewport, Arma meter coords (`flipY: false`, identity projection)
 - Terrain **definitions** (Everon 12800×12800 m, Arland, custom bounds)
 - Vector grid base map (no satellite/topo imagery yet)
-- Pan/zoom with bounds clamp; cursor X/Y in toolbelt
+- Pan/zoom with bounds clamp; cursor X/Y/Z in toolbelt (Z=0 flat until DEM, T-050)
 - Icon layer for placed **slots**; selection highlight; marquee select + live overlay
 - Drag-move slots with live preview + Y.Doc commit; undo/redo
 
@@ -93,6 +93,14 @@ Tracks A and B can progress in parallel once map assets exist. **Track C is its 
 ### Documentation & Eden wiki research (T-042)
 - FEDS inventory ([`feature_inventory.md`](feature_inventory.md)), Eden reference ([`eden/`](eden/))
 - **Arma 3 Eden Editor wiki scrape:** 28 pages in [`artifacts/eden-wiki/`](../../artifacts/eden-wiki/) via [`eden/wiki_manifest.yaml`](eden/wiki_manifest.yaml) + [`scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs); feeds [`eden/interactions.md`](eden/interactions.md), [`eden/ui_anatomy.md`](eden/ui_anatomy.md), [`eden/attributes.md`](eden/attributes.md), [`eden/gap_analysis.md`](eden/gap_analysis.md)
+
+---
+
+## DONE — T-050 (cursor Z readout)
+
+| Item | Spec | Deliverable |
+|------|------|-------------|
+| **Cursor X/Y/Z** | [`t050_cursor_z_readout.md`](t050_cursor_z_readout.md) | ✅ Toolbelt **CUR** mode shows cursor **X/Y/Z** (was X/Y + dimmed `—`). `onCursorMove` payload + `TacticalMap` `onHover` carry `z: info.coordinate[2] ?? 0`; **Z = 0** on the flat map (real value, not placeholder), off-map → `—`. SEL mode unchanged. |
 
 ---
 
@@ -126,11 +134,11 @@ These are **required** for “it functions” with **positioning you can trust**
 | A-02 | **Terrain wired to mission** (`meta.terrain` → viewport) | **Done (T-049)** | `terrainId` from `meta.terrain`, `key`-remounts `<TacticalMap>` on change (Everon 12800 / Arland 10240). |
 | A-03 | **DEM / heightmap** (16-bit, per terrain) | **Missing** | No `dem/` module. All placements get `z: 0`. |
 | A-04 | **Z on place & move** (sample DEM at x,y) | **Missing** | `addSlot` / `moveEntity` set `z: 0`. Schema expects `z from DEM`. |
-| A-05 | **Z in UI** (toolbelt + Attributes, editable) | **Done (T-049, manual)** | Transform Z editable; toolbelt shows selected-slot Z. Auto-sample from DEM still pending (A-03/A-04). |
+| A-05 | **Z in UI** (toolbelt + Attributes, editable) | **Done (T-049/T-050, manual)** | Transform Z editable (T-049); toolbelt shows selected-slot Z (SEL) **and cursor Z (CUR, =0 flat)** (T-050). Auto-sample from DEM still pending (A-03/A-04). |
 | A-06 | **Numeric X/Y/Z edit** (no “eyeball only”) | **Done (T-049)** | `updateSlotPosition` + Attributes `NumberField`s (blur/Enter commit; x/y clamped to terrain). |
 | A-07 | **Rotation** (numeric + map) | **Partial (T-049)** | Numeric rotation editable in Transform (normalized 0–360); on-map rotate handle still missing. |
 | A-08 | **Export contract verified** | **Unknown** | Compiler emits positions in `editor` block; **mod must confirm** same coord system as in-game. Need golden JSON from Reforger mod team. |
-| A-09 | **Title hydrate from API** | **Missing** | Mission row title not applied to `meta.title`. |
+| A-09 | **Title hydrate from API** | **Done (T-049)** | `applyMissionRowMeta` applies the mission row `title` (+ terrain/env) to `meta` on load, including empty-`json_payload` missions. No PATCH-back (deferred T-051). |
 | A-10 | **Autosave to mission version** | **Partial** | Save Version works; continuous autosave debounce not fully wired per Ultra Plan Phase 9. |
 
 **Accuracy note:** Deck.gl `unproject` is exact in **world meters** for the defined terrain bounds. “Off by 10%” failures usually mean **(1)** map tiles not aligned to world origin, **(2)** wrong terrain bounds vs game, or **(3)** Z always zero. Fix A-01 + A-03/A-04 + A-06 before tuning icons.

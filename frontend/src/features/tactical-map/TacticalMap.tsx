@@ -79,7 +79,7 @@ export function TacticalMap({
     (info: PickingInfo) => {
       onCursorMove?.(
         info.coordinate
-          ? { x: info.coordinate[0], y: info.coordinate[1] }
+          ? { x: info.coordinate[0], y: info.coordinate[1], z: info.coordinate[2] ?? 0 }
           : null,
       )
     },

@@ -27,13 +27,14 @@ const TOOLS: Tool[] = [
 export function BottomToolbelt({
   cursorWorld,
 }: {
-  cursorWorld: { x: number; y: number } | null
+  cursorWorld: { x: number; y: number; z: number } | null
 }) {
   const activeTool = useMapStore((s) => s.activeTool)
   const setActiveTool = useMapStore((s) => s.setActiveTool)
 
   // Selection-aware readout: when exactly one slot is selected, show its X/Y/Z; otherwise
-  // fall back to the live cursor X/Y (cursor Z stays — until the DEM lands).
+  // show the live cursor X/Y/Z (cursor Z is 0 on the flat map until Phase 2 DEM). Off-map
+  // hover → null cursor → every axis shows —.
   const selectedSlot = useMapStore((s) =>
     s.selection.kind === 'slot' && s.selection.ids.length === 1
       ? s.slotsById[s.selection.ids[0]]
@@ -45,7 +46,7 @@ export function BottomToolbelt({
   const showSel = selectedSlot != null
   const x = showSel ? selectedSlot.position.x : cursorWorld?.x
   const y = showSel ? selectedSlot.position.y : cursorWorld?.y
-  const z = showSel ? selectedSlot.position.z : undefined
+  const z = showSel ? selectedSlot.position.z : cursorWorld?.z
 
   return (
     <div className={cn(overlayPanel, 'flex items-center gap-1 px-1.5 py-1.5')}>
@@ -86,8 +87,8 @@ export function BottomToolbelt({
         <span>
           Y<span className="ml-1 text-on-surface">{y != null ? fmt(y) : '   —'}</span>
         </span>
-        <span className={showSel ? undefined : 'text-outline'}>
-          Z<span className={cn('ml-1', z != null && 'text-on-surface')}>{z != null ? fmt(z) : '—'}</span>
+        <span>
+          Z<span className="ml-1 text-on-surface">{z != null ? fmt(z) : '   —'}</span>
         </span>
       </div>
     </div>

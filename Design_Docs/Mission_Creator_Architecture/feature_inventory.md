@@ -202,20 +202,20 @@
 | **Status** | working |
 | **Evidence** | `useOrthographicView.ts` `flyTo`, `MissionCreatorPage.tsx` keydown |
 
-#### MAP-CURSOR-001 — Live X/Y coordinate readout
+#### MAP-CURSOR-001 — Live X/Y/Z coordinate readout (T-050)
 
 | Field | Value |
 |-------|-------|
 | **Domain** | MAP |
-| **Goal** | Eden toolbelt-style position HUD |
+| **Goal** | Eden toolbelt-style position HUD (X/Y/Z) |
 | **Trigger** | Mouse move over map |
 | **Preconditions** | Map mounted |
-| **Procedure** | `onHover` → `onCursorMove` → `setCursor` → BottomToolbelt mono display |
-| **Postconditions** | X/Y shown; Z shows `—` |
+| **Procedure** | `onHover` → `onCursorMove({x,y,z})` (z = `info.coordinate[2] ?? 0`) → `setCursor` → BottomToolbelt mono display (CUR mode) |
+| **Postconditions** | X/Y/Z shown; **Z = 0** on the flat map (real ground-plane value until Phase 2 DEM) |
 | **Inputs** | Pointer hover |
-| **Outputs** | `cursorWorld` in store |
-| **Edge cases** | `—` when off-map; no DEM for Z |
-| **Acceptance** | `- [ ] Coords update on hover` `- [ ] Z always —` |
+| **Outputs** | `cursor` React state in `MissionCreatorPage`, passed as `cursorWorld` prop to the toolbelt (not the Zustand store) |
+| **Edge cases** | Off-map hover → null cursor → all axes show `—`; Z stays 0 until DEM feeds real elevation |
+| **Acceptance** | `- [x] Coords update on hover` `- [x] Z shows 0 on-map, — off-map (T-050)` |
 | **Eden parity** | Eden:BOTTOM-HUD-001 |
 | **Status** | partial |
 | **Evidence** | `TacticalMap.tsx`, `BottomToolbelt.tsx`, `MissionCreatorPage.tsx` |

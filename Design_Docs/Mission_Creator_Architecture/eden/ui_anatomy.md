@@ -266,7 +266,7 @@ Opened via Toolbar intel button or Menu → Attributes.
 | Entity List + Eden Layers | ORBAT + Editor Layers | **Partial** — TBD layers ≠ Eden layers |
 | Toolbar | Top strip (time/weather/save) + bottom toolbelt | **Missing** most widget/snap controls |
 | Menu Bar 8 menus | Top menu stubs | **Stub** |
-| Status Bar X/Y/Z | Bottom toolbelt X/Y only | **Partial** |
+| Status Bar X/Y/Z | Bottom toolbelt X/Y/Z (cursor Z=0 flat until DEM; SEL shows entity Z) | **Match** (pending real Z from DEM) |
 | Scenario Attributes | Mission Settings dialog | **Partial** |
 | Compositions F2 | — | **Missing** |
 | Comments | — | **Missing** |

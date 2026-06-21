@@ -35,8 +35,9 @@ export interface TacticalMapProps {
   showGrid?: boolean
   /** Extra classes for the absolutely-positioned canvas container. */
   className?: string
-  /** Fired on hover with the world (meters) cursor position, or null when off-map. */
-  onCursorMove?: (world: { x: number; y: number } | null) => void
+  /** Fired on hover with the world (meters) cursor position, or null when off-map.
+   *  `z` is 0 on the flat map and stays 0 until Phase 2 DEM sampling lands. */
+  onCursorMove?: (world: { x: number; y: number; z: number } | null) => void
   /** Receives the imperative map API (e.g. flyTo) for use by sibling panels. */
   onReady?: (api: TacticalMapApi) => void
   /** Fired when an entity icon is double-clicked (e.g. open the Attributes modal). */

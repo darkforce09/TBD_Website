@@ -77,10 +77,17 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-049 — 2026-06-22)
+## Status (latest feature work: T-050 — 2026-06-22)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-050 **Mission Creator — cursor Z readout**. One-line follow-up to T-049: the bottom
+  toolbelt's **CUR** (cursor) mode now shows **X/Y/Z** instead of X/Y with a dimmed `—` for Z.
+  The engine `onCursorMove` payload (`tactical-map/types.ts`) gained `z`; `TacticalMap` `onHover`
+  emits `z: info.coordinate[2] ?? 0` (Deck.gl unproject); `MissionCreatorPage` cursor state +
+  `BottomToolbelt` show it. **Z = 0 on the flat map** (a real ground-plane value, not a placeholder)
+  and will carry real elevation once Phase 2 DEM feeds z; off-map hover still shows `—` on all
+  axes; SEL mode unchanged. Verified: frontend build + lint clean.
 - T-049 **Mission Creator — Track A quick P0 (terrain, title, numeric position)**. Code-only
   Eden P0 slice (no map tiles / DEM / registry). **P0-07 terrain:** `MissionCreatorPage`
   reads `meta.terrain` and passes it to `<TacticalMap key={terrainId} terrain={terrainId}>`
