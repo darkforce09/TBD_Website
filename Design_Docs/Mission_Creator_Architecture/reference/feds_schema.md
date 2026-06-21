@@ -1,7 +1,7 @@
 # FEDS — Feature Entry Documentation Schema
 
 **Document:** `reference/feds_schema.md`  
-**Status:** Normative. All entries in `06_tbd_mission_creator_feature_inventory.md` and `07_arma3_eden_editor_feature_reference.md` **must** follow this schema. Gap analysis `08_eden_gap_analysis.md` links rows by `id` only.
+**Status:** Normative. All entries in `feature_inventory.md` and `eden/interactions.md` **must** follow this schema. Gap analysis `eden/gap_analysis.md` links rows by `id` only.
 
 ---
 
@@ -75,7 +75,7 @@ If a field cannot be confirmed, write `UNVERIFIED` and what must be checked.
 
 **One behavior = one ID.** Do not bundle “selection” into one row — split click, marquee, Shift-add, Ctrl-toggle, etc.
 
-**Attribute catalog rule:** Attribute **fields** live in `07b_eden_attribute_catalog.md` as `ATTR-FIELD-*` rows. `07` references them; do not inline 200+ fields in `07`.
+**Attribute catalog rule:** Attribute **fields** live in `eden/attributes.md` as `ATTR-FIELD-*` rows. `eden/interactions.md` references them; do not inline 200+ fields in the interaction reference.
 
 ---
 
@@ -198,11 +198,11 @@ The markdown FEDS block remains authoritative.
 | File | Role |
 |------|------|
 | `reference/feds_schema.md` | This file — normative schema (FEDS v2) |
-| `06_tbd_mission_creator_feature_inventory.md` | TBD implementation inventory |
+| `feature_inventory.md` | TBD implementation inventory |
 | `eden/ui_anatomy.md` | Eden workspace layout — what you see per panel |
-| `07b_eden_attribute_catalog.md` | Per-entity-type attribute fields (`ATTR-FIELD-*`) |
-| `07_arma3_eden_editor_feature_reference.md` | Eden interaction reference (wiki-anchored) |
-| `08_eden_gap_analysis.md` | ID-linked parity matrix + backlog |
-| `09_eden_wiki_manifest.yaml` | Wiki pages to scrape + status |
+| `eden/attributes.md` | Per-entity-type attribute fields (`ATTR-FIELD-*`) |
+| `eden/interactions.md` | Eden interaction reference (wiki-anchored) |
+| `eden/gap_analysis.md` | ID-linked parity matrix + backlog |
+| `eden/wiki_manifest.yaml` | Wiki pages to scrape + status |
 | `artifacts/eden-wiki/` | Scraper raw page cache |
 | `artifacts/eden-feds-draft.jsonl` | Scraper draft FEDS candidates |

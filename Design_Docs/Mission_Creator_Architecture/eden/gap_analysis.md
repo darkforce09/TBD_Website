@@ -1,7 +1,7 @@
 # Eden Gap Analysis — TBD vs Arma 3 Eden (Phase 2)
 
 **Document:** `eden/gap_analysis.md`  
-**Inputs:** [06](../06_tbd_feature_inventory.md) + [interactions](./interactions.md) + [ui_anatomy](./ui_anatomy.md) + [attributes](./attributes.md)  
+**Inputs:** [feature_inventory.md](../feature_inventory.md) + [interactions](./interactions.md) + [ui_anatomy](./ui_anatomy.md) + [attributes](./attributes.md)  
 **Schema:** [reference/feds_schema.md](../reference/feds_schema.md)
 
 ---

@@ -1,1 +1,1 @@
-> **Moved:** [`06_tbd_feature_inventory.md`](06_tbd_feature_inventory.md)
+> **Moved:** [`feature_inventory.md`](feature_inventory.md)

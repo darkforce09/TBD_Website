@@ -91,7 +91,7 @@ Visual target: **Arma 3 Eden Editor** layout + interactions, **modernized with A
 | `frontend/src/pages/missions.tsx` | Mission library (entry to editor) |
 | `frontend/docs/pages/mission-creator.md` | Setup wizard spec (`/missions/create`) — **separate track** |
 
-**STEP 0:** Done — this file is in the repo. New sessions start at **PHASE PRE-3.5** (or DOC-0 if wiring landed).
+**STEP 0:** Done — this file is in the repo. Shell phases PRE-3.5–9 are DONE (T-033–T-040); new sessions start at **[`ROADMAP.md`](ROADMAP.md)** and execute only OPEN items.
 
 ---
 
@@ -491,8 +491,8 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 
 1. Start a new Agent session in this repo.
 2. Paste the [one-line prompt](#one-line-prompt-copy-this) from the top of this file.
-3. Start at **PHASE PRE-3.5** (or **DOC-0** if wiring is already landed).
-4. To resume: `Continue agent_execution.md from PHASE 7b` (or next incomplete phase).
+3. Shell phases PRE-3.5–9 are DONE (T-033–T-040) — open [`ROADMAP.md`](ROADMAP.md) and execute only OPEN items.
+4. To resume a specific shell phase for reference: `Continue agent_execution.md from PHASE 7b`.
 5. To commit after a phase passes verification: `commit with tag T-033`.
 
 **Agent reminder:** Read **Document hierarchy** → **Decisions log** → **Architecture state** before code. Use **Interaction contract** for behavior. Ultra Plan §8 for compiler. HTML mockups are historical only.

@@ -3,7 +3,7 @@
 **Author:** Lead Backend Engineer (handoff design)
 **Date:** 2026-06-17
 **Scope:** PostgreSQL schema + Go REST API for the TBD Arma Reforger Event Platform.
-**Sources:** `Claude_Context_Handoff.md` + the 21 Stitch page mockups in `frontend/src/stitch-exports/`.
+**Sources:** [`docs/platform/context_handoff.md`](../platform/context_handoff.md) + the 21 Stitch page mockups in `frontend/src/stitch-exports/`.
 
 > **Status:** Original design plan. Schema may pre-date T-008 campaign refactor — verify against
 > [`internal/models/`](../../internal/models/). Current status: [`CLAUDE.md`](../../CLAUDE.md).

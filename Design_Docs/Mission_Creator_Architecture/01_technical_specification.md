@@ -1,1 +1,1 @@
-> **Moved:** [`01_problem_statement.md`](01_problem_statement.md)
+> **Moved:** [`problem_statement.md`](problem_statement.md)

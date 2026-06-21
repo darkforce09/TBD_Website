@@ -62,8 +62,8 @@
 ```bash
 make db-up
 PATH="/var/home/Samuel/.local/go/bin:$PATH" make api
-curl -sf http://localhost:8080/api/v1/health
-# dev-login: http://localhost:8080/api/v1/auth/dev-login?role=admin
+# no /health route — confirm API is up via the dev-login 302:
+curl -si "http://localhost:8080/api/v1/auth/dev-login?role=admin" | head -1
 make test-it
 ```
 

@@ -1,7 +1,7 @@
 # TBD Reforger — Mission Creator: The Engineering Ultra Plan
 **Document:** `engineering_plan.md`
-**Status:** Authoritative engineering blueprint (supersedes the renderer/stack choices in `01_technical_specification.md`)
-**Audience:** Implementing engineers. Read `01_technical_specification.md` (problem statement) and `mission_creator_design.md` (product/UX) first; this document is *how we build it, file by file.*
+**Status:** Authoritative engineering blueprint (supersedes the renderer/stack choices in `problem_statement.md`)
+**Audience:** Implementing engineers. Read `problem_statement.md` (problem statement) and `mission_creator_design.md` (product/UX) first; this document is *how we build it, file by file.*
 
 > **UX/layout authority is `agent_execution.md` + `ux_spec.md`.**
 > The locked UX is the **Arma 3 Eden Editor docked shell** (fullscreen, panels flush to the
@@ -19,7 +19,7 @@ recorded here so nothing downstream contradicts.
 
 | # | Decision | Supersedes | Rationale |
 |---|----------|-----------|-----------|
-| ADR-1 | **Renderer = Deck.gl** (`@deck.gl/core`, `/layers`, `/react`, `@luma.gl/core`) | `01_technical_specification.md` Pillar 1 (PixiJS/React Konva) | Deck.gl gives us a batched, GPU-driven layer system, free picking, and a clean path to custom GLSL layers (DEM hillshade, viewshed) without hand-rolling a scene graph. |
+| ADR-1 | **Renderer = Deck.gl** (`@deck.gl/core`, `/layers`, `/react`, `@luma.gl/core`) | `problem_statement.md` Pillar 1 (PixiJS/React Konva) | Deck.gl gives us a batched, GPU-driven layer system, free picking, and a clean path to custom GLSL layers (DEM hillshade, viewshed) without hand-rolling a scene graph. |
 | ADR-2 | **Structure = in-app feature module + lazy route** inside the existing **Vite + React 19** SPA. The engine is `frontend/src/features/tactical-map/`; the editor mounts at `/missions/:id/edit`. | The brief's `packages/tactical-map` monorepo + isolated Next.js wrapper | The repo is a single-package Vite app today. The editor is a 100% client-side WebGL surface — Next.js SSR/RSC add nothing and a monorepo split adds tooling cost. We get isolation via a code-split route + a self-contained feature folder, and reuse the Aegis design system and toolchain for free. |
 | ADR-3 | **Multiplayer = single-player v1, Yjs-ready.** The normalized store is `Y.Doc`-backed and offline-first from day one, but v1 ships solo. The y-websocket sync server, presence cursors, and live-conflict UX are **deferred** (Phase 4+ of the product roadmap) and documented as forward-looking only. | — | De-risks the v1 delivery of an enormously complex editor while guaranteeing the data model is correct for collaboration later — no rewrite required to turn multiplayer on. |
 
@@ -156,7 +156,7 @@ features/mission-creator/
 
 ## 2. The Normalized State Model
 
-**Principle (from `01_technical_specification.md` Pillar 3):** never nest. Every entity lives
+**Principle (from `problem_statement.md` Pillar 3):** never nest. Every entity lives
 in a flat, ID-keyed dictionary; relationships are ID arrays. This is what lets us swap one
 optic without re-rendering a squad. The dictionaries are **`Y.Map`s inside a single `Y.Doc`**
 (the source of truth); a Zustand store is a *read-mirror* updated by an `observeDeep`
