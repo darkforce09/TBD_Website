@@ -18,8 +18,9 @@ Full commands: [`DEV_RUNBOOK.md`](DEV_RUNBOOK.md)
 
 | Role | Start here |
 |------|------------|
-| Frontend | [`docs/frontend/README.md`](docs/frontend/README.md) |
-| Backend | [`docs/backend/README.md`](docs/backend/README.md) |
+| Frontend | [`docs/frontend/ROADMAP.md`](docs/frontend/ROADMAP.md) |
+| Backend | [`docs/backend/ROADMAP.md`](docs/backend/ROADMAP.md) |
+| Mission Creator | [`Design_Docs/Mission_Creator_Architecture/ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md) |
 | AI agents | [`CLAUDE.md`](CLAUDE.md) |
 | Archive / mockups | [`docs/archive/README.md`](docs/archive/README.md) |
 
