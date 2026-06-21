@@ -25,6 +25,10 @@ export default function MissionCreatorPage() {
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null)
   const [attributesId, setAttributesId] = useState<string | null>(null)
 
+  // Terrain comes from the hydrated mission meta (Everon 12.8km vs Arland 10.24km); the
+  // `key` remounts the viewport so the camera/base-map resize to the new bounds.
+  const terrainId = useMapStore((s) => s.meta?.terrain ?? 'everon')
+
   // The map's imperative API (flyTo) — captured once for Spacebar centering.
   const mapApi = useRef<TacticalMapApi | null>(null)
   const onReady = useCallback((api: TacticalMapApi) => {
@@ -87,7 +91,8 @@ export default function MissionCreatorPage() {
     <div className="relative h-full w-full overflow-hidden bg-background">
       {/* Full-bleed map behind everything. */}
       <TacticalMap
-        terrain="everon"
+        key={terrainId}
+        terrain={terrainId}
         showGrid
         className="absolute inset-0 z-0 bg-background"
         onReady={onReady}

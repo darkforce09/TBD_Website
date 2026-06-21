@@ -235,6 +235,9 @@ flowchart TD
 | Spacebar to center | Auto `flyTo` on outliner click | Phase 3.5 + 7b |
 | Delete key | No keyboard delete | Phase 7b |
 | Export + API autosave | Export disabled; IndexedDB only | Phase 9 |
+| Terrain drives viewport bounds | Hardcoded `terrain="everon"` | T-049 |
+| Mission row title/terrain on load | Always "Untitled Mission"; empty-payload early-return | T-049 |
+| Editable numeric X/Y/Z/rotation | Read-only Transform; stale "coming later" copy | T-049 |
 
 ---
 
@@ -275,6 +278,8 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Autosave** | **Debounced autosave** overwrites a single server **draft** on the mission. **Undo** = in-session. Manual **Save Version** creates semver snapshots for future Visual-Git/history. |
 | **Time of day** | Match **Arma 3 Eden** environment control (slider/scrub in environment UI — not preset-only dropdowns). Expose quick readout in top bar; fine control in Mission Settings. |
 | **Mission create entry** | **No standalone `/missions/create` route or sidebar tab** (T-048). `mission_maker+` creates from **New Mission** header (tooltip **⌘N/Ctrl+N**), **My Missions true-empty CTA** (no filters active), or **Cmd/Ctrl+N**. Close dossier Sheet before opening dialog. Form resets on every dialog close. Editor surfaces keep **Mission Creator** naming. |
+| **Numeric transform** (T-049) | Editable X/Y/Z/rotation lives in the **Attributes modal Transform tab** (commit on blur/Enter, one undo step). The **bottom toolbelt is readout-only** — selection-aware (single slot → SEL X/Y/Z; else CUR cursor X/Y). x/y clamp to terrain bounds; Z is manual until DEM. |
+| **Mission title hydrate** (T-049) | On editor load the **PostgreSQL mission row** (`title`, `terrain`, time/weather) hydrates `meta` via `applyMissionRowMeta` (INIT_ORIGIN) — including new missions whose `json_payload` is `{}`. **No PATCH-back** in T-049; Save Version still compiles payload only. |
 | **Phase order** | Shell phases **PRE-3.5 → DOC-0 → 3.5 → 7b → 7a → 9 are complete** (T-033–T-040). Historically the tree wiring landed before shell fidelity, but that is done — there is no mandatory next shell phase. For open work see **`ROADMAP.md`**: Tracks A/B/C, Phase 2 DEM, Phases 5–6 registry, Phase 8 tools. |
 | **Eden completeness** | Eden parity checklist = `eden/interactions.md`, `eden/ui_anatomy.md`, `eden/attributes.md`, `eden/gap_analysis.md` + scrape artifacts. Read `eden/ui_anatomy.md` / `eden/attributes.md` before implementing UI/attrs. Implement the P0 backlog from `eden/gap_analysis.md`. Feature status lives in `feature_inventory.md` + `reference/feds_schema.md`; new TBD features → FEDS row in `feature_inventory.md`. Wiki cache = `eden/wiki_manifest.yaml` + `artifacts/eden-wiki/`; regenerate via `node scripts/tools/scrape-eden-wiki.mjs` when the wiki updates. |
 

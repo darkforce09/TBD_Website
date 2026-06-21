@@ -77,10 +77,27 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-048 — 2026-06-21)
+## Status (latest feature work: T-049 — 2026-06-22)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-049 **Mission Creator — Track A quick P0 (terrain, title, numeric position)**. Code-only
+  Eden P0 slice (no map tiles / DEM / registry). **P0-07 terrain:** `MissionCreatorPage`
+  reads `meta.terrain` and passes it to `<TacticalMap key={terrainId} terrain={terrainId}>`
+  (the `key` remounts the viewport so the camera + base grid resize to Everon 12800 vs Arland
+  10240). **P0-06 title hydrate:** new `applyMissionRowMeta` (INIT_ORIGIN) in `tactical-map`
+  `state/ydoc.ts` sets `meta.title`/`terrain`/`environment` from the `GET /missions/:id`
+  row; `useMissionEditor.onSynced` was rewritten so it **no longer early-returns when
+  `json_payload` is `{}`** (the bug that left every freshly-created mission on "Untitled
+  Mission"/Everon) — empty payload → apply row meta; non-empty → hydrate then re-apply row
+  title; conflict "load server" re-applies the cached row meta. Hydrate-only (no `PATCH`;
+  Save Version still compiles payload). **P0-04 numeric transform:** new `updateSlotPosition`
+  (x/y clamped to terrain bounds, rotation normalized 0–360, one undo step per commit) +
+  a mono `NumberField` (blur/Enter commit, no effects) make the Attributes **Transform** tab
+  X/Y/Z/rotation editable (replacing the read-only fields + stale "coming later" copy). The
+  **bottom toolbelt** is now selection-aware: single selected slot → `SEL` X/Y/Z, otherwise
+  `CUR` cursor X/Y. `MissionDetail.current_version` type gained `json_payload?`. No backend
+  changes. Verified: frontend build + lint clean.
 - T-048 **Mission create from Library (macOS Dialog)** — the standalone `/missions/create`
   full-page wizard is replaced by a transient `CreateMissionDialog`
   (`frontend/src/features/mission-creator/CreateMissionDialog.tsx`) launched from the Mission

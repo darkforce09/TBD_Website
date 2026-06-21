@@ -151,7 +151,11 @@ export interface MissionArmory {
 
 export interface MissionDetail extends MissionCard {
   armory: MissionArmory[]
-  current_version?: { id: string; semver: string } | null
+  current_version?: {
+    id: string
+    semver: string
+    json_payload?: Record<string, unknown>
+  } | null
 }
 
 export interface EventListItem {

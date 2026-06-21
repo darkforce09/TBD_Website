@@ -97,12 +97,12 @@
 | SEL-ALL-001 | KEY-SELALL-001 | missing | P2 | Select all |
 | ATTR-FIELD-OBJ-SKILL | ATTR-TAB-003 | missing | P2 | States stub |
 | ATTR-FIELD-OBJ-FUEL | — | missing | P2 | Vehicles |
-| ATTR-FIELD-OBJ-POSITION | ATTR-TAB-001 | partial | P0 | Read-only position |
+| ATTR-FIELD-OBJ-POSITION | ATTR-TAB-001 | match | P0 | ✅ T-049 — editable X/Y/Z/rotation (NumberField → updateSlotPosition) |
 | ATTR-MULTI-CHK-001 | — | missing | P2 | Multi-edit per-field checkbox |
 | SEL-ORBAT-DBL-001 | SEL-ORBAT-DBL-001 | missing | P1 | ORBAT dbl-click attrs |
-| MAP-TERRAIN-001 | MAP-TERRAIN-001 | partial | P1 | meta.terrain not wired to map |
+| MAP-TERRAIN-001 | MAP-TERRAIN-001 | match | P1 | ✅ T-049 — meta.terrain → viewport (key-remount, Everon/Arland bounds) |
 | ENV-SETTINGS-002 | TOP-SETTINGS-001 | partial | — | Thermals + view dist in dialog |
-| DATA-HYD-TITLE-001 | TOP-TITLE-001 | partial | P0 | Title not from API row |
+| DATA-HYD-TITLE-001 | TOP-TITLE-001 | match | P0 | ✅ T-049 — applyMissionRowMeta hydrates title/terrain/env on load (no PATCH-back) |
 
 ---
 
@@ -126,10 +126,10 @@
 1. **P0-01** Real asset registry + RIGHT-MODE-001 parity (`RIGHT-CAT-001`)
 2. **P0-02** Markers on map (`RIGHT-MODE-006`, `PLACE-005`)
 3. **P0-03** Vehicles placeable (`RIGHT-MODE-001` vehicles)
-4. **P0-04** Numeric position edit (`ATTR-FIELD-OBJ-POSITION`)
+4. ~~**P0-04** Numeric position edit (`ATTR-FIELD-OBJ-POSITION`)~~ — ✅ shipped T-049
 5. **P0-05** ORBAT authoring (`CONN-GROUP-001`, `LEFT-ORBAT-001`)
-6. **P0-06** Title hydrate from mission row (`TOP-TITLE-001`, `DATA-HYD-TITLE-001`)
-7. **P0-07** Wire `meta.terrain` to map viewport (`MAP-TERRAIN-001`)
+6. ~~**P0-06** Title hydrate from mission row (`TOP-TITLE-001`, `DATA-HYD-TITLE-001`)~~ — ✅ shipped T-049
+7. ~~**P0-07** Wire `meta.terrain` to map viewport (`MAP-TERRAIN-001`)~~ — ✅ shipped T-049
 
 ### P1 — Eden feel
 

@@ -5,9 +5,15 @@
 // Debounced autosave stays LOCAL (y-indexeddb) — the versions API has no draft/overwrite route.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { hydrateMissionDoc, useMapStore, type MissionDoc } from '@/features/tactical-map'
+import {
+  applyMissionRowMeta,
+  hydrateMissionDoc,
+  useMapStore,
+  type MissionDoc,
+} from '@/features/tactical-map'
 import { LOCAL_ORIGIN } from '@/features/tactical-map'
 import { api } from '@/api/client'
+import type { MissionDetail } from '@/types/api'
 import { useMissionDoc, type MissionDocHandle } from './useMissionDoc'
 import { compileMission } from '../compiler/compile'
 import { toMissionExport } from '../compiler/exportSchema'
@@ -51,6 +57,14 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
   const [currentSemver, setCurrentSemver] = useState<string | null>(null)
   const [conflict, setConflict] = useState<Record<string, unknown> | null>(null)
   const mounted = useRef(true)
+  // Row metadata (title/terrain/env) from the initial GET, kept so a "load server"
+  // conflict resolution can re-apply it after hydrating the payload.
+  const lastRowMeta = useRef<{
+    title: string
+    terrain: string
+    time_of_day?: string
+    weather?: string
+  } | null>(null)
 
   // After the local snapshot syncs, reconcile with the server's current version.
   const onSynced = useCallback(
@@ -60,14 +74,31 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
         .get(`/missions/${missionId}`)
         .then((res) => {
           if (!mounted.current) return
-          const version = res.data?.current_version as
-            | { semver?: string; json_payload?: Record<string, unknown> }
-            | undefined
+          const data = res.data as MissionDetail
+          // Always hydrate the mission-row meta — even for a brand-new mission whose
+          // json_payload is still {} (the bug this fixes: the old early-return left the
+          // editor on "Untitled Mission" / Everon).
+          const row = {
+            title: data.title,
+            terrain: data.terrain,
+            time_of_day: data.time_of_day,
+            weather: data.weather,
+          }
+          lastRowMeta.current = row
+          const version = data.current_version
           setCurrentSemver(version?.semver ?? null)
           const payload = version?.json_payload
-          if (!payload) return // nothing on the server → keep local
-          if (hasLocalContent(md)) setConflict(payload) // prompt the user
-          else hydrateMissionDoc(md, payload) // empty local → adopt server
+          const isEmpty = !payload || Object.keys(payload).length === 0
+          if (isEmpty) {
+            applyMissionRowMeta(md, row) // new mission → title/terrain/env from the row
+            return
+          }
+          if (hasLocalContent(md)) {
+            setConflict(payload) // local edits + server version → prompt the user
+          } else {
+            hydrateMissionDoc(md, payload) // empty local → adopt server
+            applyMissionRowMeta(md, row) // row title wins (compile omits title from payload)
+          }
         })
         .catch(() => {
           /* mission not on the API (e.g. ad-hoc id) → stay local-only */
@@ -139,6 +170,7 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
     (choice: 'local' | 'server') => {
       if (choice === 'server' && conflict) {
         hydrateMissionDoc(md, conflict)
+        if (lastRowMeta.current) applyMissionRowMeta(md, lastRowMeta.current)
         setDirty(false)
       } else {
         setDirty(true) // local kept → it differs from the server, so it's unsaved

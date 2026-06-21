@@ -5,10 +5,17 @@
 
 import { useState } from 'react'
 import { Shield } from 'lucide-react'
-import { updateSlot, useMapStore, type MissionDoc, type Slot } from '@/features/tactical-map'
+import {
+  updateSlot,
+  updateSlotPosition,
+  useMapStore,
+  type MissionDoc,
+  type Slot,
+} from '@/features/tactical-map'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import {
+  NumberField,
   ReadonlyField,
   SelectField,
   TextField,
@@ -84,11 +91,16 @@ function TransformTab({ md, slot }: { md: MissionDoc; slot: Slot }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-3 gap-3">
-        <ReadonlyField label="X" value={Math.round(slot.position.x).toString()} />
-        <ReadonlyField label="Y" value={Math.round(slot.position.y).toString()} />
-        <ReadonlyField label="Z" value={Math.round(slot.position.z).toString()} />
+        <NumberField label="X" value={slot.position.x} onCommit={(x) => updateSlotPosition(md, slot.id, { x })} />
+        <NumberField label="Y" value={slot.position.y} onCommit={(y) => updateSlotPosition(md, slot.id, { y })} />
+        <NumberField label="Z" value={slot.position.z} onCommit={(z) => updateSlotPosition(md, slot.id, { z })} />
       </div>
-      <ReadonlyField label="Rotation" value={`${Math.round(slot.position.rotation)}°`} />
+      <NumberField
+        label="Rotation"
+        value={slot.position.rotation}
+        suffix="°"
+        onCommit={(rotation) => updateSlotPosition(md, slot.id, { rotation })}
+      />
       <SelectField
         label="Stance"
         value={slot.stance}
@@ -96,8 +108,7 @@ function TransformTab({ md, slot }: { md: MissionDoc; slot: Slot }) {
         onChange={(stance) => updateSlot(md, slot.id, { stance: stance as Slot['stance'] })}
       />
       <p className="text-label-sm normal-case text-outline">
-        Drag the unit on the map to reposition it (coming in a later phase). Z is derived
-        from terrain elevation once the DEM lands.
+        Drag on the map or edit coordinates above. Z is manual until terrain elevation (DEM) ships.
       </p>
     </div>
   )

@@ -32,7 +32,20 @@ export function BottomToolbelt({
   const activeTool = useMapStore((s) => s.activeTool)
   const setActiveTool = useMapStore((s) => s.setActiveTool)
 
+  // Selection-aware readout: when exactly one slot is selected, show its X/Y/Z; otherwise
+  // fall back to the live cursor X/Y (cursor Z stays — until the DEM lands).
+  const selectedSlot = useMapStore((s) =>
+    s.selection.kind === 'slot' && s.selection.ids.length === 1
+      ? s.slotsById[s.selection.ids[0]]
+      : undefined,
+  )
+
   const fmt = (n: number) => Math.round(n).toString().padStart(5, ' ')
+
+  const showSel = selectedSlot != null
+  const x = showSel ? selectedSlot.position.x : cursorWorld?.x
+  const y = showSel ? selectedSlot.position.y : cursorWorld?.y
+  const z = showSel ? selectedSlot.position.z : undefined
 
   return (
     <div className={cn(overlayPanel, 'flex items-center gap-1 px-1.5 py-1.5')}>
@@ -64,14 +77,17 @@ export function BottomToolbelt({
       <span className="mx-1 h-5 w-px bg-white/10" />
 
       <div className="flex items-center gap-2 px-1 font-mono text-code-md text-on-surface-variant">
-        <span>
-          X<span className="ml-1 text-on-surface">{cursorWorld ? fmt(cursorWorld.x) : '   —'}</span>
+        <span className="text-outline" title={showSel ? 'Selected entity' : 'Cursor'}>
+          {showSel ? 'SEL' : 'CUR'}
         </span>
         <span>
-          Y<span className="ml-1 text-on-surface">{cursorWorld ? fmt(cursorWorld.y) : '   —'}</span>
+          X<span className="ml-1 text-on-surface">{x != null ? fmt(x) : '   —'}</span>
         </span>
-        <span className="text-outline">
-          Z<span className="ml-1">—</span>
+        <span>
+          Y<span className="ml-1 text-on-surface">{y != null ? fmt(y) : '   —'}</span>
+        </span>
+        <span className={showSel ? undefined : 'text-outline'}>
+          Z<span className={cn('ml-1', z != null && 'text-on-surface')}>{z != null ? fmt(z) : '—'}</span>
         </span>
       </div>
     </div>

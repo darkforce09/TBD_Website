@@ -1,8 +1,9 @@
 // Shared inspector field primitives — a label + control row in the Aegis glass
 // style, reused by the Global Settings and Slot inspectors.
 
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 
 const controlClass =
   'w-full rounded-md border border-outline-variant/40 bg-surface-container-lowest/60 px-2.5 py-1.5 text-label-md text-on-surface outline-none transition-colors focus:border-primary/60'
@@ -38,6 +39,60 @@ export function TextField({
         onChange={(e) => onChange(e.target.value)}
         className={controlClass}
       />
+    </Field>
+  )
+}
+
+/**
+ * Mono numeric field that commits on blur / Enter (not every keystroke) — so one numeric
+ * edit is one Y.Doc transaction / undo step. While focused it shows the local draft; while
+ * unfocused it always mirrors the external value (so a map-drag updates the readout live).
+ * No effects (keeps clear of the set-state-in-effect lint rule).
+ */
+export function NumberField({
+  label,
+  value,
+  onCommit,
+  suffix,
+}: {
+  label: string
+  value: number
+  onCommit: (v: number) => void
+  suffix?: string
+}) {
+  const [draft, setDraft] = useState('')
+  const [focused, setFocused] = useState(false)
+  const rounded = Math.round(value)
+
+  const commit = () => {
+    setFocused(false)
+    const n = parseFloat(draft)
+    if (Number.isFinite(n)) onCommit(n)
+  }
+
+  return (
+    <Field label={label}>
+      <div className="relative">
+        <input
+          type="number"
+          value={focused ? draft : String(rounded)}
+          onFocus={() => {
+            setDraft(String(rounded))
+            setFocused(true)
+          }}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur()
+          }}
+          className={cn(controlClass, 'font-mono', suffix && 'pr-7')}
+        />
+        {suffix && (
+          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-label-sm text-outline">
+            {suffix}
+          </span>
+        )}
+      </div>
     </Field>
   )
 }

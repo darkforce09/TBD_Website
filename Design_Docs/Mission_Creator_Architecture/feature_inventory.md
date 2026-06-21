@@ -850,8 +850,8 @@
 | **Postconditions** | Title updated; dirty |
 | **Inputs** | Text |
 | **Outputs** | Y.Doc meta |
-| **Edge cases** | Not hydrated from server mission row on load; placeholder "Untitled Mission" |
-| **Acceptance** | `- [ ] Title edits persist in IndexedDB` |
+| **Edge cases** | T-049: hydrated from the server mission row on load via `applyMissionRowMeta` (even when `json_payload` is `{}`); placeholder "Untitled Mission" only until the GET resolves. No PATCH-back yet. |
+| **Acceptance** | `- [x] Title edits persist in IndexedDB` · `- [x] Mission row title hydrates on load (T-049)` |
 | **Eden parity** | Eden:FILE-TITLE-001 |
 | **Status** | partial |
 | **Evidence** | `TopCommandStrip.tsx`, `ydoc.ts` |
@@ -1098,7 +1098,7 @@
 | **Status** | working |
 | **Evidence** | `AttributesModal.tsx` |
 
-#### ATTR-TAB-001 — Transform tab (read-only position)
+#### ATTR-TAB-001 — Transform tab (editable position, T-049)
 
 | Field | Value |
 |-------|-------|
@@ -1106,12 +1106,12 @@
 | **Goal** | View/edit transform |
 | **Trigger** | Transform tab |
 | **Preconditions** | Slot open |
-| **Procedure** | Read-only X/Y/Z/rotation; stance `SelectField` → `updateSlot` |
-| **Postconditions** | Stance may update |
-| **Inputs** | Stance select |
-| **Outputs** | Y.Doc slot |
-| **Edge cases** | Help text says drag "coming later" but map drag works (stale copy) |
-| **Acceptance** | `- [ ] Position read-only` `- [ ] Stance editable` |
+| **Procedure** | Editable X/Y/Z/rotation via mono `NumberField` (blur/Enter commit) → `updateSlotPosition` (x/y clamped to terrain, rotation normalized 0–360); stance `SelectField` → `updateSlot` |
+| **Postconditions** | Slot position / stance update (one undo step per commit); map icon re-renders |
+| **Inputs** | X/Y/Z/rotation numbers, stance select |
+| **Outputs** | Y.Doc slot `position` / `stance` |
+| **Edge cases** | T-049: stale "coming later" copy replaced; non-finite input ignored (no NaN write); Z manual until DEM |
+| **Acceptance** | `- [x] Position editable (T-049)` `- [x] Stance editable` |
 | **Eden parity** | Eden:ATTR-XFORM-001 |
 | **Status** | partial |
 | **Evidence** | `AttributesModal.tsx` |
@@ -1326,16 +1326,16 @@ Items verified in code + scrape cross-check; added after initial `06` draft.
 
 ### New TBD features (were missing from 06)
 
-#### MAP-TERRAIN-001 — Terrain prop ignored by viewport
+#### MAP-TERRAIN-001 — Terrain wired to viewport (T-049)
 
 | Field | Value |
 |-------|-------|
 | **Domain** | MAP |
-| **Goal** | Map should use mission terrain |
-| **Trigger** | Page mount |
-| **Procedure** | `TacticalMap` hardcoded `terrain="everon"`; `meta.terrain` hydrated/compiled but not passed |
-| **Status** | partial |
-| **Evidence** | `MissionCreatorPage.tsx` L90; `MissionSettingsDialog.tsx` read-only terrain |
+| **Goal** | Map uses the mission's terrain bounds |
+| **Trigger** | Page mount / terrain change |
+| **Procedure** | `terrainId = meta.terrain ?? 'everon'`; `<TacticalMap key={terrainId} terrain={terrainId}>` — `key` remounts the viewport so camera + base map resize (Everon 12800 / Arland 10240) |
+| **Status** | done (T-049) |
+| **Evidence** | `MissionCreatorPage.tsx` (`terrainId` selector + `key`/`terrain` props); `MissionSettingsDialog.tsx` reads `meta.terrain` |
 
 #### MAP-MARQUEE-VIS-001 — Live marquee overlay
 
@@ -1439,8 +1439,8 @@ Items verified in code + scrape cross-check; added after initial `06` draft.
 | Field | Value |
 |-------|-------|
 | **Domain** | ATTR |
-| **Procedure** | Transform tab still says map drag "coming later" while `XFORM-MOVE-001` works |
-| **Status** | partial (stale copy) |
+| **Procedure** | T-049: copy now reads "Drag on the map or edit coordinates above. Z is manual until terrain elevation (DEM) ships." |
+| **Status** | done (T-049) |
 | **Evidence** | `AttributesModal.tsx` Transform tab |
 
 #### KEY-TEXTAREA-001 — Shortcuts fire in TEXTAREA

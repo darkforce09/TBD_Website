@@ -29,6 +29,8 @@ export {
   setTitle,
   updateEnvironment,
   updateSlot,
+  updateSlotPosition,
+  applyMissionRowMeta,
   addFaction,
   addSquad,
   addEditorLayer,

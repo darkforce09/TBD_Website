@@ -27,7 +27,9 @@
 | **[`scripts/tools/scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs)** | Regenerate wiki cache from manifest |
 | **[`artifacts/eden-feds-draft.jsonl`](../../artifacts/eden-feds-draft.jsonl)** | Draft FEDS entries derived from wiki research |
 | **[`artifacts/README.md`](../../artifacts/README.md)** | Generated artifacts policy |
-| **[`t048_library_create_dialog.md`](t048_library_create_dialog.md)** | **T-048** — create mission from Library dialog (planned) |
+| **[`t049_track_a_quick_p0.md`](t049_track_a_quick_p0.md)** | **T-049** — Track A quick P0: terrain + title hydrate + numeric position (planned) |
+| **[`t049_track_a_quick_p0.md`](t049_track_a_quick_p0.md)** | **T-049** — Track A quick P0: terrain + title + numeric position (planned) |
+| **[`t048_library_create_dialog.md`](t048_library_create_dialog.md)** | T-048 — Library create dialog (shipped) |
 | [`frontend/docs/pages/mission-library.md`](../../frontend/docs/pages/mission-library.md) | Surface spec for `/missions` (+ create dialog T-048) |
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Surface spec for `/missions/:id/edit` |
 | [`frontend/docs/pages/mission-creator.md`](../../frontend/docs/pages/mission-creator.md) | Archived — wizard moved into library (T-048) |
@@ -94,6 +96,16 @@ Tracks A and B can progress in parallel once map assets exist. **Track C is its 
 
 ---
 
+## DONE — T-049 (Track A quick P0)
+
+| Item | Spec | Deliverable |
+|------|------|-------------|
+| **Terrain + title + numeric position** | [`t049_track_a_quick_p0.md`](t049_track_a_quick_p0.md) | ✅ P0-07 `meta.terrain` → `<TacticalMap>` viewport (key-remount on change); P0-06 `applyMissionRowMeta` hydrates row title/terrain/env on load (fixes empty-`json_payload` early-return); P0-04 `updateSlotPosition` → editable X/Y/Z/rotation in Attributes Transform (x/y clamped to terrain), selection-aware toolbelt readout |
+
+Still blocked on assets for Phase 2+ (map tiles A-01, DEM A-03). Does not include registry/markers/vehicles (P0-01..05).
+
+---
+
 ## DONE — T-048 (platform UX)
 
 | Item | Spec | Deliverable |
@@ -111,12 +123,12 @@ These are **required** for “it functions” with **positioning you can trust**
 | ID | Requirement | Status | Notes |
 |----|-------------|--------|-------|
 | A-01 | **Aligned map imagery** (top-down Everon/Arland tiles, same origin as Reforger) | **Missing** | Today: grid only. Ultra Plan §0.3 asset hosting. Without this, X/Y are mathematically consistent but **not visually verifiable** against the real island. |
-| A-02 | **Terrain wired to mission** (`meta.terrain` → viewport) | **Partial** | Hardcoded `terrain="everon"` in `MissionCreatorPage.tsx`. |
+| A-02 | **Terrain wired to mission** (`meta.terrain` → viewport) | **Done (T-049)** | `terrainId` from `meta.terrain`, `key`-remounts `<TacticalMap>` on change (Everon 12800 / Arland 10240). |
 | A-03 | **DEM / heightmap** (16-bit, per terrain) | **Missing** | No `dem/` module. All placements get `z: 0`. |
 | A-04 | **Z on place & move** (sample DEM at x,y) | **Missing** | `addSlot` / `moveEntity` set `z: 0`. Schema expects `z from DEM`. |
-| A-05 | **Z in UI** (toolbelt + Attributes, editable) | **Partial** | Toolbelt shows Z from cursor but no DEM → always 0; Transform tab read-only. |
-| A-06 | **Numeric X/Y/Z edit** (no “eyeball only”) | **Missing** | Required for sub-meter accuracy and mod hand-off. |
-| A-07 | **Rotation** (numeric + map) | **Missing** | Schema field exists; no UI/tool. |
+| A-05 | **Z in UI** (toolbelt + Attributes, editable) | **Done (T-049, manual)** | Transform Z editable; toolbelt shows selected-slot Z. Auto-sample from DEM still pending (A-03/A-04). |
+| A-06 | **Numeric X/Y/Z edit** (no “eyeball only”) | **Done (T-049)** | `updateSlotPosition` + Attributes `NumberField`s (blur/Enter commit; x/y clamped to terrain). |
+| A-07 | **Rotation** (numeric + map) | **Partial (T-049)** | Numeric rotation editable in Transform (normalized 0–360); on-map rotate handle still missing. |
 | A-08 | **Export contract verified** | **Unknown** | Compiler emits positions in `editor` block; **mod must confirm** same coord system as in-game. Need golden JSON from Reforger mod team. |
 | A-09 | **Title hydrate from API** | **Missing** | Mission row title not applied to `meta.title`. |
 | A-10 | **Autosave to mission version** | **Partial** | Save Version works; continuous autosave debounce not fully wired per Ultra Plan Phase 9. |

@@ -36,7 +36,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
 | `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — Eden editor shipped; DEM/registry blocked |
+| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — Eden editor + terrain/title/numeric-position (T-049); DEM/registry blocked |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
 | `/events/:id/missions/:emid/orbat` | [event-hub.md § ORBAT deep-link](../../frontend/docs/pages/event-hub.md) | |
@@ -74,14 +74,14 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 | Item | Spec | Notes |
 |------|------|-------|
+| **T-049 Track A quick P0** | [t049_track_a_quick_p0.md](../../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) | Terrain wired to viewport; mission row title/terrain/env hydrate on load; editable X/Y/Z/rotation in Attributes Transform; selection-aware toolbelt readout |
 | **T-048 Library create dialog** | [t048_library_create_dialog.md](../../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) | `CreateMissionDialog` on `/missions` (header button + My-Missions empty-state CTA + Cmd/Ctrl+N, `mission_maker+`); `/missions/create` route + sidebar item removed; macOS frosted modal |
 
 ## Recommended next work
 
-1. **Mission editor Track A** — follow [MC ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) phases 1–4 (terrain, DEM, Z)
-2. **FD-001** — when backend exposes server/RCON endpoints
-3. **FD-008** — wiki markdown (low risk, high UX)
-4. **FD-007** — CMS editor (admin-only)
+1. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — blocked on assets
+2. **FD-008** — wiki markdown (low risk, high UX)
+3. **FD-001** — when backend exposes server/RCON endpoints
 
 ---
 

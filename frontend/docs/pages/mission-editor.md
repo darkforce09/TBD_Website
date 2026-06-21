@@ -22,8 +22,8 @@
 | 2 | Top strip | bar | Title, undo/redo, time/weather scrubber, settings, Export | Command chrome | Mission metadata |
 | 3 | Left dock | panel | ORBAT tree + Editor Layers | Outliner / drop target | `editorLayers` map |
 | 4 | Right dock | panel | Asset Palette tabs | Drag assets to map | Mock catalog (registry pending) |
-| 5 | Toolbelt | bar | Select, Ruler, LoS | Map tools | Tool state (ruler/LoS stub) |
-| 6 | Inspector | panel | Slot fields on double-click | `AttributesModal` | Selected slot |
+| 5 | Toolbelt | bar | Select, Ruler, LoS + X/Y/Z readout | Map tools; **selection-aware** coords (SEL = single slot X/Y/Z, CUR = cursor X/Y) (T-049) | Tool state + selection |
+| 6 | Inspector | panel | Slot fields on double-click | `AttributesModal`; **Transform X/Y/Z/rotation editable** (T-049) | Selected slot |
 | 7 | Save Version | button | POST new semver | Immutable versions API | `useMissionEditor` |
 | 8 | Export | button | Download mod envelope | Compiler | `compiler/exportSchema.ts` |
 
@@ -31,7 +31,7 @@
 
 ### Primary flow
 1. Navigate from Mission Library **+ New Mission** dialog (T-048) or dossier **OPEN IN MISSION CREATOR** → `/missions/:id/edit`.
-2. `useMissionDoc` hydrates Y.Doc from y-indexeddb; `useMissionEditor` loads current version from API with conflict prompt.
+2. `useMissionDoc` hydrates Y.Doc from y-indexeddb; `useMissionEditor` loads current version from API with conflict prompt. The mission **row** (`title`, `terrain`, time/weather) is hydrated into `meta` on every load — including brand-new missions whose `json_payload` is still `{}` (T-049). Terrain drives the viewport bounds (Everon 12.8km vs Arland 10.24km).
 3. Author places entities via palette drop, moves selection on map, organizes layers in outliner.
 4. **Save Version** → `POST /missions/:id/versions` with compiled `json_payload`.
 5. **Export** downloads camelCase mod envelope without saving.
@@ -56,6 +56,7 @@
 ### M1 — [x] Route + chromeless shell
 ### M2 — [x] Y.Doc state, map viewport, Eden docked panels
 ### M3 — [x] Map drag, multi-select, outliner ops, compiler + Save/Export
+### M3.5 — [x] T-049 terrain wired to viewport; row title/terrain/env hydrate; editable Transform X/Y/Z/rotation; selection-aware toolbelt
 ### M4 — [ ] DEM, registry worker, ruler/LoS tools (blocked on external assets/API)
 
 ## Test Plan

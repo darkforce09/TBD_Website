@@ -9,6 +9,16 @@
 import * as Y from 'yjs'
 import { ENTITY_MAPS } from './schema'
 import type { EditorLayer, ID, MissionMeta, Slot } from './schema'
+import { getTerrain } from '../coords/terrains'
+import type { TerrainId } from '../coords/terrains'
+
+const VALID_TERRAINS: ReadonlySet<MissionMeta['terrain']> = new Set([
+  'everon',
+  'arland',
+  'custom',
+])
+
+const clamp = (n: number, lo: number, hi: number): number => Math.min(Math.max(n, lo), hi)
 
 /** Origin tag stamped on every local mutation; tracked by the UndoManager. */
 export const LOCAL_ORIGIN = 'local-user'
@@ -234,6 +244,33 @@ const DEFAULT_META = (id: ID, title: string): MissionMeta => ({
   environment: { time: '06:00', weather: 'clear', viewDistance: 1600, thermals: false },
 })
 
+/** Apply mission row fields from GET /missions/:id. Uses INIT_ORIGIN — this is a load,
+ *  not a user edit, so it is neither undo-tracked nor marks the doc dirty. Title hydrate
+ *  only (T-049): the PostgreSQL row is the source for title/terrain/env on open; there is
+ *  no PATCH-back. Invalid terrain values are ignored; env defaults (viewDistance/thermals)
+ *  are preserved by merging onto the existing environment. */
+export function applyMissionRowMeta(
+  md: MissionDoc,
+  row: { title: string; terrain: string; time_of_day?: string; weather?: string },
+): void {
+  md.doc.transact(() => {
+    if (row.title) md.meta.set('title', row.title)
+    if (VALID_TERRAINS.has(row.terrain as MissionMeta['terrain'])) {
+      md.meta.set('terrain', row.terrain)
+    }
+    if (row.time_of_day != null || row.weather != null) {
+      const env = (md.meta.get('environment') as MissionMeta['environment']) ?? {}
+      md.meta.set('environment', {
+        ...env,
+        ...(row.time_of_day != null ? { time: row.time_of_day } : {}),
+        ...(row.weather != null
+          ? { weather: row.weather as MissionMeta['environment']['weather'] }
+          : {}),
+      })
+    }
+  }, INIT_ORIGIN)
+}
+
 /** Seed meta with defaults if empty. Uses INIT_ORIGIN so it is NOT an undo step. */
 export function seedMeta(md: MissionDoc, opts: { id: ID; title: string }): void {
   if (md.meta.size > 0) return
@@ -452,6 +489,31 @@ export function updateEnvironment(
   transact(md, () => {
     const env = (md.meta.get('environment') as MissionMeta['environment']) ?? {}
     md.meta.set('environment', { ...env, ...patch })
+  })
+}
+
+/** Edit a slot's transform numerically (Attributes Transform tab, T-049). One transact()
+ *  per call → one undo step (call on blur/Enter, not every keystroke). x/y are clamped to the
+ *  active terrain's bounds; z is free (manual until DEM); rotation is normalized to [0,360).
+ *  Untouched / non-finite axes are left as-is. */
+export function updateSlotPosition(
+  md: MissionDoc,
+  id: ID,
+  patch: Partial<{ x: number; y: number; z: number; rotation: number }>,
+): void {
+  const slot = md.entities.slots.get(id)
+  if (!slot) return
+  const terrain = getTerrain(md.meta.get('terrain') as TerrainId | undefined)
+  transact(md, () => {
+    const prev = (slot.get('position') as Slot['position']) ?? { x: 0, y: 0, z: 0, rotation: 0 }
+    const next = { ...prev }
+    if (patch.x != null && Number.isFinite(patch.x)) next.x = clamp(patch.x, 0, terrain.width)
+    if (patch.y != null && Number.isFinite(patch.y)) next.y = clamp(patch.y, 0, terrain.height)
+    if (patch.z != null && Number.isFinite(patch.z)) next.z = patch.z
+    if (patch.rotation != null && Number.isFinite(patch.rotation)) {
+      next.rotation = ((patch.rotation % 360) + 360) % 360
+    }
+    slot.set('position', next)
   })
 }
 
