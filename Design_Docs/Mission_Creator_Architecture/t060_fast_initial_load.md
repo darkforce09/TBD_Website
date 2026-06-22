@@ -1,4 +1,4 @@
-# T-060 — Fast load + save at scale (hydrate gate + progress UX)
+# T-060 — Fast load + save at scale (hydrate gate + progress UX + API body limit)
 
 **Status:** planned (T-060 — next slice)
 **Git tag on ship:** T-060
@@ -7,65 +7,79 @@
 **Prerequisites:** **T-057–T-059** shipped. **Validated (2026-06):** **360k objects @ 100+ fps** pan; repeat **6k paste** smooth.
 
 **Active blockers:**
-1. **Load** — opening `/missions/:id/edit` with **10k+** slots is slow; **no loading bar**; shell looks frozen.
-2. **Save** — **Save Version** runs synchronous `compileMission` + `JSON.stringify` + POST on the main thread; likely slow at **100k+** with no progress UX (only `"Saving…"` text in the dialog today).
 
-**North-star targets (ideal — design toward these):**
+| # | Blocker | Symptom (observed @ 360k) |
+|---|---------|---------------------------|
+| 1 | **Load** — no gate/coalesce | Editor open **slow**; **no loading bar**; shell looks frozen |
+| 2 | **Save compile** — sync main thread | UI **hangs** on Save Version while `compileMission` runs |
+| 3 | **API body limit 1 MB** | After hang → generic **"Could not save version"** — payload never accepted |
 
-| Operation | Entity scale | Target |
-|-----------|--------------|--------|
-| **Open editor** (IndexedDB → interactive) | **1M** slots | **≤10 s** with **determinate progress bar** |
-| **Save Version** (compile → POST) | **1M** slots | **≤10 s** with **determinate progress bar** |
-
-T-060 delivers the **UX + main-thread quick wins** (coalesce, gate, progress). Hitting **1M in ≤10 s** may require **T-062** (incremental bindings) + **T-066** (worker compile) — T-060 must not block on those but must **spec the progress contract** and measure baseline.
+**Blocker 3 (confirmed in code):** [`cmd/api/main.go`](../../../cmd/api/main.go) sets `maxJSONBody = 1 << 20` (**1 MB**) on **all** JSON routes via `bodyLimit()` middleware. A **360k-slot** compiled payload is **tens–hundreds of MB**. PostgreSQL `jsonb` has no practical 1 MB limit — the **HTTP middleware** rejects the request before `CreateVersion` runs. Frontend fallback hides the real error (`useMissionEditor.ts` → `"Could not save version"` when `response.data.error` is missing).
 
 ---
 
 ## Goal
 
-Make **load** and **Save Version** **visible and fast enough** at scale — user always sees a **progress bar** (not a frozen shell), and boot/save time improves for **10k–360k** immediately.
+Make **load** and **Save Version** work at scale: visible **progress bars**, faster boot/save path, and **server accepts large mission version payloads** (path to **1M** objects).
 
-**Acceptance (T-060 — minimum ship):**
+**North-star targets (ideal):**
 
-**Load**
-- **10k+** slots: **loading overlay + progress bar** appears on first paint (before map is interactive).
-- Progress shows phase + count — e.g. `Loading mission…` + **OBJ** rising and/or bar percent when measurable.
-- **bindings** coalesces IndexedDB replay → **one** `docToSnapshot` flush (not N during Yjs replay).
-- `hydrateMissionDoc` (server) wrapped in same bulk coalesce.
-- Optional: defer `LeftSidebar` until `docReady`.
-- After load: pan **≥55 fps** at loaded count (regression guard).
-
-**Save**
-- **Save Version** shows **determinate or staged progress bar** (not just `"Saving…"` label) — phases: `Compiling…` → `Uploading…`.
-- Save runs without **hard-freezing** the tab at **50k+** (yield between compile chunks if needed, or move compile to worker stub with progress callbacks — prefer chunked main-thread first).
-- Export download uses same compile path — show progress if compile > ~500 ms.
-
-**Engineering**
-- `cd frontend && npm run build && npm run lint` clean.
-
-**Stretch (document measured baseline; follow-up T-062/T-066 if missed):**
-- **360k** load: target **≤5 s** to interactive on dev hardware.
-- **1M** load/save: **≤10 s** ideal (may need worker + incremental snapshot in later tags).
+| Operation | Entity scale | Target |
+|-----------|--------------|--------|
+| **Open editor** | **1M** slots | **≤10 s** + progress bar |
+| **Save Version** | **1M** slots | **≤10 s** + progress bar; **POST succeeds** (not 1 MB capped) |
 
 ---
 
-## Root cause — load
+## Acceptance (T-060 — minimum ship)
 
-Boot ([`useMissionDoc.ts`](../../frontend/src/features/mission-creator/hooks/useMissionDoc.ts)):
+### Backend — mission version body limit (required for save @ scale)
 
-- `bindStoreToDoc` → immediate `docToSnapshot` + `observeDeep` flushes during IndexedDB replay.
-- Each flush: `slots.toJSON()` → 360k plain objects on main thread.
-- Full shell mounts with no `docReady` gate.
+- **`POST /api/v1/missions/:id/versions`** accepts compiled payloads **>> 1 MB** (see locked limit below).
+- Other JSON routes **keep** the **1 MB** default (DoS protection unchanged).
+- When payload exceeds the mission-version cap: **413** with JSON `{"error": "payload too large (max … MB)"}` — not a silent connection error.
+- `CreateVersion` unchanged contract: `{ semver, payload, editor_notes }` → `201` + version row; `409` duplicate semver.
+- `make test-it` still passes; add/adjust integration test for raised limit on version route (small payload smoke; optional comment documenting scale limit).
 
-## Root cause — save
+### Frontend — load
 
-Save ([`useMissionEditor.ts`](../../frontend/src/features/mission-creator/hooks/useMissionEditor.ts) + [`compile.ts`](../../frontend/src/features/mission-creator/compiler/compile.ts)):
+- **10k+** slots: **loading overlay + progress bar** on first paint.
+- **bindings** coalesces IndexedDB replay → **one** `docToSnapshot` flush.
+- `hydrateMissionDoc` wrapped in bulk coalesce.
+- Optional: defer `LeftSidebar` until `docReady`.
+- Pan **≥55 fps** after load (regression).
 
-- `compileMission(useMapStore.getState())` — `Object.values` over all factions/squads/slots; builds full `orbat[]` + `editor.slots[]` (**O(n)** allocations).
-- `api.post(..., { payload })` — axios serializes entire payload (**O(n)** JSON.stringify on main thread).
-- **No progress** — `TopCommandStrip` only toggles `saving` boolean + button text.
+### Frontend — save
 
-At **1M** slots, compile + stringify alone can exceed **10 s** on main thread without worker/chunking.
+- **Save Version** progress bar: `Compiling…` → `Uploading…`.
+- Chunked/yielding compile at **50k+** (tab stays responsive).
+- **Surface API errors:** 413 body-too-large, 409 semver, backend `error` string — never generic-only when server sent a message.
+- **360k Save Version** → **201** (with raised API limit + compile completing).
+
+### Engineering
+
+- `cd frontend && npm run build && npm run lint` clean.
+- Go API builds; `make test-it` if DB available.
+
+**Stretch:** **360k** load **≤5 s**; **1M** **≤10 s** (may need T-062/T-066 worker compile).
+
+---
+
+## Root cause — save (full chain)
+
+```mermaid
+flowchart TD
+  click[Save Version] --> compile[compileMission 360k — main thread hang]
+  compile --> post[axios POST huge JSON]
+  post --> limit[bodyLimit maxJSONBody 1MB]
+  limit --> fail[413 / truncated read / no error JSON]
+  fail --> ui["Could not save version" generic]
+```
+
+Evidence:
+- [`cmd/api/main.go`](../../../cmd/api/main.go): `maxJSONBody = 1 << 20`
+- [`internal/handlers/missions.go`](../../../internal/handlers/missions.go): `CreateVersion` only reached if body parses
+- [`useMissionEditor.ts`](../../frontend/src/features/mission-creator/hooks/useMissionEditor.ts): catch fallback line 149
 
 ---
 
@@ -73,51 +87,68 @@ At **1M** slots, compile + stringify alone can exceed **10 s** on main thread wi
 
 | Decision | Choice |
 |----------|--------|
-| Load gate | `docStatus: 'loading' \| 'ready'` from `useMissionDoc`; overlay blocks interaction until `ready` |
-| Load progress | **Progress bar** (Aegis glass) + mono count (`OBJ` / `Loading… N objects`) |
-| IDB coalesce | `beginBulkSync` / `endBulkSync` in `bindings.ts` — one flush after `persistence.once('synced')` |
-| Save progress | Store slice `saveProgress: { phase: 'compile' \| 'upload'; percent: number } \| null` — **TopCommandStrip** Save dialog shows bar |
-| Save compile | Phase A: chunked compile with `requestAnimationFrame` yields + progress updates; Phase B (if still >10s @ 360k): **Comlink worker** (pairs with T-066, optional in T-060 if Phase A insufficient) |
-| Do not block load on API | Local IndexedDB `ready` → interactive; server hydrate async with existing conflict dialog |
-| 1M ≤10 s ideal | Document as **north-star**; T-060 ships UX + coalesce; worker/incremental in T-062/T-066 if benchmarks miss |
+| **Mission version body limit** | **256 MB** default for `POST /missions/:id/versions` only (configurable `MISSION_VERSION_MAX_BODY_BYTES` env, default `268435456`). Rationale: 1M slots × ~200 B/slot ≈ 200 MB headroom; Postgres `jsonb` fine at this scale for T-060 |
+| **Global JSON cap** | **Keep 1 MB** for all other routes via existing `bodyLimit()` |
+| **Implementation** | Route-specific middleware on the versions POST **or** skip global `bodyLimit` for that path and apply higher cap in a dedicated wrapper registered **before** handler (document in `cmd/api/main.go` + [`docs/backend/architecture.md`](../../../docs/backend/architecture.md)) |
+| **413 UX** | Backend explicit message; frontend maps to user-visible **"Mission too large for server limit (max 256 MB)"** or similar |
+| Load gate / progress | Unchanged from prior T-060 spec (`docStatus`, overlay, bar, bulk sync) |
+| Save compile | `compileMissionWithProgress` + chunked yields; worker deferred to T-066 if needed |
+| 1M ≤10 s ideal | Document baseline; incremental bindings (T-062) + worker (T-066) if benchmarks miss |
 
 ---
 
 ## Implementation specification
 
-### Load (same as prior spec)
+### Backend (required — ship in T-060)
 
-**a.** `bindings.ts` — `beginBulkSync` / `endBulkSync`; skip observer flush while `bulkDepth > 0`.
+**k. `cmd/api/main.go` + routing**
 
-**b.** `useMissionDoc.ts` — bulk wrap IDB lifecycle; export `docStatus`.
+```go
+const (
+  maxJSONBody           = 1 << 20          // 1 MB — default JSON routes
+  maxMissionVersionBody = 256 << 20        // 256 MB — POST .../missions/:id/versions only
+)
+```
 
-**c.** `MissionCreatorPage.tsx` — `MissionLoadOverlay` with **progress bar** + count.
+- Add `bodyLimitBytes(limit int64) gin.HandlerFunc` (or parameterize existing `bodyLimit`).
+- Register `POST /missions/:id/versions` with **256 MB** cap; keep global 1 MB on the rest.
+- Optional: read `MISSION_VERSION_MAX_BODY_BYTES` from config in `internal/config`.
 
-**d.** `useMissionEditor.ts` — bulk-wrap `hydrateMissionDoc`.
+**l. `CreateVersion` error handling**
 
-**e.** Optional defer `LeftSidebar` until `docReady`.
+- If `ShouldBindJSON` fails due to size: return **413** + clear `error` string (not generic 400).
+- Log payload size on 500 for ops debugging (dev only).
 
-### Save (new)
+**m. Integration test**
 
-**f.** `useMapStore` or editor-local state — `saveProgress` for overlay/bar.
+- Extend [`missions_integration_test.go`](../../../internal/handlers/missions_integration_test.go): version POST still works; document that oversize behavior is middleware-level.
 
-**g.** `compileMission` — export `compileMissionWithProgress(state, onProgress)` that reports percent (e.g. by squad batches) and yields every N slots via `queueMicrotask`/`rAF` so UI updates.
+### Frontend — load (a–e)
 
-**h.** `useMissionEditor.saveVersion` — set progress phases; compile → upload; clear on done/error.
+Unchanged: `bindings.ts` bulk sync, `useMissionDoc` `docStatus`, `MissionLoadOverlay`, hydrate bulk wrap, optional sidebar defer.
 
-**i.** `TopCommandStrip` Save dialog — replace text-only `Saving…` with **progress bar** bound to `saveProgress`.
+### Frontend — save (f–j)
 
-**j.** Optional: `exportJson` reuses compile progress for large missions.
+**f–j.** Progress state, `compileMissionWithProgress`, `saveVersion` phases, TopCommandStrip bar.
+
+**n. `useMissionEditor.saveVersion` — error surfacing**
+
+```ts
+// Map axios errors: 413 → payload too large; network → timeout message;
+// always prefer resp?.data?.error
+```
+
+**o. `TopCommandStrip`** — show progress bar + error text from (n).
 
 ---
 
 ## Verification
 
-1. `npm run build && npm run lint` — clean.
-2. **360k** mission: load overlay + bar immediately; completes; OBJ correct; pan ≥55 fps.
-3. **Save Version** on **50k+**: progress bar visible; tab responsive; version POST succeeds.
-4. Small mission: load/save feel instant (bar may flash).
-5. Record baseline timings in spec §Shipped when done (load ms, save ms @ 360k).
+1. Build/lint/test as above.
+2. **360k** mission: load bar; Save Version **0.1.x** → **201**; GET version returns payload with slot count.
+3. Payload **>256 MB** (if testable): **413** with readable error in UI.
+4. Small mission (<500 slots): unchanged behavior.
+5. Record §Shipped timings: load ms, compile ms, upload ms @ 360k.
 
 ---
 
@@ -125,14 +156,15 @@ At **1M** slots, compile + stringify alone can exceed **10 s** on main thread wi
 
 | Doc | Update |
 |-----|--------|
-| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-060 bullet (load + save); Next → T-061 |
-| [`ROADMAP.md`](ROADMAP.md) | T-060 row (load + save, ≤10s @ 1M ideal); Next → T-061 |
-| [`agent_execution.md`](agent_execution.md) | Decisions log; ACTIVE SLICE → T-061 |
-| [`feature_inventory.md`](feature_inventory.md) | PERF-LOAD-001 + PERF-SAVE-001 |
-| [`mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | M3.15; PERF-003 load + PERF-004 save |
+| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-060 includes API body limit fix |
+| [`ROADMAP.md`](ROADMAP.md) | T-060 row; scale ladder save row |
+| [`agent_execution.md`](agent_execution.md) | Decisions log: API 1 MB blocker + fix |
+| [`docs/backend/architecture.md`](../../../docs/backend/architecture.md) | §Request body limits + mission version exception |
+| [`feature_inventory.md`](feature_inventory.md) | TOP-SAVE-001 edge case; PERF-SAVE-001 |
+| [`mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | PERF-004 + API limit note |
 
 ---
 
 ## After T-060
 
-**T-061:** typed-array IconLayer. **T-062:** incremental bindings (load path). **T-066:** worker compile (save @ 1M). **Eden T-068+.**
+**T-061:** typed-array IconLayer. **T-062:** incremental bindings. **T-066:** worker compile @ 1M. **Future:** gzip upload, blob storage if 256 MB insufficient. **Eden T-068+.**

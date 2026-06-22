@@ -64,7 +64,7 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 |----------|--------|-------------|----------------|
 | `GET /missions/:id` | GET | Boot | `Mission` |
 | `GET /missions/:id/versions/current` | GET | Hydrate | `MissionVersion` |
-| `POST /missions/:id/versions` | POST | Save Version | `MissionVersion` (409 on dup semver) |
+| `POST /missions/:id/versions` | POST | Save Version | `MissionVersion` (409 dup semver; **413 if payload >256 MB** — T-060 raises limit from 1 MB global) |
 | `GET /missions/:id/export` | GET | Export preview | camelCase envelope |
 
 ## Milestones
@@ -98,5 +98,5 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 - **[PERF-001] ~~Map pan/zoom FPS collapse~~** — **Resolved T-057** (100+ fps @ 10k validated); **T-058** OBJ/SEL entity-count telemetry shipped.
 - **[PERF-002] ~~Bulk paste 10k freeze~~** — **Resolved T-059** (validated **360k @ 100+ fps** pan; 6k paste loops smooth).
 - **[PERF-003] Initial load on large missions** — **Active T-060:** progress bar + hydrate coalesce; **≤10 s ideal @ 1M**.
-- **[PERF-004] Save Version on large missions** — **Active T-060:** compile progress bar; chunked compile; **≤10 s ideal @ 1M** (worker T-066 if needed).
+- **[PERF-004] Save Version on large missions** — **Active T-060:** API **1 MB → 256 MB** on version POST; compile progress bar; **360k save must return 201**; **≤10 s ideal @ 1M**.
 - [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).

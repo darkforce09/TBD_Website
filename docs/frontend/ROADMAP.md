@@ -88,7 +88,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 ## Recommended next work
 
-1. **Mission Creator — T-060 fast load + save (next)** — progress bars on open and Save Version; hydrate coalesce; **≤10 s ideal @ 1M**. T-059 validated **360k @ 100+ fps**. Then **T-061..T-067** toward **1M–10M**. Eden **T-068+**. See [MC ROADMAP §Map performance](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program).
+1. **Mission Creator — T-060 fast load + save (next)** — **256 MB** version POST limit (fixes 1 MB blocker); progress bars; hydrate coalesce. T-059 validated **360k @ 100+ fps**. Then **T-061..T-067** toward **1M–10M**. Eden **T-068+**. See [MC ROADMAP §Map performance](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program).
 2. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — **deferred until Eden P0–P2**
 3. **FD-008** — wiki markdown (low risk, high UX)
 4. **FD-001** — when backend exposes server/RCON endpoints

@@ -411,7 +411,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
 
 **Not yet built / next (Mission Creator):** **T-059** bulk paste/delete **landed** (batch append +
 selection/outliner caps). **Validated:** **360k objects @ 100+ fps** pan; repeat **6k paste**
-smooth. **Active blocker:** **initial load** and **Save Version** slow at **10k+** with no progress UX → **T-060** fast load + save (progress bars; **≤10 s ideal @ 1M**). Then **T-061..T-067**
+smooth. **Active blocker:** **initial load** slow at **10k+**; **Save Version fails @ 360k** (API **1 MB** body cap + sync compile hang) → **T-060** (progress bars + **256 MB** version route + compile UX). Then **T-061..T-067**
 scale program toward **1M–10M** (typed-array IconLayer → incremental bindings → spatial index →
 virtualized outliner → LOD → worker → spatial chunks; see [MC ROADMAP §Map performance](Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program)). **Eden P1-07+** resumes at **T-068+**. Track A Phase 2 (map tiles, DEM) deferred until Eden P0–P2.
 - **Deferred until after Eden P0–P2:** Phase 2 **DEM / Z-axis** + aligned map tiles (A-01/A-03; blocked on hosted assets).

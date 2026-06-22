@@ -31,7 +31,7 @@ Supporting docs use **descriptive snake_case** filenames (no numeric prefixes): 
 | **T-057** | Map perf hotfix — ≥55 fps @ 200+ slots (shipped) | [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) |
 | **T-058** | Toolbelt OBJ/SEL entity counts (shipped) | [`t058_entity_count_readout.md`](../Design_Docs/Mission_Creator_Architecture/t058_entity_count_readout.md) |
 | **T-059** | Bulk paste/delete at scale — validated **360k @ 100+ fps** pan (shipped) | [`t059_bulk_paste_operations.md`](../Design_Docs/Mission_Creator_Architecture/t059_bulk_paste_operations.md) |
-| **T-060** | Fast load + save — progress bars; **≤10 s ideal @ 1M** (**next slice**) | [`t060_fast_initial_load.md`](../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md) |
+| **T-060** | Fast load + save — **256 MB** version API limit + progress bars (**next slice**) | [`t060_fast_initial_load.md`](../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md) |
 | **T-061..T-067** | Scale program → 1M–10M editable entities | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
 | **T-051** | Title PATCH sync (**deferred**, not started) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) amendment |
 | **FD-0xx** | Frontend deferred work | [`frontend/docs/TRACKING.md`](../frontend/docs/TRACKING.md) |

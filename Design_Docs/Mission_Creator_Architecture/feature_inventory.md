@@ -994,10 +994,10 @@
 | **Postconditions** | Server version created |
 | **Inputs** | Semver, notes |
 | **Outputs** | API |
-| **Edge cases** | 409 duplicate semver; invalid UUID error |
-| **Acceptance** | `- [ ] Save 0.1.1 succeeds on real mission` |
+| **Edge cases** | 409 duplicate semver; invalid UUID; **413 payload >256 MB (T-060)**; pre-T-060: **>1 MB rejected by API** → generic save error |
+| **Acceptance** | `- [ ] Save 0.1.1 succeeds on real mission` `- [ ] Save @ 360k returns 201 after T-060` |
 | **Eden parity** | Eden:FILE-SAVE-001 |
-| **Status** | working |
+| **Status** | working (<1 MB); **blocked @ scale until T-060 API limit** |
 | **Evidence** | `TopCommandStrip.tsx`, `useMissionEditor.ts`, `compile.ts` |
 
 #### TOP-EXPORT-001 — Export JSON download
@@ -1161,15 +1161,15 @@
 | Field | Value |
 |-------|-------|
 | **Domain** | PERF |
-| **Goal** | **Save Version** with **progress bar**; compile + POST without hard-freeze at **50k+**; **≤10 s ideal @ 1M** |
+| **Goal** | **Save Version** with **progress bar**; compile + POST without hard-freeze at **50k+**; **API accepts payloads >> 1 MB** (256 MB route limit — T-060); **≤10 s ideal @ 1M** |
 | **Trigger** | User clicks Save → Save Version in TopCommandStrip |
 | **Preconditions** | Valid mission UUID; dirty or explicit save |
 | **Procedure** | `compileMissionWithProgress` (chunked/yield) → progress `Compiling…` / `Uploading…` → POST; bar in Save dialog |
 | **Postconditions** | Version 201; dirty cleared |
 | **Inputs** | `useMapStore` snapshot |
 | **Outputs** | POST body; progress UI |
-| **Edge cases** | 409 dup semver; compile may need worker (T-066) for 1M |
-| **Acceptance** | `- [ ] Progress bar on save 50k+` `- [ ] Tab responsive` `- [ ] Baseline timings recorded` |
+| **Edge cases** | 409 semver; **413 >256 MB**; compile may need worker (T-066) for 1M |
+| **Acceptance** | `- [ ] Progress bar on save 50k+` `- [ ] 360k save → 201` `- [ ] 413 surfaced in UI` |
 | **Status** | planned |
 | **Evidence** | `useMissionEditor.ts`, `compiler/compile.ts`, `TopCommandStrip.tsx` |
 

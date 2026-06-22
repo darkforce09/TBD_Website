@@ -506,6 +506,10 @@ users ─< event_registrations >─ events ─> missions ─< mission_versions
 
 Authorization helpers: `RequireAuth`, `RequireRole(mission_maker)`, `RequireRole(admin)`, `RequireServiceToken`.
 
+### Request body limits
+
+Global middleware in [`cmd/api/main.go`](../../cmd/api/main.go) caps JSON bodies at **1 MB** (`maxJSONBody = 1 << 20`) for DoS protection. **Exception (T-060):** `POST /missions/:id/versions` (Save Version from the 2D editor) uses a **separate higher limit** — default **256 MB** (`MISSION_VERSION_MAX_BODY_BYTES`) — because compiled `json_payload` for large missions (100k–1M+ slot entities) exceeds 1 MB by orders of magnitude. PostgreSQL `jsonb` on `mission_versions` has no 1 MB constraint; the prior bottleneck was HTTP-only. Oversize requests return **413** with `{"error":"payload too large (max … MB)"}`. All other JSON routes remain at 1 MB.
+
 ### 2.1 Auth & Identity
 
 | Method | Path | Auth | Purpose |
@@ -547,7 +551,7 @@ Authorization helpers: `RequireAuth`, `RequireRole(mission_maker)`, `RequireRole
 | POST | `/missions` | mission_maker | Library create dialog → create `draft` + initial version |
 | GET | `/missions/:id` | user | Overview: briefing, armory, ORBAT template, version, command actions |
 | PATCH | `/missions/:id` | author/admin | Update metadata |
-| POST | `/missions/:id/versions` | author/admin | Save new `json_payload` version from 2D editor |
+| POST | `/missions/:id/versions` | author/admin | Save new `json_payload` version from 2D editor (**body limit 256 MB default — T-060**; global JSON cap elsewhere 1 MB) |
 | GET | `/missions/:id/versions/:vid` | user | Fetch specific version payload |
 | GET | `/missions/:id/export` | mission_maker | Export strict `mission.json` (Mission Injection) |
 | POST | `/missions/:id/submit` | author | Move `draft → pending_approval` |

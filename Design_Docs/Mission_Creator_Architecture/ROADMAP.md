@@ -55,7 +55,7 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | **T-057** ✅ | Hotfix | 200+ | ≥55 fps pan/zoom — **shipped**. Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) |
 | **T-058** ✅ | Scale prep | — | Toolbelt **OBJ** + **SEL** — **shipped**. Spec: [`t058_entity_count_readout.md`](t058_entity_count_readout.md) |
 | **T-059** ✅ | Bulk ops | 360k+ paste/pan | Batch O(n) paste; selection/outliner caps — **shipped** (validated **360k @ 100+ fps** pan). Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md) |
-| **T-060** | Fast load + save | 10k–1M | Loading/saving **progress bars**; hydrate coalesce; **≤10 s ideal @ 1M** (worker/incremental may follow in T-062/T-066). Spec: [`t060_fast_initial_load.md`](t060_fast_initial_load.md) |
+| **T-060** | Fast load + save | 10k–1M | Progress bars; hydrate coalesce; **raise API body limit** (1 MB → **256 MB** on `POST …/versions`); **≤10 s ideal @ 1M**. Spec: [`t060_fast_initial_load.md`](t060_fast_initial_load.md) |
 | **T-061** | Scale-A | 50k–500k | Typed-array IconLayer (optional headroom) |
 | **T-062** | Scale-B | 50k+ | Incremental `bindings.ts` (patch vs full snapshot) |
 | **T-063** | Scale-C | 50k+ pick | Spatial index (rbush) for pick/marquee |
