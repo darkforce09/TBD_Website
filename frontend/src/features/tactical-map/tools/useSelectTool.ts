@@ -6,7 +6,7 @@
 // (one Y.Doc transaction = one undo step); selection + transient drag/marquee live in the
 // store. The map never pans on left-drag (Deck's dragPan is disabled in TacticalMap).
 
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import type { OrthographicView } from '@deck.gl/core'
 import type { DeckGLRef } from '@deck.gl/react'
 import { useMapStore } from '../state/useMapStore'
@@ -55,6 +55,24 @@ export function useSelectTool({
   onEntitiesMove,
 }: UseSelectToolArgs): SelectToolHandlers {
   const gesture = useRef<Gesture>(null)
+  // Pan is rAF-coalesced (T-057): a high-rate mouse can fire several pointermove events per
+  // frame, and each onViewStateChange re-renders TacticalMap. We stash the latest target and
+  // flush at most once per animation frame.
+  const panRaf = useRef(0)
+  const pendingPan = useRef<MapViewState | null>(null)
+  const flushPan = useCallback(() => {
+    panRaf.current = 0
+    const next = pendingPan.current
+    pendingPan.current = null
+    if (next) onViewStateChange({ viewState: next })
+  }, [onViewStateChange])
+  const cancelPan = useCallback(() => {
+    if (panRaf.current) {
+      cancelAnimationFrame(panRaf.current)
+      panRaf.current = 0
+    }
+    pendingPan.current = null
+  }, [])
 
   const localPt = useCallback(
     (e: { clientX: number; clientY: number }): Pt | null => {
@@ -119,12 +137,11 @@ export function useSelectTool({
       if (g.type === 'pan') {
         const w0 = g.vp.unproject(g.startPx)
         const w1 = g.vp.unproject(px)
-        onViewStateChange({
-          viewState: {
-            ...viewState,
-            target: [g.startTarget[0] - (w1[0] - w0[0]), g.startTarget[1] - (w1[1] - w0[1])],
-          },
-        })
+        pendingPan.current = {
+          ...viewState,
+          target: [g.startTarget[0] - (w1[0] - w0[0]), g.startTarget[1] - (w1[1] - w0[1])],
+        }
+        if (!panRaf.current) panRaf.current = requestAnimationFrame(flushPan)
         return
       }
 
@@ -163,7 +180,7 @@ export function useSelectTool({
           .setMarquee({ x0: cur.startWorld[0], y0: cur.startWorld[1], x1: w1[0], y1: w1[1] })
       }
     },
-    [localPt, makeViewport, onViewStateChange, viewState, containerRef],
+    [localPt, makeViewport, viewState, containerRef, flushPan],
   )
 
   const onPointerUp = useCallback(
@@ -174,6 +191,18 @@ export function useSelectTool({
         containerRef.current.releasePointerCapture(e.pointerId)
       }
       if (!g) return
+
+      if (g.type === 'pan') {
+        // Apply the last coalesced target immediately so the camera lands where the pointer
+        // was released (a pending rAF may not have fired yet).
+        if (panRaf.current) {
+          cancelAnimationFrame(panRaf.current)
+          panRaf.current = 0
+        }
+        flushPan()
+        return
+      }
+
       const store = useMapStore.getState()
 
       if (g.type === 'move') {
@@ -201,10 +230,13 @@ export function useSelectTool({
         }
         store.setMarquee(null)
       }
-      // 'pending-left' (sub-threshold) and 'pan' need no commit — Deck's onClick handles clicks.
+      // 'pending-left' (sub-threshold) needs no commit — Deck's onClick handles clicks.
     },
-    [containerRef, deckRef, localPt, onEntitiesMove],
+    [containerRef, deckRef, localPt, onEntitiesMove, flushPan],
   )
+
+  // Drop any in-flight pan frame if the tool unmounts mid-gesture.
+  useEffect(() => cancelPan, [cancelPan])
 
   const onContextMenu = useCallback((e: React.MouseEvent) => e.preventDefault(), [])
 

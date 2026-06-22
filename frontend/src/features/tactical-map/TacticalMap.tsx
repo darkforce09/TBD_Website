@@ -4,7 +4,7 @@
 // layers (Ultra Plan §4.3). Deck owns all entity rendering — React never draws
 // per-entity DOM — which is what holds 60 fps with hundreds of slots.
 
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import DeckGL from '@deck.gl/react'
 import type { DeckGLRef } from '@deck.gl/react'
 import type { PickingInfo } from '@deck.gl/core'
@@ -19,7 +19,7 @@ import { useMapStore } from './state/useMapStore'
 import type { ID } from './state/schema'
 import { ASSET_DND_MIME, type AssetDropPayload, type MapViewState, type TacticalMapProps } from './types'
 
-export function TacticalMap({
+function TacticalMapInner({
   terrain: terrainId,
   showGrid = false,
   className,
@@ -40,6 +40,12 @@ export function TacticalMap({
   // (with dragPan off) our custom drags, so both bubble to this container.
   const containerRef = useRef<HTMLDivElement>(null)
   const deckRef = useRef<DeckGLRef | null>(null)
+  // Latest camera for the rAF cursor closure (so it reads fresh viewState without
+  // re-scheduling on every render).
+  const viewStateRef = useRef(viewState)
+  useEffect(() => {
+    viewStateRef.current = viewState
+  }, [viewState])
 
   const noopMove = useCallback(() => {}, [])
   const selectTool = useSelectTool({
@@ -99,16 +105,58 @@ export function TacticalMap({
     [onEntityActivate],
   )
 
-  const onHover = useCallback(
-    (info: PickingInfo) => {
-      onCursorMove?.(
-        info.coordinate
-          ? { x: info.coordinate[0], y: info.coordinate[1], z: info.coordinate[2] ?? 0 }
-          : null,
-      )
+  // Cursor read-out (toolbelt X/Y/Z) — computed by unprojecting the mouse ourselves and
+  // rAF-throttled, instead of Deck's onHover. Deck's hover handler ran a GPU pick pass over
+  // every icon on each pointer move just to get cursor coords (the 200-slot fps killer,
+  // T-057); the same flipY:false math as onDrop gives us the world position with no pick.
+  const cursorRaf = useRef(0)
+  const lastClientPt = useRef<{ x: number; y: number } | null>(null)
+  const emitCursor = useCallback(
+    (e: React.PointerEvent) => {
+      if (!onCursorMove) return
+      lastClientPt.current = { x: e.clientX, y: e.clientY }
+      if (cursorRaf.current) return
+      cursorRaf.current = requestAnimationFrame(() => {
+        cursorRaf.current = 0
+        const el = containerRef.current
+        const pt = lastClientPt.current
+        if (!el || !pt) return
+        const rect = el.getBoundingClientRect()
+        const viewport = view.makeViewport({
+          width: rect.width,
+          height: rect.height,
+          viewState: viewStateRef.current,
+        })
+        if (!viewport) return
+        const [x, y] = viewport.unproject([pt.x - rect.left, pt.y - rect.top])
+        onCursorMove({ x, y, z: 0 }) // z stays 0 on the flat map until Phase 2 DEM (T-050)
+      })
     },
-    [onCursorMove],
+    [onCursorMove, view],
   )
+
+  // Drive both the gesture machine and the cursor read-out from one container pointermove.
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      selectTool.onPointerMove(e)
+      emitCursor(e)
+    },
+    [selectTool, emitCursor],
+  )
+
+  // Off-map (pointer over a docked panel or out of the canvas) → blank the read-out.
+  const onPointerLeave = useCallback(() => {
+    if (cursorRaf.current) {
+      cancelAnimationFrame(cursorRaf.current)
+      cursorRaf.current = 0
+    }
+    onCursorMove?.(null)
+  }, [onCursorMove])
+
+  // Cancel any pending cursor frame on unmount.
+  useEffect(() => () => {
+    if (cursorRaf.current) cancelAnimationFrame(cursorRaf.current)
+  }, [])
 
   // Identity projection (flipY:false → common space == world space), so a world
   // position centers directly. Stable across renders for the onReady handle.
@@ -168,8 +216,9 @@ export function TacticalMap({
         onDragOver={onDragOver}
         onDrop={onDrop}
         onPointerDown={selectTool.onPointerDown}
-        onPointerMove={selectTool.onPointerMove}
+        onPointerMove={onPointerMove}
         onPointerUp={selectTool.onPointerUp}
+        onPointerLeave={onPointerLeave}
         onDoubleClick={onDoubleClick}
         onContextMenu={selectTool.onContextMenu}
       >
@@ -184,11 +233,17 @@ export function TacticalMap({
           controller={{ dragPan: false, doubleClickZoom: false }}
           layers={[...(showGrid ? [baseMap] : []), iconLayer, selectionLayer]}
           onClick={onClick}
-          onHover={onHover}
-          getCursor={({ isHovering }) => (isHovering ? 'pointer' : 'grab')}
+          // No onHover: cursor coords come from our own rAF unproject (emitCursor) so Deck
+          // doesn't run a per-move pick pass. getCursor is constant for the same reason
+          // (isHovering would force hover picking). Picking still runs on click/drag/marquee.
+          getCursor={() => 'crosshair'}
           style={{ position: 'absolute', width: '100%', height: '100%' }}
         />
       </div>
     </MapContextProvider>
   )
 }
+
+// Memoized so a host re-render (modal open/close, dirty flag, cursor read-out) doesn't
+// re-render the map subtree — its props (terrain + stable callbacks) rarely change (T-057).
+export const TacticalMap = memo(TacticalMapInner)

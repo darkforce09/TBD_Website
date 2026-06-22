@@ -3,6 +3,7 @@
 // Editor Layers (workflow folders), then stub sections for tools that land in Phase 8. A
 // bottom icon-tab strip (Hierarchy/Layers/Assets/History/Settings) is visual-only for now.
 
+import { memo } from 'react'
 import { Boxes, History, ListTree, Layers, Settings2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useMapStore, type ID, type MissionDoc } from '@/features/tactical-map'
@@ -25,7 +26,7 @@ interface LeftSidebarProps {
   onActivateSlot?: (id: ID) => void
 }
 
-export function LeftSidebar({ md, onActivateSlot }: LeftSidebarProps) {
+function LeftSidebarInner({ md, onActivateSlot }: LeftSidebarProps) {
   const title = useMapStore((s) => s.meta?.title ?? 'Untitled Mission')
 
   return (
@@ -61,3 +62,7 @@ export function LeftSidebar({ md, onActivateSlot }: LeftSidebarProps) {
     </div>
   )
 }
+
+// Memoized (T-057): its props (md + stable setAttributesId) don't change per frame, so a
+// host re-render won't rebuild the Outliner trees.
+export const LeftSidebar = memo(LeftSidebarInner)

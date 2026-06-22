@@ -4,7 +4,7 @@
 // drags from. Phase 3.5: Factions = the live Asset Browser tree; the other tabs are stubs
 // until the registry feed (GET /api/v1/registry) and the markers/objectives tools land.
 
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { overlayDocked } from '../overlay'
 import { AssetBrowser } from './AssetBrowser'
@@ -12,7 +12,7 @@ import { AssetBrowser } from './AssetBrowser'
 const TABS = ['Factions', 'Vehicles', 'Markers', 'Objectives'] as const
 type Tab = (typeof TABS)[number]
 
-export function AssetPalette() {
+function AssetPaletteInner() {
   const [tab, setTab] = useState<Tab>('Factions')
 
   return (
@@ -47,3 +47,5 @@ export function AssetPalette() {
     </div>
   )
 }
+
+export const AssetPalette = memo(AssetPaletteInner)

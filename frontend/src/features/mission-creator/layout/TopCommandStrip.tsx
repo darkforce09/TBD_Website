@@ -4,7 +4,7 @@
 // history stub, Undo/Redo, Mission Settings gear, Save Version (semver snapshot → server),
 // and Export (download the camelCase mod JSON). Persistence wired in Phase 9.
 
-import { useEffect, useReducer, useState } from 'react'
+import { memo, useEffect, useReducer, useState } from 'react'
 import { Download, History, Redo2, Save, Settings2, Undo2 } from 'lucide-react'
 import {
   setTitle,
@@ -45,7 +45,7 @@ const toMinutes = (hhmm: string) => {
 const toHHMM = (mins: number) =>
   `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`
 
-export function TopCommandStrip({
+function TopCommandStripInner({
   md,
   undo,
   dirty,
@@ -267,3 +267,5 @@ export function TopCommandStrip({
     </div>
   )
 }
+
+export const TopCommandStrip = memo(TopCommandStripInner)

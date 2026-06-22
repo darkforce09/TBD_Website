@@ -3,7 +3,7 @@
 // SlotInspector (the Asset Palette now stays docked). Position editing (Transform X/Y) and
 // the real Arsenal land in later phases (7b / 6); this ships role/tag/stance editing + stubs.
 
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { Shield } from 'lucide-react'
 import {
   updateSlot,
@@ -31,7 +31,7 @@ const STANCE = [
 const TABS = ['Transform', 'Identity', 'States', 'Arsenal'] as const
 type Tab = (typeof TABS)[number]
 
-export function AttributesModal({
+function AttributesModalInner({
   md,
   slotId,
   onOpenChange,
@@ -172,3 +172,6 @@ function ArsenalTab() {
     </div>
   )
 }
+
+// Memoized (T-057) with a stabilized onOpenChange so unrelated page renders don't re-render it.
+export const AttributesModal = memo(AttributesModalInner)

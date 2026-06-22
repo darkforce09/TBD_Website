@@ -77,10 +77,33 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-056 — 2026-06-22)
+## Status (latest feature work: T-057 — 2026-06-22)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-057 **Mission Creator — map performance hotfix (≥55 fps pan/zoom @ 200+ slots)**. Restores
+  the engineering-plan perf contract after a regression dropped pan/zoom to **~9 fps at ~100–200
+  slots**. Deck.gl already draws the icons on the GPU — the bottleneck was the **React layer**, fixed
+  on three fronts (spec: `Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md`):
+  **(1) Cursor off the render path** — the toolbelt X/Y/Z read-out is now a transient
+  `useMapStore.cursor` slice (set rAF-throttled), so a pointer move no longer re-renders the whole
+  `MissionCreatorPage` (both Outliner trees, palette); only `BottomToolbelt` (now reading
+  `s.cursor`) re-renders. `MissionCreatorPage` drops its `cursor` `useState`/`cursorRef`; paste reads
+  `useMapStore.getState().cursor`. **(2) No hover picking** — `TacticalMap` drops Deck's `onHover`
+  (which ran a GPU pick over every icon each move just to feed cursor coords) and computes the
+  cursor itself by **unprojecting the mouse** (`view.makeViewport(...).unproject`, same flipY:false
+  math as `onDrop`) on the container `onPointerMove`, rAF-throttled, with `onPointerLeave`→`null` for
+  the off-map `—`; `getCursor` is now constant (`'crosshair'`) so Deck stops computing `isHovering`.
+  Picking is kept **only** for click / dbl-click / marquee / drag-start. **(3) Pan coalesced** —
+  `useSelectTool` rAF-coalesces the pan branch so a high-rate mouse can't outrun the display
+  (one `setViewState`/frame; flushed on pointer-up). **(4) `React.memo`** on `TacticalMap`,
+  `LeftSidebar`, `AssetPalette`, `TopCommandStrip`, `BottomToolbelt`, `AttributesModal`
+  (+ `onOpenChange` stabilized) so unrelated page renders can't cascade into the trees/map.
+  **Only behavioral change:** the pointer no longer switches to a "pointer" glyph over an icon (no
+  per-move hover pick) — ROADMAP-sanctioned. No schema/compiler/backend change; all interactions
+  (select, Ctrl-toggle, marquee, drag-move+undo, dbl-click→Attributes, Ctrl+C/V, Space, Delete)
+  unchanged. Verified: frontend build + lint clean (fps acceptance is a manual in-browser check
+  with 200+ slots via the `FpsCounter`).
 - T-056 **Mission Creator — Ctrl+C/V copy-paste (Eden P1-02)**. Placed slots can now be
   duplicated: **Ctrl/Cmd+C** snapshots the current slot selection to an in-editor clipboard and
   **Ctrl/Cmd+V** pastes it at the **map cursor**, preserving the group's relative layout
@@ -351,7 +374,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-057 map perf hotfix (urgent)** — pan/zoom must hold **≥55 fps with 200+ slots** (engineering contract; observed ~9 fps @ ~200). **North star:** **100k+ editable entities** with no lag — step-by-step via **T-058..T-062** scale program (see [MC ROADMAP §Map performance](Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program)). **Eden P1-07+** resumes at **T-063+** after T-057 passes and scale milestones land. Track A Phase 2 (map tiles, DEM) remains deferred until Eden P0–P2.
+**Not yet built / next (Mission Creator):** **T-058 entity-count readout** — toolbelt shows total placed slots + selected count (scale-test telemetry). Then **T-059..T-063** scale program toward **100k+ editable entities** (typed-array IconLayer → rbush → virtualized outliner → LOD/clustering → worker compile; see [MC ROADMAP §Map performance](Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program)). **Eden P1-07+** resumes at **T-064+**. Track A Phase 2 (map tiles, DEM) deferred until Eden P0–P2.
 - **Deferred until after Eden P0–P2:** Phase 2 **DEM / Z-axis** + aligned map tiles (A-01/A-03; blocked on hosted assets).
 - **During Eden P0:** thin **registry** (Phase 5 / B-01) as needed for real palette + markers/vehicles — not full Track C.
 - Phase 8 **ruler/LoS/viewshed** (needs DEM for LoS) — after heightmap phase.

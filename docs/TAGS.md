@@ -28,8 +28,8 @@ Supporting docs use **descriptive snake_case** filenames (no numeric prefixes): 
 | **T-054** | Eden P1 Attributes entry points — map dbl-click + ORBAT tree (shipped) | [`t054_attributes_entry_points.md`](../Design_Docs/Mission_Creator_Architecture/t054_attributes_entry_points.md) |
 | **T-055** | Eden P1 asset browser search (shipped) | [`t055_asset_browser_search.md`](../Design_Docs/Mission_Creator_Architecture/t055_asset_browser_search.md) |
 | **T-056** | Eden P1 Ctrl+C/V copy-paste at cursor (slots) (shipped) | [`t056_eden_p1_copy_paste.md`](../Design_Docs/Mission_Creator_Architecture/t056_eden_p1_copy_paste.md) |
-| **T-057** | Map perf hotfix — ≥55 fps @ 200+ slots (**in progress**; spec pending) | [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) |
-| **T-058..T-062** | Scale program → 100k+ editable entities (planned after T-057) | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
+| **T-057** | Map perf hotfix — ≥55 fps @ 200+ slots (shipped) | [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) |
+| **T-058..T-063** | Scale program → 100k+ editable entities (T-058 = entity counts; T-059+ = perf scale) | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
 | **T-051** | Title PATCH sync (**deferred**, not started) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) amendment |
 | **FD-0xx** | Frontend deferred work | [`frontend/docs/TRACKING.md`](../frontend/docs/TRACKING.md) |
 | **BE-0xx** | Backend deferred work | [`docs/backend/ROADMAP.md`](backend/ROADMAP.md) |

@@ -14,7 +14,7 @@
 
 | Do now | Defer until after Eden (+ assets where noted) |
 |--------|-----------------------------------------------|
-| **T-057 map perf hotfix** — ≥55 fps pan/zoom @ 200+ slots (engineering contract) | Track A **A-01** map imagery |
+| ~~**T-057 map perf hotfix** — ≥55 fps pan/zoom @ 200+ slots~~ ✅ **shipped** | Track A **A-01** map imagery |
 | **T-058..T-062 scale program** — path to **100k+** editable entities (step-by-step) | Track A **A-03/A-04** DEM + Z sampling |
 | Eden **P0** remaining — registry, markers, vehicles, ORBAT authoring (P0-01..03, P0-05) — **T-063+** after scale milestones | **A-08** mod golden coord test (needs mod team + accurate map) |
 | Eden **P1/P2** — faction submode, multi-place, compositions, triggers, … — **T-063+** | gap_analysis **P3-02/03** (DEM snap, full loadout forge — Track C) |
@@ -27,7 +27,7 @@
 
 Work [`eden/gap_analysis.md`](eden/gap_analysis.md) **numbered backlog** in priority tier, interleaving small **P1** slices between heavier **P0** blocks:
 
-1. **P1 quick (code-only)** — ~~P1-01..P1-04, P1-09 (T-053–T-056)~~ → **T-057 perf hotfix** → **T-058..T-062 scale** → P1-07 faction submode (T-063+) → P1-05 multi-place → …
+1. **P1 quick (code-only)** — ~~P1-01..P1-04, P1-09 (T-053–T-056)~~ → ~~**T-057 perf hotfix**~~ ✅ → **T-058 entity counts** → **T-059..T-063 scale** → P1-07 faction submode (T-064+) → …
 2. **P0 ship-blocking** — P0-01 registry (+ thin B-01) → P0-02 markers → P0-03 vehicles → P0-05 ORBAT authoring UI
 3. **P1 remainder** — P1-05..P1-11 (multi-place, rotate, Space conflict, vehicle crew, …)
 4. **P2 power-user** — P2-01..P2-07
@@ -37,31 +37,32 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 
 ### Map performance (contract + scale program)
 
-**Contract (engineering plan §4.4):** 60 fps pan/zoom with **200+** pickable slot icons on the flat grid. **Observed regression (2026-06):** ~100–200 slots + pan → ~9 fps. **T-057** is an **interrupt hotfix** before more Eden P1.
+**Contract (engineering plan §4.4):** 60 fps pan/zoom with **200+** pickable slot icons on the flat grid. **Observed regression (2026-06):** ~100–200 slots + pan → ~9 fps. **T-057** is an **interrupt hotfix** before more Eden P1 — **shipped** (fps acceptance is a manual in-browser check via `FpsCounter`).
 
-**Root causes (code review — profile to confirm):**
+**Root causes → T-057 fix (shipped):**
 
-| Layer | Issue | T-057 fix |
+| Layer | Issue | T-057 fix (done) |
 |-------|--------|-----------|
-| React shell | `onHover` → `setCursor` re-renders entire `MissionCreatorPage` every pointer move | Cursor via ref + rAF/throttled child; `React.memo` sidebars |
-| Deck picking | `IconLayer` `pickable: true` + `onHover` runs a pick pass over all icons for cursor coords | Unproject mouse → world for toolbelt; pick only on click/drag |
-| Pan | `useOrthographicView` `setViewState` every pan frame re-renders `TacticalMap` + children | Ref/imperative Deck `viewState` during pan; optional rAF coalesce |
-| Gestures | `pickObject` on pointerdown + hover during pan | Skip/disable picking while pan gesture active |
+| React shell | `onHover` → `setCursor` re-renders entire `MissionCreatorPage` every pointer move | ✅ Cursor moved to transient `useMapStore.cursor` (rAF-throttled); only `BottomToolbelt` subscribes. `React.memo` on the panels |
+| Deck picking | `IconLayer` `pickable: true` + `onHover` runs a pick pass over all icons for cursor coords | ✅ Removed `onHover`; cursor unprojected from the mouse on `onPointerMove`. Picking only on click/dbl-click/marquee/drag-start |
+| Pan | `useOrthographicView` `setViewState` every pan frame re-renders `TacticalMap` + children | ✅ `useSelectTool` rAF-coalesces pan to one `setViewState`/frame (layers already memoized) |
+| Gestures | `pickObject` on pointerdown + hover during pan | ✅ Hover picking removed entirely; pointerdown pick (icon vs empty) unchanged; pan never picks |
 
 **100k+ editable entities** is the **north star**; reach it **step-by-step** (not one commit). Deck.gl `IconLayer` can draw 100k+ on GPU; bottlenecks are **React/DOM**, **linear picking**, and **full Y.Doc snapshot → sidebar rebuild**. Phased track (one spec + slice per tag):
 
 | Tag | Phase | Entity target | FPS / UX target |
 |-----|-------|---------------|-----------------|
-| **T-057** | Hotfix | 200+ | ≥55 fps pan/zoom sustained |
-| **T-058** | Scale-A | 5k–10k | ≥55 fps; typed-array IconLayer data |
-| **T-059** | Scale-B | 10k–50k | ≥55 fps; spatial index (rbush) for pick/marquee |
-| **T-060** | Scale-C | 50k+ | Virtualized outliner; incremental `bindings.ts` |
-| **T-061** | Scale-D | 100k overview | Cluster/LOD zoomed out; individual pick zoomed in |
-| **T-062** | Scale-E | 100k+ export | Worker offload for compile + bulk spatial ops |
+| **T-057** ✅ | Hotfix | 200+ | ≥55 fps pan/zoom sustained — **shipped** (cursor off render path, no hover pick, pan rAF-coalesce, `React.memo` panels). Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) |
+| **T-058** | Scale prep | — | Toolbelt **OBJ** total + **SEL** selected slot counts (mono telemetry for scale testing) |
+| **T-059** | Scale-A | 5k–10k | ≥55 fps; typed-array IconLayer data |
+| **T-060** | Scale-B | 10k–50k | ≥55 fps; spatial index (rbush) for pick/marquee |
+| **T-061** | Scale-C | 50k+ | Virtualized outliner; incremental `bindings.ts` |
+| **T-062** | Scale-D | 100k overview | Cluster/LOD zoomed out; individual pick zoomed in |
+| **T-063** | Scale-E | 100k+ export | Worker offload for compile + bulk spatial ops |
 
-**After T-057 passes:** run **T-058..T-062** before resuming Eden P1 (mass placement is blocked until scale milestones land). **Eden P1-07+** resumes at **T-063+**. All entities stay **editable** at every phase (outliner, search, zoom-in, attributes) — overview clustering is OK when zoomed out.
+**T-057 passed (shipped):** **T-058** entity-count telemetry on the toolbelt, then **T-059..T-063** scale milestones before resuming Eden P1. **Eden P1-07+** resumes at **T-064+**.
 
-Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (write before code).
+Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shipped T-057).
 
 ---
 
@@ -84,6 +85,7 @@ Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (write 
 | **[`scripts/tools/scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs)** | Regenerate wiki cache from manifest |
 | **[`artifacts/eden-feds-draft.jsonl`](../../artifacts/eden-feds-draft.jsonl)** | Draft FEDS entries derived from wiki research |
 | **[`artifacts/README.md`](../../artifacts/README.md)** | Generated artifacts policy |
+| **[`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md)** | **T-057** — Map perf hotfix: ≥55 fps pan/zoom @ 200+ slots (shipped) |
 | **[`t056_eden_p1_copy_paste.md`](t056_eden_p1_copy_paste.md)** | **T-056** — Eden P1-02: Ctrl+C/V copy-paste at cursor (slots) (shipped) |
 | **[`t055_asset_browser_search.md`](t055_asset_browser_search.md)** | **T-055** — Eden P1-04: Asset browser search (filters Factions tree) (shipped) |
 | **[`t054_attributes_entry_points.md`](t054_attributes_entry_points.md)** | **T-054** — Eden P1-09: Attributes entry points (map native dblclick + ORBAT dbl-click) (shipped) |
@@ -158,6 +160,12 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 
 ---
 
+## DONE — T-057 (Map performance hotfix)
+
+| Item | Spec | Deliverable |
+|------|------|-------------|
+| **Map perf hotfix** | [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) | ✅ Restores ≥55 fps pan/zoom @ 200+ slots (manual `FpsCounter` check): cursor → transient `useMapStore.cursor` (rAF-throttled, only `BottomToolbelt` re-renders on move); drop Deck `onHover` (self-unproject for toolbelt coords); pan rAF-coalesce in `useSelectTool`; `React.memo` on `TacticalMap`, sidebars, toolbelt, modal. **UX trade:** constant `crosshair` cursor (no pointer glyph over icons). All interactions unchanged (T-053–T-056). |
+
 ## DONE — T-056 (Eden P1 copy-paste)
 
 | Item | Spec | Deliverable |
@@ -188,7 +196,7 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 |------|------|-------------|
 | **Ctrl/Cmd+Z/Y undo-redo** | [`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **P1-03** / KEY-UNDO-001. |
 
-**Next (see §Current strategy):** **T-057 map perf hotfix** (60 fps @ 200+ slots) — **interrupt before Eden P1 or scale work**. Then **T-058..T-062** scale program toward **100k+** editable entities (see §Map performance). **Eden P1-07+** resumes at **T-063+** per [`eden/gap_analysis.md`](eden/gap_analysis.md). **Deferred:** T-051 title PATCH; Track A A-01/A-03 until Eden P0–P2 complete and perf contract met at each scale milestone.
+**Next (see §Current strategy):** ~~**T-057 map perf hotfix**~~ ✅ shipped. **Active: T-058** toolbelt entity counts (total + selected slots), then **T-059..T-063** scale program toward **100k+**. **Eden P1-07+** resumes at **T-064+** per [`eden/gap_analysis.md`](eden/gap_analysis.md).
 
 ---
 

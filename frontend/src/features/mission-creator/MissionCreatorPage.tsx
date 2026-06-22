@@ -22,17 +22,13 @@ export default function MissionCreatorPage() {
   const editor = useMissionEditor(id)
   const { md, undo } = editor
 
-  const [cursor, setCursor] = useState<{ x: number; y: number; z: number } | null>(null)
   const [attributesId, setAttributesId] = useState<string | null>(null)
 
   // In-editor clipboard for Ctrl+C/V copy-paste (T-056); a ref so a copy/paste never
-  // re-renders the page. `cursorRef` mirrors the live cursor so the keydown handler can read
-  // the paste anchor without taking `cursor` as a dependency (it updates on every mouse move).
+  // re-renders the page. The live cursor lives in the engine store (set rAF-throttled by
+  // TacticalMap, T-057) so the page never re-renders on pointer move — paste reads it via
+  // useMapStore.getState().cursor and only BottomToolbelt subscribes to it.
   const clipboardRef = useRef<ClipboardSlot[]>([])
-  const cursorRef = useRef(cursor)
-  useEffect(() => {
-    cursorRef.current = cursor
-  }, [cursor])
 
   // Terrain comes from the hydrated mission meta (Everon 12.8km vs Arland 10.24km); the
   // `key` remounts the viewport so the camera/base-map resize to the new bounds.
@@ -53,6 +49,18 @@ export default function MissionCreatorPage() {
   // Double-click opens the Attributes modal only for a single-entity selection.
   const onEntityActivate = useCallback((id: string) => {
     if (useMapStore.getState().selection.ids.length <= 1) setAttributesId(id)
+  }, [])
+
+  // Cursor read-out goes straight into the engine store (rAF-throttled upstream) so the page
+  // never re-renders on pointer move — only BottomToolbelt subscribes to it (T-057).
+  const onCursorMove = useCallback(
+    (c: { x: number; y: number; z: number } | null) => useMapStore.getState().setCursor(c),
+    [],
+  )
+
+  // Stable so the memoized AttributesModal doesn't re-render on unrelated page renders.
+  const onAttributesOpenChange = useCallback((open: boolean) => {
+    if (!open) setAttributesId(null)
   }, [])
 
   // Drop an Asset Palette leaf onto the map → one Y.Doc transaction creates the slot
@@ -122,8 +130,7 @@ export default function MissionCreatorPage() {
       if (mod && !e.altKey && !e.shiftKey && e.code === 'KeyV') {
         if (!clipboardRef.current.length) return
         e.preventDefault()
-        const { activeLayerId, setSelection: setSel } = useMapStore.getState()
-        const cur = cursorRef.current
+        const { activeLayerId, cursor: cur, setSelection: setSel } = useMapStore.getState()
         const ids = pasteSlots(md, clipboardRef.current, {
           anchorAt: cur ? { x: cur.x, y: cur.y } : null,
           layerId: activeLayerId ?? undefined,
@@ -160,7 +167,7 @@ export default function MissionCreatorPage() {
         showGrid
         className="absolute inset-0 z-0 bg-background"
         onReady={onReady}
-        onCursorMove={setCursor}
+        onCursorMove={onCursorMove}
         onEntityActivate={onEntityActivate}
         onAssetDrop={onAssetDrop}
         onEntitiesMove={onEntitiesMove}
@@ -189,7 +196,7 @@ export default function MissionCreatorPage() {
         </div>
 
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2">
-          <BottomToolbelt cursorWorld={cursor} />
+          <BottomToolbelt />
         </div>
 
         {editor.invalidMissionId && (
@@ -206,7 +213,7 @@ export default function MissionCreatorPage() {
       <AttributesModal
         md={md}
         slotId={attributesId}
-        onOpenChange={(open) => !open && setAttributesId(null)}
+        onOpenChange={onAttributesOpenChange}
       />
 
       {/* Load conflict: the server has a saved version and the local draft has edits. */}

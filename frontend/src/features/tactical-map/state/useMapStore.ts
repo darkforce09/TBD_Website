@@ -51,6 +51,15 @@ export interface MarqueeRect {
   y1: number
 }
 
+/** Live cursor world position (meters) for the toolbelt read-out; null off-map. Transient
+ *  UI state, never written to the Y.Doc. Set rAF-throttled from TacticalMap so the cursor
+ *  read-out never re-renders the editor page on pointer move (T-057). */
+export interface CursorPos {
+  x: number
+  y: number
+  z: number
+}
+
 export interface MapStoreState extends MapSnapshot {
   // UI / runtime (not persisted to json_payload)
   selection: Selection
@@ -61,6 +70,8 @@ export interface MapStoreState extends MapSnapshot {
   drag: DragState | null
   /** Live marquee box (world meters); null when not box-selecting. */
   marquee: MarqueeRect | null
+  /** Live cursor world position (meters); null off-map. Drives the toolbelt read-out. */
+  cursor: CursorPos | null
 
   // Internal: bindings push a fresh snapshot here on every Y.Doc change.
   _applySnapshot: (snapshot: MapSnapshot) => void
@@ -69,6 +80,7 @@ export interface MapStoreState extends MapSnapshot {
   setActiveLayer: (id: ID | null) => void
   setDrag: (drag: DragState | null) => void
   setMarquee: (marquee: MarqueeRect | null) => void
+  setCursor: (cursor: CursorPos | null) => void
   reset: () => void
 }
 
@@ -94,12 +106,21 @@ export const useMapStore = create<MapStoreState>()((set) => ({
   activeLayerId: null,
   drag: null,
   marquee: null,
+  cursor: null,
   _applySnapshot: (snapshot) => set(snapshot),
   setSelection: (selection) => set({ selection }),
   setActiveTool: (activeTool) => set({ activeTool }),
   setActiveLayer: (activeLayerId) => set({ activeLayerId }),
   setDrag: (drag) => set({ drag }),
   setMarquee: (marquee) => set({ marquee }),
+  setCursor: (cursor) => set({ cursor }),
   reset: () =>
-    set({ ...EMPTY_SNAPSHOT, selection: NO_SELECTION, activeLayerId: null, drag: null, marquee: null }),
+    set({
+      ...EMPTY_SNAPSHOT,
+      selection: NO_SELECTION,
+      activeLayerId: null,
+      drag: null,
+      marquee: null,
+      cursor: null,
+    }),
 }))

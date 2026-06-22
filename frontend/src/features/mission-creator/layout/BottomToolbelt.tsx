@@ -3,6 +3,7 @@
 // Ruler / Line-of-Sight / Place Objective are visible placeholders (their tools land
 // in Phase 8). Floating HudBar-style bar over the map.
 
+import { memo } from 'react'
 import { Eye, MousePointer2, Ruler } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useMapStore, type ToolId } from '@/features/tactical-map'
@@ -24,13 +25,12 @@ const TOOLS: Tool[] = [
   { id: 'los', label: 'Line of Sight', icon: Eye, enabled: false },
 ]
 
-export function BottomToolbelt({
-  cursorWorld,
-}: {
-  cursorWorld: { x: number; y: number; z: number } | null
-}) {
+function BottomToolbeltInner() {
   const activeTool = useMapStore((s) => s.activeTool)
   const setActiveTool = useMapStore((s) => s.setActiveTool)
+  // The live cursor read-out is store-backed (T-057), so only this toolbelt re-renders on
+  // pointer move — not the whole editor page.
+  const cursorWorld = useMapStore((s) => s.cursor)
 
   // Selection-aware readout: when exactly one slot is selected, show its X/Y/Z; otherwise
   // show the live cursor X/Y/Z (cursor Z is 0 on the flat map until Phase 2 DEM). Off-map
@@ -94,3 +94,5 @@ export function BottomToolbelt({
     </div>
   )
 }
+
+export const BottomToolbelt = memo(BottomToolbeltInner)

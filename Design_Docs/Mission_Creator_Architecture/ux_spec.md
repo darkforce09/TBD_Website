@@ -48,6 +48,7 @@ Left and right panels are **docked flush** to the viewport edges; the map fills 
 | Click-drag entity on map | Move entity; one undo step on release |
 | Left-drag on empty map | Marquee box-select |
 | Middle-mouse / right-drag | Pan/zoom map |
+| Map cursor | Constant **crosshair** over the map (T-057 — no pointer glyph over icons; pick only on click/drag) |
 | Click-drag selected group | Move all selected together; one undo step |
 | Spacebar | Center camera on selection |
 | Delete / Backspace | Delete selected entities (undoable) |

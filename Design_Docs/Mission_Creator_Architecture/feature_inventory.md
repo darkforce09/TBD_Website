@@ -210,14 +210,14 @@
 | **Goal** | Eden toolbelt-style position HUD (X/Y/Z) |
 | **Trigger** | Mouse move over map |
 | **Preconditions** | Map mounted |
-| **Procedure** | `onHover` → `onCursorMove({x,y,z})` (z = `info.coordinate[2] ?? 0`) → `setCursor` → BottomToolbelt mono display (CUR mode) |
+| **Procedure** | Container `onPointerMove` → rAF-throttled self-unproject (`view.makeViewport(...).unproject`) → `useMapStore.setCursor` → `BottomToolbelt` mono display (CUR mode). **No Deck `onHover` pick** (T-057). |
 | **Postconditions** | X/Y/Z shown; **Z = 0** on the flat map (real ground-plane value until Phase 2 DEM) |
-| **Inputs** | Pointer hover |
-| **Outputs** | `cursor` React state in `MissionCreatorPage`, passed as `cursorWorld` prop to the toolbelt (not the Zustand store) |
-| **Edge cases** | Off-map hover → null cursor → all axes show `—`; Z stays 0 until DEM feeds real elevation |
-| **Acceptance** | `- [x] Coords update on hover` `- [x] Z shows 0 on-map, — off-map (T-050)` |
+| **Inputs** | Pointer move over map container |
+| **Outputs** | Transient `useMapStore.cursor` (not page React state) |
+| **Edge cases** | Off-map / pointer leave → `cursor: null` → all axes show `—`; pointer is constant `crosshair` (no icon hover glyph — T-057 trade) |
+| **Acceptance** | `- [x] Coords update on hover` `- [x] Z shows 0 on-map, — off-map (T-050)` `- [x] Page does not re-render on move (T-057)` |
 | **Eden parity** | Eden:BOTTOM-HUD-001 |
-| **Status** | partial |
+| **Status** | working |
 | **Evidence** | `TacticalMap.tsx`, `BottomToolbelt.tsx`, `MissionCreatorPage.tsx` |
 
 ---
