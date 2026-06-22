@@ -10,7 +10,7 @@
 
 ## Goal
 
-Show **how many slot entities are on the map** and **how many are selected** in the bottom toolbelt — scale-test telemetry before the **T-059..T-066** performance program (1M–10M north star). Without live counts, paste-doubling and scale verification are guesswork.
+Show **how many slot entities are on the map** and **how many are selected** in the bottom toolbelt — scale-test telemetry for the **T-059..T-067** performance program (1M–10M north star).
 
 **Acceptance:**
 - Bottom toolbelt displays **OBJ** `{total}` = count of entries in `slotsById` (all placed map slots).
@@ -131,6 +131,4 @@ Re-export: `selectSlotCount` alongside `selectSlotIcons`.
 
 **T-059 (bulk paste/delete):** fix O(n²) spreads, cap selection/outliner after bulk paste, optional chunked paste — **10k paste without hard freeze**. Use **OBJ** to confirm totals. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md).
 
-**T-060+:** typed-array IconLayer, incremental bindings, spatial index, virtualized outliner, LOD, worker, spatial chunks — toward **1M–10M**.
-
-**Eden P1-07+** resumes at **T-067+** (after T-059..T-066 scale milestones).
+**T-060:** fast load + save. **T-061..T-067:** typed-array IconLayer, incremental bindings, spatial index, virtualized outliner, LOD, worker, spatial chunks. **Eden T-068+.**

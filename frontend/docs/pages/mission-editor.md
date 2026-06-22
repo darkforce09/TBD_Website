@@ -31,14 +31,14 @@
 
 ### Primary flow
 1. Navigate from Mission Library **+ New Mission** dialog (T-048) or dossier **OPEN IN MISSION CREATOR** → `/missions/:id/edit`.
-2. `useMissionDoc` hydrates Y.Doc from y-indexeddb; `useMissionEditor` loads current version from API with conflict prompt. The mission **row** (`title`, `terrain`, time/weather) is hydrated into `meta` on every load — including brand-new missions whose `json_payload` is still `{}` (T-049). Terrain drives the viewport bounds (Everon 12.8km vs Arland 10.24km).
+2. `useMissionDoc` hydrates Y.Doc from y-indexeddb; `useMissionEditor` loads current version from API with conflict prompt. The mission **row** (`title`, `terrain`, time/weather) hydrates into `meta` on every load — including new missions whose `json_payload` is `{}` (T-049). Terrain drives viewport bounds. **Known gap (T-060):** **10k+** slot missions open slowly with **no loading indicator** — `docToSnapshot` during IndexedDB replay blocks the shell.
 3. Author places entities via palette drop, moves selection on map, organizes layers in outliner.
 4. **Save Version** → `POST /missions/:id/versions` with compiled `json_payload`.
 5. **Export** downloads camelCase mod envelope without saving.
 
 ### States
 - **Chromeless:** No platform Sidebar/TopNav (`fullBleed` + `chromeless` route handles).
-- **Loading:** Version fetch + IndexedDB sync.
+- **Loading:** Version fetch + IndexedDB sync. **T-060:** full-bleed loading overlay + progress for large snapshots (planned).
 - **Dirty:** Local autosave to y-indexeddb; server save is manual semver POST.
 - **Blocked phases:** DEM/Z-axis (Phase 2), asset registry (Phase 5/6), ruler/LoS viewshed (Phase 8).
 
@@ -81,8 +81,9 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.11 — [x] T-056 Ctrl+C/V copy-paste at cursor (slots; relative layout, off-map +20m nudge; one undo step)
 ### M3.12 — [x] T-057 Map perf hotfix (≥55 fps pan/zoom @ 200+ slots: cursor→store rAF, no Deck `onHover` pick, pan rAF-coalesce, `React.memo` panels)
 ### M3.13 — [x] T-058 Toolbelt OBJ/SEL entity counts (total placed slots + selected count; scale telemetry)
-### M3.14 — [ ] T-059 Bulk paste/delete at scale (10k without freeze)
-### M4 — [ ] T-060+ scale program + DEM/registry (see MC ROADMAP §Map performance)
+### M3.14 — [x] T-059 Bulk paste/delete at scale (batch O(n) append; selection cap 500; outliner leaf cap 500 both trees; validated **360k @ 100+ fps** pan)
+### M3.15 — [ ] T-060 Fast load + save (progress bars; hydrate coalesce; **≤10 s ideal @ 1M**)
+### M4 — [ ] T-061+ scale program + DEM/registry (see MC ROADMAP §Map performance)
 
 ## Test Plan
 
@@ -94,5 +95,8 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 
 ## Open Questions / Blockers
 
-- **[PERF-001] ~~Map pan/zoom FPS collapse~~** — **Resolved T-057** (100+ fps @ 10k validated); **T-058** OBJ/SEL entity-count telemetry shipped. **Active: T-059** bulk paste (10k paste freezes browser — batch append + caps).
+- **[PERF-001] ~~Map pan/zoom FPS collapse~~** — **Resolved T-057** (100+ fps @ 10k validated); **T-058** OBJ/SEL entity-count telemetry shipped.
+- **[PERF-002] ~~Bulk paste 10k freeze~~** — **Resolved T-059** (validated **360k @ 100+ fps** pan; 6k paste loops smooth).
+- **[PERF-003] Initial load on large missions** — **Active T-060:** progress bar + hydrate coalesce; **≤10 s ideal @ 1M**.
+- **[PERF-004] Save Version on large missions** — **Active T-060:** compile progress bar; chunked compile; **≤10 s ideal @ 1M** (worker T-066 if needed).
 - [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).

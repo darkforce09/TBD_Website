@@ -11,7 +11,7 @@
 Restore the engineering-plan performance contract: **60 fps pan/zoom with 200+ pickable
 slot icons** on the flat grid. A 2026-06 regression dropped this to **~9 fps at ~100–200
 slots**. T-057 is an **interrupt hotfix** that must land before any further Eden P1 work or
-the T-059..T-066 scale program.
+the T-059..T-067 scale program.
 
 **Acceptance:** ≥55 fps sustained pan/zoom with 200+ slots (read from the existing
 `FpsCounter`, green ≥55); click-select, Ctrl/Cmd-toggle, marquee, drag-move,
@@ -150,4 +150,4 @@ hovering an icon (no per-move hover pick). Click/dbl-click/marquee/drag picking 
 
 ## After T-057
 
-**T-058** — toolbelt entity-count telemetry (total + selected slots). Then the **T-059 bulk paste** slice, then **T-060..T-066 scale program** toward 1M–10M editable entities. Eden P1 resumes at **T-067+**.
+**T-058** — toolbelt entity-count telemetry. **T-059** bulk paste ✅ shipped (**360k @ 100+ fps** validated). **T-060** fast load + save (active). Then **T-061..T-067** scale program. Eden **T-068+**.

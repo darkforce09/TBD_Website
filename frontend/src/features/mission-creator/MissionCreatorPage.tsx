@@ -17,6 +17,9 @@ import { AssetPalette } from './layout/RightInspector/AssetPalette'
 import { AttributesModal } from './layout/AttributesModal'
 import { FpsCounter } from './FpsCounter'
 
+/** A paste larger than this does not auto-select its result — see the Ctrl+V branch (T-059). */
+const BULK_SELECT_CAP = 500
+
 export default function MissionCreatorPage() {
   const { id } = useParams<{ id: string }>()
   const editor = useMissionEditor(id)
@@ -135,7 +138,12 @@ export default function MissionCreatorPage() {
           anchorAt: cur ? { x: cur.x, y: cur.y } : null,
           layerId: activeLayerId ?? undefined,
         })
-        if (ids.length) setSel({ kind: 'slot', ids })
+        // Cap the post-paste selection: putting 10k ids in selection.ids blows up the
+        // highlight Set + outliner re-render (T-059). Above the cap, clear selection — OBJ
+        // still updates (it reads slotsById); the user box-selects if they need it.
+        if (ids.length) {
+          setSel(ids.length <= BULK_SELECT_CAP ? { kind: 'slot', ids } : { kind: 'none', ids: [] })
+        }
         return
       }
       const { selection, slotsById, setSelection } = useMapStore.getState()

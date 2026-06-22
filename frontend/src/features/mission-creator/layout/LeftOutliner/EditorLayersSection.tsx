@@ -33,6 +33,12 @@ interface TreeDragPayload {
   id: ID
 }
 
+/** Above this many entities a folder renders as a count label with NO per-slot leaves —
+ *  rendering 10k+ DOM rows froze the tab on a bulk paste (T-059). Real virtualization is T-063;
+ *  until then a large folder just shows its count. The same cap is applied per-squad in the
+ *  ORBAT tree (OrbatSection). */
+export const OUTLINER_LEAF_CAP = 500
+
 /** Build the recursive tree: each EditorLayer → a folder node containing its child
  *  folders then its placed slots. Layers nest via parentId; null = root. */
 function buildTree(
@@ -42,18 +48,22 @@ function buildTree(
   const all = Object.values(layersById)
   const build = (layer: EditorLayer): TreeNodeData => {
     const childFolders = all.filter((l) => l.parentId === layer.id).map(build)
-    const entityNodes: TreeNodeData[] = layer.entityIds
-      .map((eid) => slotsById[eid])
-      .filter((s): s is Slot => Boolean(s))
-      .map((s) => ({
-        id: s.id,
-        label: s.role || 'Unit',
-        icon: User,
-        ...(s.tag ? { badge: s.tag } : {}),
-      }))
+    // Past the cap, drop the slot leaves but keep child folders + a count in the label.
+    const overCap = layer.entityIds.length > OUTLINER_LEAF_CAP
+    const entityNodes: TreeNodeData[] = overCap
+      ? []
+      : layer.entityIds
+          .map((eid) => slotsById[eid])
+          .filter((s): s is Slot => Boolean(s))
+          .map((s) => ({
+            id: s.id,
+            label: s.role || 'Unit',
+            icon: User,
+            ...(s.tag ? { badge: s.tag } : {}),
+          }))
     return {
       id: layer.id,
-      label: layer.name,
+      label: overCap ? `${layer.name} (${layer.entityIds.length} units)` : layer.name,
       icon: Folder,
       isFolder: true,
       defaultExpanded: true,

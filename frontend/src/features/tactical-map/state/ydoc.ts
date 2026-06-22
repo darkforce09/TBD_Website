@@ -175,16 +175,37 @@ export function pasteSlots(
   const newIds: ID[] = []
   transact(md, () => {
     const { slots, squads, editorLayers } = md.entities
+    // Batch appends: accumulate each squad's new slotIds and each layer's new entityIds in
+    // local arrays (seeded once from the live Y.Array) and write each map ONCE after the loop.
+    // The per-slot `[...spread, id]` form was O(n²) and froze the tab on a 10k paste (T-059).
+    const squadSlotIds = new Map<ID, ID[]>()
+    const layerEntityIds = new Map<ID, ID[]>()
+    const slotIdsFor = (sid: ID): ID[] => {
+      let arr = squadSlotIds.get(sid)
+      if (!arr) {
+        arr = [...(squads.get(sid)!.get('slotIds') as ID[])]
+        squadSlotIds.set(sid, arr)
+      }
+      return arr
+    }
+    const entityIdsFor = (lid: ID): ID[] => {
+      let arr = layerEntityIds.get(lid)
+      if (!arr) {
+        arr = [...(editorLayers.get(lid)!.get('entityIds') as ID[])]
+        layerEntityIds.set(lid, arr)
+      }
+      return arr
+    }
     for (const c of clip) {
       const targetSquad = squads.get(c.squadId) ? c.squadId : ensureDefaultSquad(md)
       const targetLayer =
         opts?.layerId && editorLayers.get(opts.layerId) ? opts.layerId : ensureDefaultLayer(md)
-      const squad = squads.get(targetSquad)!
+      const ids = slotIdsFor(targetSquad)
       const id = newId()
       const slot: Slot = {
         id,
         squadId: targetSquad,
-        index: (squad.get('slotIds') as ID[]).length,
+        index: ids.length,
         role: c.role,
         ...(c.tag ? { tag: c.tag } : {}),
         ...(c.assetId ? { assetId: c.assetId } : {}),
@@ -198,11 +219,12 @@ export function pasteSlots(
         loadoutId: null,
       }
       slots.set(id, entityToYMap(slot as unknown as Record<string, unknown>))
-      squad.set('slotIds', [...(squad.get('slotIds') as ID[]), id])
-      const layer = editorLayers.get(targetLayer)
-      if (layer) layer.set('entityIds', [...(layer.get('entityIds') as ID[]), id])
+      ids.push(id)
+      if (editorLayers.get(targetLayer)) entityIdsFor(targetLayer).push(id)
       newIds.push(id)
     }
+    for (const [sid, ids] of squadSlotIds) squads.get(sid)!.set('slotIds', ids)
+    for (const [lid, ids] of layerEntityIds) editorLayers.get(lid)!.set('entityIds', ids)
   })
   return newIds
 }

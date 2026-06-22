@@ -1129,10 +1129,49 @@
 | **Inputs** | `ClipboardSlot[]`, cursor anchor, active layer |
 | **Outputs** | New slot ids (selection capped when bulk) |
 | **Edge cases** | Paste 10k → selection cleared not 10k ids; layer folder shows count not 10k leaves |
-| **Acceptance** | `- [ ] Paste 10k no hard freeze` `- [ ] OBJ correct` `- [ ] Pan ≥55 fps after` `- [ ] Undo one step` |
+| **Acceptance** | `- [x] Paste 10k no hard freeze` `- [x] OBJ correct` `- [x] Pan ≥55 fps after` `- [x] Undo one step` `- [x] 360k @ 100+ fps pan validated` |
 | **Eden parity** | Eden:ACTION-PASTE-001 (bulk scale) |
+| **Status** | working |
+| **Evidence** | `state/ydoc.ts` (`pasteSlots`), `MissionCreatorPage.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx` |
+
+---
+
+#### PERF-LOAD-001 — Fast initial load / hydrate gate (T-060)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | Open **10k–1M** missions with **progress bar**; coalesce boot snapshots; **≤10 s ideal @ 1M** |
+| **Trigger** | Navigate to `/missions/:id/edit` |
+| **Preconditions** | Y.Doc persisted in IndexedDB (possibly 100k–360k+ slots) |
+| **Procedure** | Loading overlay until `docReady`; `beginBulkSync`/`endBulkSync` around IDB replay + `hydrateMissionDoc`; optional defer sidebar mount |
+| **Postconditions** | Map interactive; OBJ correct; pan ≥55 fps |
+| **Inputs** | IndexedDB snapshot, optional server `json_payload` |
+| **Outputs** | `docStatus: ready`; user-visible progress |
+| **Edge cases** | Small mission may flash overlay briefly; API hydrate runs after local ready |
+| **Acceptance** | `- [ ] Overlay on 10k+ open` `- [ ] Progress/count visible` `- [ ] One snapshot flush after IDB sync` `- [ ] Pan regression clean` |
+| **Eden parity** | — |
 | **Status** | planned |
-| **Evidence** | `state/ydoc.ts` (`pasteSlots`), `EditorLayersSection.tsx`, `MissionCreatorPage.tsx` |
+| **Evidence** | `useMissionDoc.ts`, `bindings.ts`, `MissionCreatorPage.tsx` |
+
+---
+
+#### PERF-SAVE-001 — Fast Save Version + progress (T-060)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | **Save Version** with **progress bar**; compile + POST without hard-freeze at **50k+**; **≤10 s ideal @ 1M** |
+| **Trigger** | User clicks Save → Save Version in TopCommandStrip |
+| **Preconditions** | Valid mission UUID; dirty or explicit save |
+| **Procedure** | `compileMissionWithProgress` (chunked/yield) → progress `Compiling…` / `Uploading…` → POST; bar in Save dialog |
+| **Postconditions** | Version 201; dirty cleared |
+| **Inputs** | `useMapStore` snapshot |
+| **Outputs** | POST body; progress UI |
+| **Edge cases** | 409 dup semver; compile may need worker (T-066) for 1M |
+| **Acceptance** | `- [ ] Progress bar on save 50k+` `- [ ] Tab responsive` `- [ ] Baseline timings recorded` |
+| **Status** | planned |
+| **Evidence** | `useMissionEditor.ts`, `compiler/compile.ts`, `TopCommandStrip.tsx` |
 
 ---
 
@@ -1331,7 +1370,7 @@
 | KEY-SPACE-001 | working | `Space` → flyTo selection | `MissionCreatorPage.tsx` |
 | KEY-DEL-001 | working | Delete/Backspace → remove slots | `MissionCreatorPage.tsx` |
 | KEY-UNDO-001 | working | Buttons + Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
-| KEY-COPY-001 | working | Ctrl/Cmd+C copy slot selection + Ctrl/Cmd+V paste at cursor (relative layout; off-map +20m nudge); pasted slots selected when ≤500 (T-056); bulk scale → T-059 | `MissionCreatorPage.tsx`, `state/ydoc.ts` (`pasteSlots`), `state/schema.ts` (`ClipboardSlot`) |
+| KEY-COPY-001 | working | Ctrl/Cmd+C copy slot selection + Ctrl/Cmd+V paste at cursor (relative layout; off-map +20m nudge) (T-056). **Bulk scale (T-059):** `pasteSlots` batch O(n) append (no O(n²) spreads); paste auto-selects only when ≤500 (`BULK_SELECT_CAP`), else clears to `none`; outliner caps slot leaves at 500/folder+squad (`OUTLINER_LEAF_CAP`) → 10k paste without hard freeze | `MissionCreatorPage.tsx`, `state/ydoc.ts` (`pasteSlots`), `state/schema.ts` (`ClipboardSlot`), `LeftOutliner/EditorLayersSection.tsx`, `LeftOutliner/OrbatSection.tsx` |
 | KEY-SELALL-001 | not_built | Ctrl+A | — |
 
 ---

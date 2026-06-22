@@ -9,7 +9,7 @@ import { Flag, User, Users } from 'lucide-react'
 import { useMapStore } from '@/features/tactical-map'
 import type { Faction, ID, Slot, Squad } from '@/features/tactical-map'
 import { TreeView, type TreeNodeData } from '../tree/TreeView'
-import { Section } from './EditorLayersSection'
+import { OUTLINER_LEAF_CAP, Section } from './EditorLayersSection'
 
 function buildOrbat(
   factionsById: Record<ID, Faction>,
@@ -24,22 +24,29 @@ function buildOrbat(
     children: f.squadIds
       .map((sid) => squadsById[sid])
       .filter((s): s is Squad => Boolean(s))
-      .map((squad) => ({
-        id: squad.id,
-        label: squad.name,
-        icon: Users,
-        defaultExpanded: true,
-        children: squad.slotIds
-          .map((slid) => slotsById[slid])
-          .filter((s): s is Slot => Boolean(s))
-          .sort((a, b) => a.index - b.index)
-          .map((s) => ({
-            id: s.id,
-            label: s.role || 'Slot',
-            icon: User,
-            ...(s.tag ? { badge: s.tag } : {}),
-          })),
-      })),
+      .map((squad) => {
+        // Past the cap, show the squad's slot count instead of N leaf rows — rendering 10k+
+        // rows froze the tab on a bulk paste (T-059). Virtualization is T-063.
+        const overCap = squad.slotIds.length > OUTLINER_LEAF_CAP
+        return {
+          id: squad.id,
+          label: overCap ? `${squad.name} (${squad.slotIds.length} slots)` : squad.name,
+          icon: Users,
+          defaultExpanded: true,
+          children: overCap
+            ? []
+            : squad.slotIds
+                .map((slid) => slotsById[slid])
+                .filter((s): s is Slot => Boolean(s))
+                .sort((a, b) => a.index - b.index)
+                .map((s) => ({
+                  id: s.id,
+                  label: s.role || 'Slot',
+                  icon: User,
+                  ...(s.tag ? { badge: s.tag } : {}),
+                })),
+        }
+      }),
   }))
 }
 

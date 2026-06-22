@@ -77,12 +77,35 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-058 — 2026-06-22)
+## Status (latest feature work: T-059 — 2026-06-22)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-059 **Mission Creator — bulk paste/delete at scale**. First slice of the
+  **T-059..T-067 scale program** toward the **1M–10M editable-entity** north star. Pasting ~10k
+  slots hard-froze the tab; three confirmed causes fixed (spec:
+  `Design_Docs/Mission_Creator_Architecture/t059_bulk_paste_operations.md`): **(a)** `pasteSlots`
+  (`tactical-map/state/ydoc.ts`) dropped its per-slot `[...spread, id]` appends to `slotIds` /
+  `entityIds` (**O(n²)**) — the loop now accumulates into local arrays (a `Map<squadId, ID[]>`
+  seeded once per squad so per-slot squad re-targeting still works, plus one array per target
+  layer) and writes each Y.Map **once** at the end (O(n); `index` derived from the accumulating
+  length). **(b)** post-paste **selection cap** in `MissionCreatorPage` Ctrl+V branch
+  (`BULK_SELECT_CAP = 500`): ≤500 selects the paste (T-056 behavior), above it clears to `none`
+  so `selection.ids` never holds 10k ids — OBJ still updates from `slotsById`. **(c)** **outliner
+  leaf cap** (`OUTLINER_LEAF_CAP = 500`, exported from `EditorLayersSection`): a layer
+  (`buildTree`) or ORBAT squad (`OrbatSection.buildOrbat`) over the cap renders a
+  `"(N units/slots)"` count label with **no** per-slot leaf rows — rendering 10k+ DOM rows was
+  the dominant freeze (real virtualization is T-063). The conditional **chunked paste + progress**
+  and `bindings._bulkMode` (spec items d/e) were **not** needed after the batch fix — the single
+  transact + existing one-flush-per-transaction coalescing meets the no-freeze bar; revisit only if
+  a manual 10k paste still stalls. Slots only; no schema/compiler/backend change. Four real files
+  (`ydoc.ts`, `MissionCreatorPage.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx`). Verified:
+  frontend build + lint clean (10k no-freeze + ≥55 fps pan after = manual in-browser check).
+  **Live validated (2026-06):** repeat **6k-object paste** loops smooth; **360k objects @ 100+ fps**
+  pan/zoom. **New blocker surfaced:** initial editor open with **10k+** objects is slow with no
+  loading indicator → **T-060** fast load + save.
 - T-058 **Mission Creator — toolbelt entity count readout (OBJ total + SEL selected)**. Scale
-  telemetry ahead of the T-059..T-066 scale program: the bottom toolbelt now shows **OBJ** =
+  telemetry ahead of the T-059..T-067 scale program: the bottom toolbelt now shows **OBJ** =
   total placed slots and **SEL** = selected slot count, right of the X/Y/Z block (JetBrains Mono,
   `tabular-nums`, plain integers). **OBJ** reads a new memoized `selectSlotCount(slotsById)` in
   `tactical-map/state/selectors.ts` (re-exported from the barrel `index.ts`); **SEL** is
@@ -386,7 +409,11 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-058** entity-count readout landed (toolbelt OBJ total + SEL selected). **Validated:** pan/zoom **100+ fps @ 10k** (T-057). **Blocker:** paste **10k freezes browser**. **Active: T-059** bulk paste/delete, then **T-060..T-066** scale program toward **1M–10M** editable entities (typed-array IconLayer → incremental bindings → spatial index → virtualized outliner → LOD → worker → spatial chunks; see [MC ROADMAP §Map performance](Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program)). **Eden P1-07+** resumes at **T-067+**. Track A Phase 2 (map tiles, DEM) deferred until Eden P0–P2.
+**Not yet built / next (Mission Creator):** **T-059** bulk paste/delete **landed** (batch append +
+selection/outliner caps). **Validated:** **360k objects @ 100+ fps** pan; repeat **6k paste**
+smooth. **Active blocker:** **initial load** and **Save Version** slow at **10k+** with no progress UX → **T-060** fast load + save (progress bars; **≤10 s ideal @ 1M**). Then **T-061..T-067**
+scale program toward **1M–10M** (typed-array IconLayer → incremental bindings → spatial index →
+virtualized outliner → LOD → worker → spatial chunks; see [MC ROADMAP §Map performance](Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program)). **Eden P1-07+** resumes at **T-068+**. Track A Phase 2 (map tiles, DEM) deferred until Eden P0–P2.
 - **Deferred until after Eden P0–P2:** Phase 2 **DEM / Z-axis** + aligned map tiles (A-01/A-03; blocked on hosted assets).
 - **During Eden P0:** thin **registry** (Phase 5 / B-01) as needed for real palette + markers/vehicles — not full Track C.
 - Phase 8 **ruler/LoS/viewshed** (needs DEM for LoS) — after heightmap phase.
