@@ -33,7 +33,7 @@ Left and right panels are **docked flush** to the viewport edges; the map fills 
   Eden-style nested tree (Men → Rifleman). Drag a leaf onto the map to place it.
 - **Top Command Strip:** mission title (inline edit), File/Edit/View/Mission/Environment menu stubs,
   Eden-style **time slider/scrub** + weather, Undo/Redo, Export (disabled until Phase 9), settings gear.
-- **Bottom Toolbelt:** Select / Ruler / LoS + live X/Y/Z readout in JetBrains Mono, centered in the map area.
+- **Bottom Toolbelt:** Select / Ruler / LoS + live X/Y/Z readout + **OBJ/SEL entity counts** (T-058) in JetBrains Mono, centered in the map area.
 - **Attributes Modal:** opens on **double-click** of a single entity (Transform / Identity / States / Arsenal tabs).
 
 ---
@@ -56,6 +56,7 @@ Left and right panels are **docked flush** to the viewport edges; the map fills 
 | Ctrl/Cmd + click entity | Toggle in/out of selection (T-053); Shift unbound |
 | Cmd/Ctrl+C / Cmd/Ctrl+V | Copy slot selection / paste at cursor (relative layout; off-map +20m nudge) (T-056) |
 | Asset Browser search | Filter Factions catalog tree by name; X/Esc clears (T-055) |
+| Toolbelt OBJ / SEL counts | **OBJ** = total placed slots, **SEL** = selected count; mono, right of the X/Y/Z block; scale telemetry, updates on add/remove/paste/delete/selection (T-058) |
 | Click outliner row | Select entity (**no** camera move until Spacebar) |
 
 ---

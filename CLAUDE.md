@@ -77,10 +77,22 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-057 — 2026-06-22)
+## Status (latest feature work: T-058 — 2026-06-22)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-058 **Mission Creator — toolbelt entity count readout (OBJ total + SEL selected)**. Scale
+  telemetry ahead of the T-059..T-066 scale program: the bottom toolbelt now shows **OBJ** =
+  total placed slots and **SEL** = selected slot count, right of the X/Y/Z block (JetBrains Mono,
+  `tabular-nums`, plain integers). **OBJ** reads a new memoized `selectSlotCount(slotsById)` in
+  `tactical-map/state/selectors.ts` (re-exported from the barrel `index.ts`); **SEL** is
+  `selection.ids.length` when `selection.kind==='slot'`, else 0. Both subscribe **inside the
+  already-memoized `BottomToolbelt`** (a new `slotsById` selector + the existing selection slice),
+  so they update on add/remove/paste/delete/selection but **never on a cursor move** — the T-057
+  cursor channel (`useMapStore.cursor`, rAF-throttled) is untouched, as are Deck layers/picking,
+  pan coalescing, and `MissionCreatorPage` state. Slots only (vehicles/markers join the count in a
+  later P0 slice); no schema/compiler/backend change. Two real files + barrel export. Closes
+  feature_inventory `BOTTOM-OBJCOUNT-001`. Verified: frontend build + lint clean.
 - T-057 **Mission Creator — map performance hotfix (≥55 fps pan/zoom @ 200+ slots)**. Restores
   the engineering-plan perf contract after a regression dropped pan/zoom to **~9 fps at ~100–200
   slots**. Deck.gl already draws the icons on the GPU — the bottleneck was the **React layer**, fixed
@@ -374,7 +386,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-058 entity-count readout** — toolbelt shows total placed slots + selected count (scale-test telemetry). Then **T-059..T-063** scale program toward **100k+ editable entities** (typed-array IconLayer → rbush → virtualized outliner → LOD/clustering → worker compile; see [MC ROADMAP §Map performance](Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program)). **Eden P1-07+** resumes at **T-064+**. Track A Phase 2 (map tiles, DEM) deferred until Eden P0–P2.
+**Not yet built / next (Mission Creator):** **T-058** entity-count readout landed (toolbelt OBJ total + SEL selected). **Validated:** pan/zoom **100+ fps @ 10k** (T-057). **Blocker:** paste **10k freezes browser**. **Active: T-059** bulk paste/delete, then **T-060..T-066** scale program toward **1M–10M** editable entities (typed-array IconLayer → incremental bindings → spatial index → virtualized outliner → LOD → worker → spatial chunks; see [MC ROADMAP §Map performance](Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program)). **Eden P1-07+** resumes at **T-067+**. Track A Phase 2 (map tiles, DEM) deferred until Eden P0–P2.
 - **Deferred until after Eden P0–P2:** Phase 2 **DEM / Z-axis** + aligned map tiles (A-01/A-03; blocked on hosted assets).
 - **During Eden P0:** thin **registry** (Phase 5 / B-01) as needed for real palette + markers/vehicles — not full Track C.
 - Phase 8 **ruler/LoS/viewshed** (needs DEM for LoS) — after heightmap phase.

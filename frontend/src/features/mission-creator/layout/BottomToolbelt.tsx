@@ -6,7 +6,7 @@
 import { memo } from 'react'
 import { Eye, MousePointer2, Ruler } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useMapStore, type ToolId } from '@/features/tactical-map'
+import { selectSlotCount, useMapStore, type ToolId } from '@/features/tactical-map'
 import { cn } from '@/lib/utils'
 import { overlayPanel } from './overlay'
 
@@ -39,6 +39,15 @@ function BottomToolbeltInner() {
     s.selection.kind === 'slot' && s.selection.ids.length === 1
       ? s.slotsById[s.selection.ids[0]]
       : undefined,
+  )
+
+  // Scale telemetry (T-058): OBJ = total placed slots, SEL = selected count. Both subscribe
+  // here in the already-memoized toolbelt — they update on add/remove/paste/delete/selection,
+  // never on a cursor move (the cursor lives in its own store slice, T-057).
+  const slotsById = useMapStore((s) => s.slotsById)
+  const totalSlots = selectSlotCount(slotsById)
+  const selectedCount = useMapStore((s) =>
+    s.selection.kind === 'slot' ? s.selection.ids.length : 0,
   )
 
   const fmt = (n: number) => Math.round(n).toString().padStart(5, ' ')
@@ -89,6 +98,20 @@ function BottomToolbeltInner() {
         </span>
         <span>
           Z<span className="ml-1 text-on-surface">{z != null ? fmt(z) : '   —'}</span>
+        </span>
+      </div>
+
+      <span className="mx-1 h-5 w-px bg-white/10" />
+
+      <div
+        className="flex items-center gap-2 px-1 font-mono text-code-md tabular-nums text-on-surface-variant"
+        title="Placed slots on map / current selection"
+      >
+        <span>
+          OBJ<span className="ml-1 text-on-surface">{totalSlots}</span>
+        </span>
+        <span>
+          SEL<span className="ml-1 text-on-surface">{selectedCount}</span>
         </span>
       </div>
     </div>

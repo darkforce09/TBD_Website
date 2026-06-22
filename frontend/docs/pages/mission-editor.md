@@ -22,7 +22,7 @@
 | 2 | Top strip | bar | Title, undo/redo, time/weather scrubber, settings, Export | Command chrome; Undo/Redo buttons + **keyboard shortcuts** (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Ctrl+Y) (T-052) | Mission metadata |
 | 3 | Left dock | panel | ORBAT tree + Editor Layers | Outliner / drop target | `editorLayers` map |
 | 4 | Right dock | panel | Asset Palette tabs + **Asset Browser search** | Drag assets to map; **search filters the Factions tree by name** (T-055) | Mock catalog (registry pending) |
-| 5 | Toolbelt | bar | Select, Ruler, LoS + X/Y/Z readout | Map tools; **selection-aware** coords (SEL = single slot X/Y/Z, CUR = cursor X/Y/Z, Z=0 flat until DEM) (T-049, T-050) | Tool state + selection |
+| 5 | Toolbelt | bar | Select, Ruler, LoS + X/Y/Z readout + **OBJ/SEL counts** (T-058) | Map tools; CUR/SEL coords; **OBJ** = total slots, **SEL** = selected count | Tool state + `slotsById` + selection |
 | 6 | Inspector | panel | Slot fields on double-click | `AttributesModal` opens from **map dbl-click**, **ORBAT** slot row, or **Editor Layers** slot row (T-054); **Transform X/Y/Z/rotation editable** (T-049) | Selected slot |
 | 7 | Save Version | button | POST new semver | Immutable versions API | `useMissionEditor` |
 | 8 | Export | button | Download mod envelope | Compiler | `compiler/exportSchema.ts` |
@@ -79,8 +79,10 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.9 — [x] T-054 Attributes entry — map dbl-click + ORBAT tree dbl-click
 ### M3.10 — [x] T-055 Asset browser search (filters Factions tree; folder-name match shows subtree)
 ### M3.11 — [x] T-056 Ctrl+C/V copy-paste at cursor (slots; relative layout, off-map +20m nudge; one undo step)
-### M3.12 — [x] T-057 Map perf hotfix (≥55 fps pan/zoom @ 200+ slots: cursor→store rAF, no Deck `onHover` pick, pan rAF-coalesce, `React.memo` panels; then T-058..T-062 scale to 100k+)
-### M4 — [ ] DEM, registry worker, ruler/LoS tools (blocked on external assets/API; Eden P0–P2 after scale milestones)
+### M3.12 — [x] T-057 Map perf hotfix (≥55 fps pan/zoom @ 200+ slots: cursor→store rAF, no Deck `onHover` pick, pan rAF-coalesce, `React.memo` panels)
+### M3.13 — [x] T-058 Toolbelt OBJ/SEL entity counts (total placed slots + selected count; scale telemetry)
+### M3.14 — [ ] T-059 Bulk paste/delete at scale (10k without freeze)
+### M4 — [ ] T-060+ scale program + DEM/registry (see MC ROADMAP §Map performance)
 
 ## Test Plan
 
@@ -92,5 +94,5 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 
 ## Open Questions / Blockers
 
-- **[PERF-001] ~~Map pan/zoom FPS collapse~~** — **Resolved T-057** (≥55 fps @ 200+; manual `FpsCounter` verification). North star: 100k+ via T-059..T-063 scale program. **Active: T-058** entity-count telemetry on toolbelt.
+- **[PERF-001] ~~Map pan/zoom FPS collapse~~** — **Resolved T-057** (100+ fps @ 10k validated); **T-058** OBJ/SEL entity-count telemetry shipped. **Active: T-059** bulk paste (10k paste freezes browser — batch append + caps).
 - [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).

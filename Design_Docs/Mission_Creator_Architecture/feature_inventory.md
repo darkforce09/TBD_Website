@@ -1096,6 +1096,46 @@
 
 ---
 
+#### BOTTOM-OBJCOUNT-001 — Entity count readout (OBJ total + SEL selected) (T-058)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | BOTTOM |
+| **Goal** | Scale telemetry — live placed-slot total + selection count for the T-059+ scale program |
+| **Trigger** | Slot added / removed / pasted / deleted, or selection change |
+| **Preconditions** | Map mounted |
+| **Procedure** | `BottomToolbelt` subscribes to `slotsById` → memoized `selectSlotCount` (OBJ) and to `selection.ids.length` when `kind==='slot'` (SEL); mono `tabular-nums` block right of the X/Y/Z coords |
+| **Postconditions** | OBJ = total placed slots; SEL = selected slot count (0 when none) |
+| **Inputs** | `slotsById`, `selection` store slices |
+| **Outputs** | Display only (no state written) |
+| **Edge cases** | Empty mission → OBJ 0 / SEL 0; **does not** update on cursor move (separate T-057 channel); plain integer (no commas) so 100000+ doesn't break layout |
+| **Acceptance** | `- [x] OBJ counts slotsById` `- [x] SEL tracks marquee/Ctrl/paste/delete` `- [x] No re-render on cursor move (T-057 guard)` |
+| **Eden parity** | Eden:BOTTOM-HUD-001 (entity counter) |
+| **Status** | working |
+| **Evidence** | `selectors.ts` (`selectSlotCount`), `BottomToolbelt.tsx` |
+
+---
+
+#### PERF-BULK-PASTE-001 — Bulk paste/delete at scale (T-059)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | Paste **10k** slots without browser hard-freeze; one undo step; pan ≥55 fps after |
+| **Trigger** | Ctrl/Cmd+V with large clipboard; bulk delete |
+| **Preconditions** | T-056 copy/paste working; T-058 OBJ readout for verification |
+| **Procedure** | Batch `slotIds`/`entityIds` append in `pasteSlots`; cap selection ids >500; cap outliner leaves; optional chunked paste + progress |
+| **Postconditions** | OBJ correct; tab responsive; undo reverts entire paste |
+| **Inputs** | `ClipboardSlot[]`, cursor anchor, active layer |
+| **Outputs** | New slot ids (selection capped when bulk) |
+| **Edge cases** | Paste 10k → selection cleared not 10k ids; layer folder shows count not 10k leaves |
+| **Acceptance** | `- [ ] Paste 10k no hard freeze` `- [ ] OBJ correct` `- [ ] Pan ≥55 fps after` `- [ ] Undo one step` |
+| **Eden parity** | Eden:ACTION-PASTE-001 (bulk scale) |
+| **Status** | planned |
+| **Evidence** | `state/ydoc.ts` (`pasteSlots`), `EditorLayersSection.tsx`, `MissionCreatorPage.tsx` |
+
+---
+
 ## ATTR — Attributes & settings
 
 #### ATTR-MODAL-001 — Attributes dialog shell
@@ -1291,7 +1331,7 @@
 | KEY-SPACE-001 | working | `Space` → flyTo selection | `MissionCreatorPage.tsx` |
 | KEY-DEL-001 | working | Delete/Backspace → remove slots | `MissionCreatorPage.tsx` |
 | KEY-UNDO-001 | working | Buttons + Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
-| KEY-COPY-001 | working | Ctrl/Cmd+C copy slot selection + Ctrl/Cmd+V paste at cursor (relative layout; off-map +20m nudge); pasted slots selected (T-056) | `MissionCreatorPage.tsx`, `state/ydoc.ts` (`pasteSlots`), `state/schema.ts` (`ClipboardSlot`) |
+| KEY-COPY-001 | working | Ctrl/Cmd+C copy slot selection + Ctrl/Cmd+V paste at cursor (relative layout; off-map +20m nudge); pasted slots selected when ≤500 (T-056); bulk scale → T-059 | `MissionCreatorPage.tsx`, `state/ydoc.ts` (`pasteSlots`), `state/schema.ts` (`ClipboardSlot`) |
 | KEY-SELALL-001 | not_built | Ctrl+A | — |
 
 ---

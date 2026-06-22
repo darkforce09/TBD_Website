@@ -48,7 +48,7 @@ If a spec exists for the task (e.g. [`t048_library_create_dialog.md`](../Design_
 | Eden UI parity | `eden/gap_analysis.md` + maybe `eden/ui_anatomy.md` |
 | Shipped git milestone | [`CLAUDE.md`](../CLAUDE.md) §Status + rows above (MC ROADMAP, frontend ROADMAP, TAGS, mission-editor, gap_analysis, feature_inventory, agent_execution as applicable) |
 
-Shell phases PRE-3.5–9 are **done** (T-033–T-040). **T-057 map perf hotfix shipped.** **Active: T-058** entity-count readout, then **T-059..T-063 scale program** (100k+ north star). Eden **T-064+** per MC ROADMAP **§Current strategy**; Track A map tiles/DEM deferred until after Eden + scale milestones.
+Shell phases PRE-3.5–9 are **done** (T-033–T-040). **T-057 map perf hotfix shipped.** **T-058** OBJ/SEL entity-count readout **shipped.** **Active: T-059** bulk paste/delete, then **T-060..T-066 scale program** (1M–10M north star). Eden **T-067+** per MC ROADMAP **§Current strategy**; Track A map tiles/DEM deferred until after Eden + scale milestones.
 
 ### Mission Creator slice workflow
 

@@ -258,7 +258,16 @@ using AI. **Do not commit until the user asks.**
 
 ---
 
+## Known scale limits (addressed T-059)
+
+T-056 copy/paste is correct for typical mission sizes. **Paste 10k+ freezes the browser**
+(O(n²) `[...array, id]` spreads per slot in `pasteSlots`, full `docToSnapshot`, 10k outliner
+leaves, 10k-id selection). **T-059** bulk paste/delete fixes this before further scale work.
+Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md).
+
+---
+
 ## Related
 
 - Prior: [t055_asset_browser_search.md](t055_asset_browser_search.md), [t053_eden_p1_additive_select.md](t053_eden_p1_additive_select.md)
-- Next: **T-057** map perf hotfix; then **T-058..T-062** scale program (100k+ north star); Eden **T-063+** (P1-07 faction submode, P1-05 multi-place, P1-06 rotation)
+- Next: ~~**T-057** map perf hotfix~~ ✅ → ~~**T-058** entity counts~~ ✅ → **T-059 bulk paste** (10k without freeze; copy/paste scale limits) → **T-060..T-066** scale program (1M–10M north star); Eden **T-067+** (P1-07 faction submode, P1-05 multi-place, P1-06 rotation)

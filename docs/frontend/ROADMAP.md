@@ -36,7 +36,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
 | `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-053–T-057 shipped (Eden P1 + map perf hotfix); **T-058** entity counts next; scale T-059+; tiles/DEM deferred |
+| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-053–T-058 shipped (Eden P1 + map perf hotfix + toolbelt OBJ/SEL counts); **T-059 bulk paste** next; tiles/DEM deferred |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
 | `/events/:id/missions/:emid/orbat` | [event-hub.md § ORBAT deep-link](../../frontend/docs/pages/event-hub.md) | |
@@ -74,6 +74,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 | Item | Spec | Notes |
 |------|------|-------|
+| **T-058 Toolbelt OBJ/SEL counts** | [t058_entity_count_readout.md](../../Design_Docs/Mission_Creator_Architecture/t058_entity_count_readout.md) | Bottom toolbelt shows OBJ (total placed slots, memoized `selectSlotCount`) + SEL (selected count); mono, right of X/Y/Z; subscribes in the memoized toolbelt so no cursor-move re-render; scale telemetry |
 | **T-057 Map perf hotfix** | [t057_map_performance_hotfix.md](../../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) | ≥55 fps pan/zoom @ 200+ slots: cursor → transient store (rAF), drop Deck `onHover` (no per-move pick), pan rAF-coalesce, `React.memo` panels; interactions unchanged |
 | **T-056 Ctrl+C/V copy-paste** | [t056_eden_p1_copy_paste.md](../../Design_Docs/Mission_Creator_Architecture/t056_eden_p1_copy_paste.md) | Ctrl/Cmd+C copies slot selection; Ctrl/Cmd+V pastes at cursor (relative layout; off-map +20m nudge); pasted slots selected; one undo step (P1-02) |
 | **T-055 Asset browser search** | [t055_asset_browser_search.md](../../Design_Docs/Mission_Creator_Architecture/t055_asset_browser_search.md) | Search field filters the Asset Browser (Factions) tree by name; folder-name match shows subtree; X/Esc clears; filtered leaves still drag (P1-04) |
@@ -86,7 +87,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 ## Recommended next work
 
-1. **Mission Creator — scale program (T-058+)** — **T-057 map perf hotfix shipped** (≥55 fps @ 200+ slots). Next: **T-058..T-062** scale toward the 100k+ editable-entities north star. Eden P1-07+ resumes **T-063+**. See [MC ROADMAP §Map performance](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program).
+1. **Mission Creator — T-059 bulk paste (next)** — fix 10k paste freeze (batch append, selection/outliner caps, optional chunking). Pan **100+ fps @ 10k** validated (T-057). Then **T-060..T-066** scale toward **1M–10M**. Eden **T-067+**. See [MC ROADMAP §Map performance](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program).
 2. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — **deferred until Eden P0–P2**
 3. **FD-008** — wiki markdown (low risk, high UX)
 4. **FD-001** — when backend exposes server/RCON endpoints

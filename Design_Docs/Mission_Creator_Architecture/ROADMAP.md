@@ -15,11 +15,11 @@
 | Do now | Defer until after Eden (+ assets where noted) |
 |--------|-----------------------------------------------|
 | ~~**T-057 map perf hotfix** — ≥55 fps pan/zoom @ 200+ slots~~ ✅ **shipped** | Track A **A-01** map imagery |
-| **T-058..T-062 scale program** — path to **100k+** editable entities (step-by-step) | Track A **A-03/A-04** DEM + Z sampling |
-| Eden **P0** remaining — registry, markers, vehicles, ORBAT authoring (P0-01..03, P0-05) — **T-063+** after scale milestones | **A-08** mod golden coord test (needs mod team + accurate map) |
-| Eden **P1/P2** — faction submode, multi-place, compositions, triggers, … — **T-063+** | gap_analysis **P3-02/03** (DEM snap, full loadout forge — Track C) |
+| **T-059..T-066 scale program** — path to **1M–10M** editable entities (step-by-step; **T-059 bulk paste** is active) | Track A **A-03/A-04** DEM + Z sampling |
+| Eden **P0** remaining — registry, markers, vehicles, ORBAT authoring (P0-01..03, P0-05) — **T-067+** after scale milestones | **A-08** mod golden coord test (needs mod team + accurate map) |
+| Eden **P1/P2** — faction submode, multi-place, compositions, triggers, … — **T-067+** | gap_analysis **P3-02/03** (DEM snap, full loadout forge — Track C) |
 | Thin **Track B** registry as needed to unblock Eden P0 (not “full registry completeness”) | **T-051** title PATCH sync (optional; not Eden-blocking) |
-| Continue Eden quick slices as **T-063+** (spec → code → docs, same as T-048..T-056) | |
+| Continue Eden quick slices as **T-067+** (spec → code → docs, same as T-048..T-056) | |
 
 **Rationale:** Eden interaction + entity UX should feel complete on the **flat grid** before investing in hosted heightmaps and satellite tiles. X/Y/Z remain manual/zero until DEM lands; that is acceptable during the Eden push.
 
@@ -27,7 +27,7 @@
 
 Work [`eden/gap_analysis.md`](eden/gap_analysis.md) **numbered backlog** in priority tier, interleaving small **P1** slices between heavier **P0** blocks:
 
-1. **P1 quick (code-only)** — ~~P1-01..P1-04, P1-09 (T-053–T-056)~~ → ~~**T-057 perf hotfix**~~ ✅ → **T-058 entity counts** → **T-059..T-063 scale** → P1-07 faction submode (T-064+) → …
+1. **P1 quick (code-only)** — ~~P1-01..P1-04, P1-09 (T-053–T-056)~~ → ~~**T-057 perf hotfix**~~ ✅ → ~~**T-058 entity counts**~~ ✅ → **T-059 bulk paste** → **T-060..T-066 scale** → P1-07 faction submode (T-067+) → …
 2. **P0 ship-blocking** — P0-01 registry (+ thin B-01) → P0-02 markers → P0-03 vehicles → P0-05 ORBAT authoring UI
 3. **P1 remainder** — P1-05..P1-11 (multi-place, rotate, Space conflict, vehicle crew, …)
 4. **P2 power-user** — P2-01..P2-07
@@ -48,19 +48,31 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | Pan | `useOrthographicView` `setViewState` every pan frame re-renders `TacticalMap` + children | ✅ `useSelectTool` rAF-coalesces pan to one `setViewState`/frame (layers already memoized) |
 | Gestures | `pickObject` on pointerdown + hover during pan | ✅ Hover picking removed entirely; pointerdown pick (icon vs empty) unchanged; pan never picks |
 
-**100k+ editable entities** is the **north star**; reach it **step-by-step** (not one commit). Deck.gl `IconLayer` can draw 100k+ on GPU; bottlenecks are **React/DOM**, **linear picking**, and **full Y.Doc snapshot → sidebar rebuild**. Phased track (one spec + slice per tag):
+**1M–10M editable entities** is the **north star** (Arma 3 reference ~8M map objects); reach it **step-by-step** (not one commit). **Validated (2026-06):** pan/zoom **100+ fps @ 10k** (T-057). **Blocker:** bulk paste **10k freezes browser** — **T-059** first. Deck.gl `IconLayer` can draw millions on GPU; bottlenecks are **bulk Y.Doc mutation**, **React/DOM**, **linear picking**, and **full Y.Doc snapshot → sidebar rebuild**. Phased track (one spec + slice per tag):
 
 | Tag | Phase | Entity target | FPS / UX target |
 |-----|-------|---------------|-----------------|
-| **T-057** ✅ | Hotfix | 200+ | ≥55 fps pan/zoom sustained — **shipped** (cursor off render path, no hover pick, pan rAF-coalesce, `React.memo` panels). Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) |
-| **T-058** | Scale prep | — | Toolbelt **OBJ** total + **SEL** selected slot counts (mono telemetry for scale testing) |
-| **T-059** | Scale-A | 5k–10k | ≥55 fps; typed-array IconLayer data |
-| **T-060** | Scale-B | 10k–50k | ≥55 fps; spatial index (rbush) for pick/marquee |
-| **T-061** | Scale-C | 50k+ | Virtualized outliner; incremental `bindings.ts` |
-| **T-062** | Scale-D | 100k overview | Cluster/LOD zoomed out; individual pick zoomed in |
-| **T-063** | Scale-E | 100k+ export | Worker offload for compile + bulk spatial ops |
+| **T-057** ✅ | Hotfix | 200+ | ≥55 fps pan/zoom sustained — **shipped**. Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) |
+| **T-058** ✅ | Scale prep | — | Toolbelt **OBJ** total + **SEL** selected slot counts — **shipped**. Spec: [`t058_entity_count_readout.md`](t058_entity_count_readout.md) |
+| **T-059** | Bulk ops | 10k paste | Paste 10k **without hard freeze**; batch append; selection/outliner caps. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md) |
+| **T-060** | Scale-A | 10k–50k | ≥55 fps pan; typed-array IconLayer data |
+| **T-061** | Scale-B | 50k+ | Incremental `bindings.ts` (patch vs full snapshot) |
+| **T-062** | Scale-C | 50k+ pick | Spatial index (rbush) for pick/marquee |
+| **T-063** | Scale-D | 50k+ UI | Virtualized outliner; folder count labels |
+| **T-064** | Scale-E | 100k–1M | Cluster/LOD zoomed out; individuals zoomed in |
+| **T-065** | Scale-F | 1M+ export | Worker offload for compile + bulk spatial ops |
+| **T-066+** | Scale-G | 1M–10M | Spatial chunks / lazy regions (design spike) |
 
-**T-057 passed (shipped):** **T-058** entity-count telemetry on the toolbelt, then **T-059..T-063** scale milestones before resuming Eden P1. **Eden P1-07+** resumes at **T-064+**.
+**Milestone ladder:**
+
+| Objects | Pan/zoom | Bulk paste | Outliner |
+|---------|----------|------------|----------|
+| 5k–10k | ✅ 100+ fps | **T-059** | cap leaves T-059; virtualize T-063 |
+| 50k | T-060–T-061 | T-059 chunked | T-063 |
+| 100k–200k | T-062–T-064 | T-059 + async | counts in folder |
+| 1M+ | T-064–T-066 | worker T-065 | chunk browser |
+
+**T-057 + T-058 shipped.** **Active: T-059** bulk paste/delete. Then **T-060..T-066** before Eden P1. **Eden P1-07+** resumes at **T-067+**.
 
 Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shipped T-057).
 
@@ -85,6 +97,8 @@ Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shippe
 | **[`scripts/tools/scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs)** | Regenerate wiki cache from manifest |
 | **[`artifacts/eden-feds-draft.jsonl`](../../artifacts/eden-feds-draft.jsonl)** | Draft FEDS entries derived from wiki research |
 | **[`artifacts/README.md`](../../artifacts/README.md)** | Generated artifacts policy |
+| **[`t058_entity_count_readout.md`](t058_entity_count_readout.md)** | **T-058** — Toolbelt OBJ/SEL entity counts (shipped) |
+| **[`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md)** | **T-059** — Bulk paste/delete at scale (active — next slice) |
 | **[`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md)** | **T-057** — Map perf hotfix: ≥55 fps pan/zoom @ 200+ slots (shipped) |
 | **[`t056_eden_p1_copy_paste.md`](t056_eden_p1_copy_paste.md)** | **T-056** — Eden P1-02: Ctrl+C/V copy-paste at cursor (slots) (shipped) |
 | **[`t055_asset_browser_search.md`](t055_asset_browser_search.md)** | **T-055** — Eden P1-04: Asset browser search (filters Factions tree) (shipped) |
@@ -160,6 +174,12 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 
 ---
 
+## DONE — T-058 (Toolbelt entity count readout)
+
+| Item | Spec | Deliverable |
+|------|------|-------------|
+| **OBJ/SEL counts** | [`t058_entity_count_readout.md`](t058_entity_count_readout.md) | ✅ Bottom toolbelt shows **OBJ** = total placed slots (memoized `selectSlotCount(slotsById)` in `selectors.ts`, re-exported from `index.ts`) + **SEL** = `selection.ids.length` when `kind==='slot'` else 0, right of the X/Y/Z block (mono `tabular-nums`, plain integers). Both subscribe inside the already-memoized `BottomToolbelt`, so they update on add/remove/paste/delete/selection but **not** on cursor move (T-057 channel untouched). Slots only; vehicles/markers join in later P0. No Deck/schema/backend change. |
+
 ## DONE — T-057 (Map performance hotfix)
 
 | Item | Spec | Deliverable |
@@ -196,7 +216,7 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 |------|------|-------------|
 | **Ctrl/Cmd+Z/Y undo-redo** | [`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **P1-03** / KEY-UNDO-001. |
 
-**Next (see §Current strategy):** ~~**T-057 map perf hotfix**~~ ✅ shipped. **Active: T-058** toolbelt entity counts (total + selected slots), then **T-059..T-063** scale program toward **100k+**. **Eden P1-07+** resumes at **T-064+** per [`eden/gap_analysis.md`](eden/gap_analysis.md).
+**Next (see §Current strategy):** ~~**T-057 map perf hotfix**~~ ✅ ~~**T-058** toolbelt OBJ/SEL counts~~ ✅ shipped. **Active: T-059** bulk paste/delete (10k without freeze). Then **T-060..T-066** toward **1M–10M**. **Eden P1-07+** resumes at **T-067+** per [`eden/gap_analysis.md`](eden/gap_analysis.md).
 
 ---
 

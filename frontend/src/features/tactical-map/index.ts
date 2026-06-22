@@ -49,6 +49,7 @@ export { createUndoManager } from './state/undo'
 export type { UndoController } from './state/undo'
 export {
   selectSlotIcons,
+  selectSlotCount,
   selectFactionList,
   selectSquadsOf,
   selectSlotsOf,

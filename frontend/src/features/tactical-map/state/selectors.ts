@@ -58,6 +58,11 @@ function memo3<A, B, C, R>(fn: (a: A, b: B, c: C) => R): (a: A, b: B, c: C) => R
   }
 }
 
+/** O(n) slot count; memoized on slotsById ref (bindings replace the dict object per snapshot). */
+export const selectSlotCount = memo1(
+  (slotsById: Record<ID, Slot>): number => Object.keys(slotsById).length,
+)
+
 // Selected ids drive the highlight; a live `drag` offsets the dragged icons so the move
 // previews without touching the Y.Doc (Phase 7b).
 export const selectSlotIcons = memo3(
