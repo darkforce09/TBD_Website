@@ -32,7 +32,7 @@
 | RIGHT-MODE-005 | — | missing | P2 | Systems/modules |
 | RIGHT-MODE-006 | RIGHT-STUB-002 | missing | P0 | Markers |
 | RIGHT-SUBMODE-001 | — | missing | P1 | BLUFOR/OPFOR submode |
-| RIGHT-SEARCH-001 | — | missing | P1 | Asset search field |
+| RIGHT-SEARCH-001 | — | working | P1 | Asset search field (T-055; filters Factions tree) |
 | RIGHT-SEARCH-002 | — | missing | P2 | class: prefix |
 | RIGHT-CREW-001 | — | missing | P1 | Vehicle crew toggle |
 | PLACE-001 | PLACE-DROP-001 | partial | — | TBD drag-only; no click-then-click |
@@ -101,7 +101,7 @@
 | ATTR-FIELD-OBJ-FUEL | — | missing | P2 | Vehicles |
 | ATTR-FIELD-OBJ-POSITION | ATTR-TAB-001 | match | P0 | ✅ T-049 — editable X/Y/Z/rotation (NumberField → updateSlotPosition) |
 | ATTR-MULTI-CHK-001 | — | missing | P2 | Multi-edit per-field checkbox |
-| SEL-ORBAT-DBL-001 | SEL-ORBAT-DBL-001 | missing | P1 | ORBAT dbl-click attrs |
+| SEL-ORBAT-DBL-001 | SEL-ORBAT-DBL-001 | match | P1 | ✅ T-054 — ORBAT slot row dbl-click → Attributes (map uses native dblclick + pickObject) |
 | MAP-TERRAIN-001 | MAP-TERRAIN-001 | match | P1 | ✅ T-049 — meta.terrain → viewport (key-remount, Everon/Arland bounds) |
 | ENV-SETTINGS-002 | TOP-SETTINGS-001 | partial | — | Thermals + view dist in dialog |
 | DATA-HYD-TITLE-001 | TOP-TITLE-001 | match | P0 | ✅ T-049 — applyMissionRowMeta hydrates title/terrain/env on load (no PATCH-back) |
@@ -138,7 +138,7 @@
 7. ~~**P1-01** Ctrl+LMB additive select (`SEL-MOD-001`)~~ — ✅ shipped T-053
 8. **P1-02** Ctrl+C/V copy paste (`ACTION-CopyUnit` / `PasteUnit`)
 9. ~~**P1-03** Ctrl+Z/Y (`TOP-UNDO-001`)~~ — ✅ shipped T-052
-10. **P1-04** Asset browser search (`RIGHT-SEARCH-001`)
+10. ~~**P1-04** Asset browser search (`RIGHT-SEARCH-001`)~~ — ✅ shipped T-055
 11. **P1-05** Ctrl multi-place (`PLACE-004`)
 12. **P1-06** Map rotation / Shift rotate (`XFORM-SHIFT-001`)
 13. **P1-07** Faction submode or catalog structure (`RIGHT-SUBMODE-001`)

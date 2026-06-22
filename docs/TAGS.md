@@ -24,6 +24,9 @@ Supporting docs use **descriptive snake_case** filenames (no numeric prefixes): 
 | **T-049** | Track A quick P0 (shipped) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) |
 | **T-050** | Cursor Z readout (shipped) | [`t050_cursor_z_readout.md`](../Design_Docs/Mission_Creator_Architecture/t050_cursor_z_readout.md) |
 | **T-052** | Eden P1 undo keyboard shortcuts (shipped) | [`t052_eden_p1_undo_shortcuts.md`](../Design_Docs/Mission_Creator_Architecture/t052_eden_p1_undo_shortcuts.md) |
+| **T-053** | Eden P1 Ctrl/Cmd+LMB additive toggle select (shipped) | [`t053_eden_p1_additive_select.md`](../Design_Docs/Mission_Creator_Architecture/t053_eden_p1_additive_select.md) |
+| **T-054** | Eden P1 Attributes entry points — map dbl-click + ORBAT tree (shipped) | [`t054_attributes_entry_points.md`](../Design_Docs/Mission_Creator_Architecture/t054_attributes_entry_points.md) |
+| **T-055** | Eden P1 asset browser search (shipped) | [`t055_asset_browser_search.md`](../Design_Docs/Mission_Creator_Architecture/t055_asset_browser_search.md) |
 | **T-051** | Title PATCH sync (**deferred**, not started) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) amendment |
 | **FD-0xx** | Frontend deferred work | [`frontend/docs/TRACKING.md`](../frontend/docs/TRACKING.md) |
 | **BE-0xx** | Backend deferred work | [`docs/backend/ROADMAP.md`](backend/ROADMAP.md) |

@@ -36,7 +36,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
 | `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — Eden editor + terrain/title/numeric-position (T-049); DEM/registry blocked |
+| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — Eden-first active (T-053–T-055: additive select, Attributes entry, asset search); tiles/DEM deferred |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
 | `/events/:id/missions/:emid/orbat` | [event-hub.md § ORBAT deep-link](../../frontend/docs/pages/event-hub.md) | |
@@ -74,6 +74,9 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 | Item | Spec | Notes |
 |------|------|-------|
+| **T-055 Asset browser search** | [t055_asset_browser_search.md](../../Design_Docs/Mission_Creator_Architecture/t055_asset_browser_search.md) | Search field filters the Asset Browser (Factions) tree by name; folder-name match shows subtree; X/Esc clears; filtered leaves still drag (P1-04) |
+| **T-054 Attributes entry points** | [t054_attributes_entry_points.md](../../Design_Docs/Mission_Creator_Architecture/t054_attributes_entry_points.md) | Map native dbl-click + ORBAT tree dbl-click → Attributes modal (P1-09); multi-select suppress unchanged |
+| **T-053 Ctrl/Cmd additive select** | [t053_eden_p1_additive_select.md](../../Design_Docs/Mission_Creator_Architecture/t053_eden_p1_additive_select.md) | Ctrl/Cmd+LMB toggles slot in/out of selection; Ctrl/Cmd+empty preserves; Shift unbound (P1-01) |
 | **T-052 Eden P1 undo keyboard** | [t052_eden_p1_undo_shortcuts.md](../../Design_Docs/Mission_Creator_Architecture/t052_eden_p1_undo_shortcuts.md) | Keyboard undo/redo + `useMissionDoc` StrictMode lifecycle fix; focus-guarded; session edits only |
 | **T-050 Cursor Z readout** | [t050_cursor_z_readout.md](../../Design_Docs/Mission_Creator_Architecture/t050_cursor_z_readout.md) | Editor toolbelt CUR mode shows cursor X/Y/**Z** (Z=0 on the flat map until DEM); off-map → dashes; SEL mode unchanged |
 | **T-049 Track A quick P0** | [t049_track_a_quick_p0.md](../../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) | Terrain wired to viewport; mission row title/terrain/env hydrate on load; editable X/Y/Z/rotation in Attributes Transform; selection-aware toolbelt readout |
@@ -81,7 +84,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 ## Recommended next work
 
-1. **Mission Creator — Eden-first (T-053+)** — [`eden/gap_analysis.md`](../../Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md) P0 remaining + P1 + P2 **before** map tiles/DEM. Next slices: **P1-01** Ctrl+LMB additive select, **P1-04** asset search. See [MC ROADMAP §Current strategy](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#current-strategy-locked--2026-06).
+1. **Mission Creator — Eden-first (T-056+)** — [`eden/gap_analysis.md`](../../Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md) P0 remaining + P1 + P2 **before** map tiles/DEM. Next slice: **P1-02** copy/paste, then **P1-07** faction submode (`RIGHT-SUBMODE-001`). See [MC ROADMAP §Current strategy](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#current-strategy-locked--2026-06).
 2. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — **deferred until Eden P0–P2**
 3. **FD-008** — wiki markdown (low risk, high UX)
 4. **FD-001** — when backend exposes server/RCON endpoints

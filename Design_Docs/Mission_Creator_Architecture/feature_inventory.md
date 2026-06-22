@@ -254,11 +254,11 @@
 | **Postconditions** | Selection cleared |
 | **Inputs** | LMB on empty |
 | **Outputs** | `selection` cleared |
-| **Edge cases** | No camera teleport (removed Phase 7b) |
-| **Acceptance** | `- [ ] Click empty clears selection` |
+| **Edge cases** | Plain LMB only; **Ctrl/Cmd+empty preserves** selection (T-053). No camera teleport (removed Phase 7b) |
+| **Acceptance** | `- [ ] Plain click empty clears selection` `- [ ] Ctrl/Cmd+empty preserves` |
 | **Eden parity** | Eden:SEL-002 |
 | **Status** | working |
-| **Evidence** | `TacticalMap.tsx` |
+| **Evidence** | `TacticalMap.tsx` (T-053/T-054) |
 
 #### SEL-MAP-003 — Marquee box-select
 
@@ -284,7 +284,7 @@
 |-------|-------|
 | **Domain** | SEL |
 | **Goal** | Eden attributes entry via dbl-click |
-| **Trigger** | Two LMB clicks same icon within 350ms |
+| **Trigger** | Native `dblclick` on map container over a slot icon |
 | **Preconditions** | `selection.ids.length <= 1` at activate |
 | **Procedure** | Native `dblclick` on the map container → `deckRef.pickObject('slot-icons')` → `onEntityActivate` → `setAttributesId` (T-054; replaced the 350ms `lastClick` timer) |
 | **Postconditions** | `AttributesModal` open |
@@ -761,6 +761,24 @@
 | **Eden parity** | Eden:RIGHT-CAT-001 |
 | **Status** | partial |
 | **Evidence** | `AssetBrowser.tsx`, `assetCatalogMock.ts` |
+
+#### RIGHT-SEARCH-001 — Asset browser search
+
+| Field | Value |
+|-------|-------|
+| **Domain** | RIGHT |
+| **Goal** | Eden asset search field |
+| **Trigger** | Type in the Asset Browser search box (Factions tab) |
+| **Preconditions** | Palette open, Factions tab |
+| **Procedure** | T-055: `AssetBrowser` `filterCatalog(ASSET_CATALOG, q)` (case-insensitive label substring; folder kept on self-match → full subtree, else on descendant match → filtered children; retained folders `defaultExpanded`); `TreeView` keyed on query so mount-time expand re-runs |
+| **Postconditions** | Tree narrows to matches (ancestors expanded); empty → "No assets match"; clear (X/Esc) restores |
+| **Inputs** | Text query; Esc / X to clear |
+| **Outputs** | Filtered `TreeView`; filtered leaves still draggable (`ASSET_DND_MIME`) |
+| **Edge cases** | Whitespace-only = no filter; stub tabs have no search (no catalog); no `class:` prefix (RIGHT-SEARCH-002, P2) |
+| **Acceptance** | `- [x] Query filters tree` `- [x] Folder-name match shows subtree` `- [x] Clear restores` |
+| **Eden parity** | Eden:RIGHT-SEARCH-001 |
+| **Status** | working |
+| **Evidence** | `AssetBrowser.tsx` |
 
 #### RIGHT-STUB-001 — Vehicles tab placeholder
 

@@ -26,7 +26,7 @@
 
 Work [`eden/gap_analysis.md`](eden/gap_analysis.md) **numbered backlog** in priority tier, interleaving small **P1** slices between heavier **P0** blocks:
 
-1. **P1 quick (code-only)** — ~~P1-01 Ctrl+LMB additive select (T-053)~~ → ~~P1-09 ORBAT dbl-click attributes (T-054)~~ → P1-04 asset search → P1-02 copy/paste → …
+1. **P1 quick (code-only)** — ~~P1-01 Ctrl+LMB additive select (T-053)~~ → ~~P1-09 ORBAT dbl-click attributes (T-054)~~ → ~~P1-04 asset search (T-055)~~ → P1-02 copy/paste → …
 2. **P0 ship-blocking** — P0-01 registry (+ thin B-01) → P0-02 markers → P0-03 vehicles → P0-05 ORBAT authoring UI
 3. **P1 remainder** — P1-05..P1-11 (multi-place, rotate, Space conflict, vehicle crew, …)
 4. **P2 power-user** — P2-01..P2-07
@@ -55,6 +55,7 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | **[`scripts/tools/scrape-eden-wiki.mjs`](../../scripts/tools/scrape-eden-wiki.mjs)** | Regenerate wiki cache from manifest |
 | **[`artifacts/eden-feds-draft.jsonl`](../../artifacts/eden-feds-draft.jsonl)** | Draft FEDS entries derived from wiki research |
 | **[`artifacts/README.md`](../../artifacts/README.md)** | Generated artifacts policy |
+| **[`t055_asset_browser_search.md`](t055_asset_browser_search.md)** | **T-055** — Eden P1-04: Asset browser search (filters Factions tree) (shipped) |
 | **[`t054_attributes_entry_points.md`](t054_attributes_entry_points.md)** | **T-054** — Eden P1-09: Attributes entry points (map native dblclick + ORBAT dbl-click) (shipped) |
 | **[`t053_eden_p1_additive_select.md`](t053_eden_p1_additive_select.md)** | **T-053** — Eden P1-01: Ctrl/Cmd+LMB additive (toggle) select (shipped) |
 | **[`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md)** | **T-052** — Eden P1-03: Ctrl/Cmd+Z/Y undo-redo keyboard (shipped) |
@@ -64,7 +65,7 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | [`frontend/docs/pages/mission-library.md`](../../frontend/docs/pages/mission-library.md) | Surface spec for `/missions` (+ create dialog T-048) |
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Surface spec for `/missions/:id/edit` |
 | [`frontend/docs/pages/mission-creator.md`](../../frontend/docs/pages/mission-creator.md) | Archived — wizard moved into library (T-048) |
-| [`CLAUDE.md`](../../CLAUDE.md) §Status | Git milestones T-029–T-052 shipped work |
+| [`CLAUDE.md`](../../CLAUDE.md) §Status | Git milestones T-029–T-054 shipped work |
 
 ---
 
@@ -127,6 +128,12 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 
 ---
 
+## DONE — T-055 (Eden P1 asset browser search)
+
+| Item | Spec | Deliverable |
+|------|------|-------------|
+| **Asset browser search** | [`t055_asset_browser_search.md`](t055_asset_browser_search.md) | ✅ `AssetBrowser` (Factions tab) gains a search field over a recursive `filterCatalog(ASSET_CATALOG, q)` (case-insensitive label substring; folder kept on self-match → full subtree, else on descendant match → filtered children; retained folders force-expanded). `TreeView` keyed on the query so its mount-time expand pass re-runs and reveals matches; empty result → "No assets match"; X/Esc clears. Filtered leaves still drag-to-place. One real file — no `TreeView`/`ASSET_CATALOG`/store change. Closes gap_analysis **P1-04** / RIGHT-SEARCH-001. |
+
 ## DONE — T-054 (Eden P1 Attributes entry points)
 
 | Item | Spec | Deliverable |
@@ -145,7 +152,7 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 |------|------|-------------|
 | **Ctrl/Cmd+Z/Y undo-redo** | [`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **P1-03** / KEY-UNDO-001. |
 
-**Next (Eden-first — see §Current strategy):** T-055+ Eden P1/P0 slices per [`eden/gap_analysis.md`](eden/gap_analysis.md). Immediate: **P1-04** asset browser search, then **P1-02** copy/paste. **Deferred:** T-051 title PATCH; Track A A-01/A-03 until Eden P0–P2 complete.
+**Next (Eden-first — see §Current strategy):** T-056+ Eden P1/P0 slices per [`eden/gap_analysis.md`](eden/gap_analysis.md). Immediate: **P1-02** copy/paste, then **P1-07** faction submode (`RIGHT-SUBMODE-001`). **Deferred:** T-051 title PATCH; Track A A-01/A-03 until Eden P0–P2 complete.
 
 ---
 
