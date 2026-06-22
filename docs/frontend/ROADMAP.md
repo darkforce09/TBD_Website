@@ -85,7 +85,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 ## Recommended next work
 
-1. **Mission Creator — Eden-first (T-057+)** — [`eden/gap_analysis.md`](../../Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md) P0 remaining + P1 + P2 **before** map tiles/DEM. **Interrupt:** **T-057 map perf hotfix** (60 fps @ 200+ slots on pan/zoom). Then Eden: **P1-07** faction submode, **P1-05** Ctrl multi-place. See [MC ROADMAP §Current strategy](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#current-strategy-locked--2026-06).
+1. **Mission Creator — perf + scale (T-057+)** — **Interrupt: T-057** map perf hotfix (≥55 fps @ 200+ slots). **North star:** 100k+ editable entities via **T-058..T-062** scale program. Eden P1-07+ resumes **T-063+**. See [MC ROADMAP §Map performance](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program).
 2. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — **deferred until Eden P0–P2**
 3. **FD-008** — wiki markdown (low risk, high UX)
 4. **FD-001** — when backend exposes server/RCON endpoints

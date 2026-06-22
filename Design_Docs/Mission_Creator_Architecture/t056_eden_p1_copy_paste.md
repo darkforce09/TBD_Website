@@ -261,4 +261,4 @@ using AI. **Do not commit until the user asks.**
 ## Related
 
 - Prior: [t055_asset_browser_search.md](t055_asset_browser_search.md), [t053_eden_p1_additive_select.md](t053_eden_p1_additive_select.md)
-- Next Eden P1: P1-07 faction submode (`RIGHT-SUBMODE-001`), P1-05 Ctrl multi-place, P1-06 rotation
+- Next: **T-057** map perf hotfix; then **T-058..T-062** scale program (100k+ north star); Eden **T-063+** (P1-07 faction submode, P1-05 multi-place, P1-06 rotation)

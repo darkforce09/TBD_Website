@@ -4,7 +4,7 @@
 **Inputs:** [feature_inventory.md](../feature_inventory.md) + [interactions](./interactions.md) + [ui_anatomy](./ui_anatomy.md) + [attributes](./attributes.md)  
 **Schema:** [reference/feds_schema.md](../reference/feds_schema.md)
 
-**Execution order (locked):** Complete **P0 remaining + P1 + P2** in this file **before** Track A Phase 2 (map tiles, DEM/heightmap). See [ROADMAP.md §Current strategy](../ROADMAP.md#current-strategy-locked--2026-06). P3 items that require DEM (P3-02/03) stay deferred with heightmap work.
+**Execution order (locked):** **T-057 perf hotfix** first (see [ROADMAP.md §Map performance](../ROADMAP.md#map-performance-contract--scale-program)), then **T-058..T-062** scale program toward **100k+** editable entities, then complete **P0 remaining + P1 + P2** in this file (**T-063+** Eden slices) **before** Track A Phase 2 (map tiles, DEM/heightmap). P3 items that require DEM (P3-02/03) stay deferred with heightmap work.
 
 ---
 

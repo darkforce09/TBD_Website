@@ -79,7 +79,8 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.9 — [x] T-054 Attributes entry — map dbl-click + ORBAT tree dbl-click
 ### M3.10 — [x] T-055 Asset browser search (filters Factions tree; folder-name match shows subtree)
 ### M3.11 — [x] T-056 Ctrl+C/V copy-paste at cursor (slots; relative layout, off-map +20m nudge; one undo step)
-### M4 — [ ] DEM, registry worker, ruler/LoS tools (blocked on external assets/API; Eden P0–P2 first)
+### M3.12 — [ ] T-057 Map perf hotfix (≥55 fps pan/zoom @ 200+ slots; then T-058..T-062 scale to 100k+)
+### M4 — [ ] DEM, registry worker, ruler/LoS tools (blocked on external assets/API; Eden P0–P2 after scale milestones)
 
 ## Test Plan
 
@@ -91,4 +92,5 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 
 ## Open Questions / Blockers
 
+- **[PERF-001] Map pan/zoom FPS collapse at ~100–200 slots (~9 fps observed).** **T-057** hotfix in progress. Contract: ≥55 fps @ 200+. North star: 100k+ editable entities via T-058..T-062 scale program. See [MC ROADMAP §Map performance](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program).
 - [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).

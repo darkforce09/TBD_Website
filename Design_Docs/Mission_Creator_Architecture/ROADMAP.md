@@ -14,11 +14,12 @@
 
 | Do now | Defer until after Eden (+ assets where noted) |
 |--------|-----------------------------------------------|
-| **T-057 map perf hotfix** — 60 fps pan/zoom @ 200+ slots (engineering contract) | Track A **A-01** map imagery |
-| Eden **P0** remaining — registry, markers, vehicles, ORBAT authoring (P0-01..03, P0-05) | Track A **A-03/A-04** DEM + Z sampling |
-| Eden **P2** — compositions, triggers, connections, widgets, menus, class search | **A-08** mod golden coord test (needs mod team + accurate map) |
-| Thin **Track B** registry as needed to unblock Eden P0 (not “full registry completeness”) | gap_analysis **P3-02/03** (DEM snap, full loadout forge — Track C) |
-| Continue Eden quick slices as **T-053+** (spec → code → docs, same as T-048..T-052) | **T-051** title PATCH sync (optional; not Eden-blocking) |
+| **T-057 map perf hotfix** — ≥55 fps pan/zoom @ 200+ slots (engineering contract) | Track A **A-01** map imagery |
+| **T-058..T-062 scale program** — path to **100k+** editable entities (step-by-step) | Track A **A-03/A-04** DEM + Z sampling |
+| Eden **P0** remaining — registry, markers, vehicles, ORBAT authoring (P0-01..03, P0-05) — **T-063+** after scale milestones | **A-08** mod golden coord test (needs mod team + accurate map) |
+| Eden **P1/P2** — faction submode, multi-place, compositions, triggers, … — **T-063+** | gap_analysis **P3-02/03** (DEM snap, full loadout forge — Track C) |
+| Thin **Track B** registry as needed to unblock Eden P0 (not “full registry completeness”) | **T-051** title PATCH sync (optional; not Eden-blocking) |
+| Continue Eden quick slices as **T-063+** (spec → code → docs, same as T-048..T-056) | |
 
 **Rationale:** Eden interaction + entity UX should feel complete on the **flat grid** before investing in hosted heightmaps and satellite tiles. X/Y/Z remain manual/zero until DEM lands; that is acceptable during the Eden push.
 
@@ -26,7 +27,7 @@
 
 Work [`eden/gap_analysis.md`](eden/gap_analysis.md) **numbered backlog** in priority tier, interleaving small **P1** slices between heavier **P0** blocks:
 
-1. **P1 quick (code-only)** — ~~P1-01..P1-04, P1-09 (T-053–T-056)~~ → **T-057 perf hotfix** → P1-07 faction submode → P1-05 multi-place → …
+1. **P1 quick (code-only)** — ~~P1-01..P1-04, P1-09 (T-053–T-056)~~ → **T-057 perf hotfix** → **T-058..T-062 scale** → P1-07 faction submode (T-063+) → P1-05 multi-place → …
 2. **P0 ship-blocking** — P0-01 registry (+ thin B-01) → P0-02 markers → P0-03 vehicles → P0-05 ORBAT authoring UI
 3. **P1 remainder** — P1-05..P1-11 (multi-place, rotate, Space conflict, vehicle crew, …)
 4. **P2 power-user** — P2-01..P2-07
@@ -47,14 +48,18 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | Pan | `useOrthographicView` `setViewState` every pan frame re-renders `TacticalMap` + children | Ref/imperative Deck `viewState` during pan; optional rAF coalesce |
 | Gestures | `pickObject` on pointerdown + hover during pan | Skip/disable picking while pan gesture active |
 
-**50k–100k editable entities** is a **separate multi-phase program** after T-057 (not one commit). Deck.gl `IconLayer` can draw 100k+ on GPU; the bottlenecks are **React/DOM**, **linear picking**, and **full Y.Doc snapshot → sidebar rebuild**. Phased track:
+**100k+ editable entities** is the **north star**; reach it **step-by-step** (not one commit). Deck.gl `IconLayer` can draw 100k+ on GPU; bottlenecks are **React/DOM**, **linear picking**, and **full Y.Doc snapshot → sidebar rebuild**. Phased track (one spec + slice per tag):
 
-1. **T-057** — restore 200+ contract (above).
-2. **T-0xx scale-a** — typed-array / binary `IconLayer` attributes; stable layer instance; viewport-only data refresh.
-3. **T-0xx scale-b** — spatial index (e.g. rbush) for pick, marquee, and “entities in view”.
-4. **T-0xx scale-c** — virtualized outliner/asset trees; incremental `bindings.ts` (patch maps, not full `docToSnapshot` per keystroke).
-5. **T-0xx scale-d** — zoom LOD / cluster icons when zoomed out; expand to individual pick when zoomed in.
-6. **T-0xx scale-e** — worker offload for compile/export and heavy spatial queries.
+| Tag | Phase | Entity target | FPS / UX target |
+|-----|-------|---------------|-----------------|
+| **T-057** | Hotfix | 200+ | ≥55 fps pan/zoom sustained |
+| **T-058** | Scale-A | 5k–10k | ≥55 fps; typed-array IconLayer data |
+| **T-059** | Scale-B | 10k–50k | ≥55 fps; spatial index (rbush) for pick/marquee |
+| **T-060** | Scale-C | 50k+ | Virtualized outliner; incremental `bindings.ts` |
+| **T-061** | Scale-D | 100k overview | Cluster/LOD zoomed out; individual pick zoomed in |
+| **T-062** | Scale-E | 100k+ export | Worker offload for compile + bulk spatial ops |
+
+**After T-057 passes:** run **T-058..T-062** before resuming Eden P1 (mass placement is blocked until scale milestones land). **Eden P1-07+** resumes at **T-063+**. All entities stay **editable** at every phase (outliner, search, zoom-in, attributes) — overview clustering is OK when zoomed out.
 
 Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (write before code).
 
@@ -183,7 +188,7 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 |------|------|-------------|
 | **Ctrl/Cmd+Z/Y undo-redo** | [`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **P1-03** / KEY-UNDO-001. |
 
-**Next (Eden-first — see §Current strategy):** **T-057 map perf hotfix** (60 fps @ 200+ slots) — **interrupt before more Eden P1**. Then T-058+ Eden slices per [`eden/gap_analysis.md`](eden/gap_analysis.md): **P1-07** faction submode, **P1-05** Ctrl multi-place / **P1-06** rotation. **Deferred:** T-051 title PATCH; Track A A-01/A-03 until Eden P0–P2 complete (and T-057 perf contract met at 200+).
+**Next (see §Current strategy):** **T-057 map perf hotfix** (60 fps @ 200+ slots) — **interrupt before Eden P1 or scale work**. Then **T-058..T-062** scale program toward **100k+** editable entities (see §Map performance). **Eden P1-07+** resumes at **T-063+** per [`eden/gap_analysis.md`](eden/gap_analysis.md). **Deferred:** T-051 title PATCH; Track A A-01/A-03 until Eden P0–P2 complete and perf contract met at each scale milestone.
 
 ---
 
