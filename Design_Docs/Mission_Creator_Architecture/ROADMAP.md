@@ -14,8 +14,8 @@
 
 | Do now | Defer until after Eden (+ assets where noted) |
 |--------|-----------------------------------------------|
-| Eden **P0** remaining — registry, markers, vehicles, ORBAT authoring (P0-01..03, P0-05) | Track A **A-01** map imagery |
-| Eden **P1** — selection, copy/paste, search, rotation, ORBAT dbl-click, etc. | Track A **A-03/A-04** DEM + Z sampling |
+| **T-057 map perf hotfix** — 60 fps pan/zoom @ 200+ slots (engineering contract) | Track A **A-01** map imagery |
+| Eden **P0** remaining — registry, markers, vehicles, ORBAT authoring (P0-01..03, P0-05) | Track A **A-03/A-04** DEM + Z sampling |
 | Eden **P2** — compositions, triggers, connections, widgets, menus, class search | **A-08** mod golden coord test (needs mod team + accurate map) |
 | Thin **Track B** registry as needed to unblock Eden P0 (not “full registry completeness”) | gap_analysis **P3-02/03** (DEM snap, full loadout forge — Track C) |
 | Continue Eden quick slices as **T-053+** (spec → code → docs, same as T-048..T-052) | **T-051** title PATCH sync (optional; not Eden-blocking) |
@@ -26,13 +26,37 @@
 
 Work [`eden/gap_analysis.md`](eden/gap_analysis.md) **numbered backlog** in priority tier, interleaving small **P1** slices between heavier **P0** blocks:
 
-1. **P1 quick (code-only)** — ~~P1-01 Ctrl+LMB additive select (T-053)~~ → ~~P1-09 ORBAT dbl-click attributes (T-054)~~ → ~~P1-04 asset search (T-055)~~ → ~~P1-02 copy/paste (T-056)~~ → …
+1. **P1 quick (code-only)** — ~~P1-01..P1-04, P1-09 (T-053–T-056)~~ → **T-057 perf hotfix** → P1-07 faction submode → P1-05 multi-place → …
 2. **P0 ship-blocking** — P0-01 registry (+ thin B-01) → P0-02 markers → P0-03 vehicles → P0-05 ORBAT authoring UI
 3. **P1 remainder** — P1-05..P1-11 (multi-place, rotate, Space conflict, vehicle crew, …)
 4. **P2 power-user** — P2-01..P2-07
 5. **Then** Track A Phase 2 — A-01 tiles → A-03/A-04 DEM → A-08 golden test
 
 Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.md) + [`eden/interactions.md`](eden/interactions.md).
+
+### Map performance (contract + scale program)
+
+**Contract (engineering plan §4.4):** 60 fps pan/zoom with **200+** pickable slot icons on the flat grid. **Observed regression (2026-06):** ~100–200 slots + pan → ~9 fps. **T-057** is an **interrupt hotfix** before more Eden P1.
+
+**Root causes (code review — profile to confirm):**
+
+| Layer | Issue | T-057 fix |
+|-------|--------|-----------|
+| React shell | `onHover` → `setCursor` re-renders entire `MissionCreatorPage` every pointer move | Cursor via ref + rAF/throttled child; `React.memo` sidebars |
+| Deck picking | `IconLayer` `pickable: true` + `onHover` runs a pick pass over all icons for cursor coords | Unproject mouse → world for toolbelt; pick only on click/drag |
+| Pan | `useOrthographicView` `setViewState` every pan frame re-renders `TacticalMap` + children | Ref/imperative Deck `viewState` during pan; optional rAF coalesce |
+| Gestures | `pickObject` on pointerdown + hover during pan | Skip/disable picking while pan gesture active |
+
+**50k–100k editable entities** is a **separate multi-phase program** after T-057 (not one commit). Deck.gl `IconLayer` can draw 100k+ on GPU; the bottlenecks are **React/DOM**, **linear picking**, and **full Y.Doc snapshot → sidebar rebuild**. Phased track:
+
+1. **T-057** — restore 200+ contract (above).
+2. **T-0xx scale-a** — typed-array / binary `IconLayer` attributes; stable layer instance; viewport-only data refresh.
+3. **T-0xx scale-b** — spatial index (e.g. rbush) for pick, marquee, and “entities in view”.
+4. **T-0xx scale-c** — virtualized outliner/asset trees; incremental `bindings.ts` (patch maps, not full `docToSnapshot` per keystroke).
+5. **T-0xx scale-d** — zoom LOD / cluster icons when zoomed out; expand to individual pick when zoomed in.
+6. **T-0xx scale-e** — worker offload for compile/export and heavy spatial queries.
+
+Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (write before code).
 
 ---
 
@@ -159,7 +183,7 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 |------|------|-------------|
 | **Ctrl/Cmd+Z/Y undo-redo** | [`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **P1-03** / KEY-UNDO-001. |
 
-**Next (Eden-first — see §Current strategy):** T-057+ Eden P1/P0 slices per [`eden/gap_analysis.md`](eden/gap_analysis.md). Immediate: **P1-07** faction submode (`RIGHT-SUBMODE-001`), then **P1-05** Ctrl multi-place / **P1-06** rotation. **Deferred:** T-051 title PATCH; Track A A-01/A-03 until Eden P0–P2 complete.
+**Next (Eden-first — see §Current strategy):** **T-057 map perf hotfix** (60 fps @ 200+ slots) — **interrupt before more Eden P1**. Then T-058+ Eden slices per [`eden/gap_analysis.md`](eden/gap_analysis.md): **P1-07** faction submode, **P1-05** Ctrl multi-place / **P1-06** rotation. **Deferred:** T-051 title PATCH; Track A A-01/A-03 until Eden P0–P2 complete (and T-057 perf contract met at 200+).
 
 ---
 
@@ -287,9 +311,11 @@ Required to place **objects**, not just generic slots.
 **Eden-first** means much of what used to be parked is now **in the active backlog** as P1/P2 slices — only the post-Eden / P3 set stays deferred.
 
 **In the Eden backlog (P1/P2 — do these before tiles/DEM):**
-- Copy/paste (P1-02), Ctrl multi-place (P1-05), Shift/map rotate (P1-06), crew UI (P1-10)
+- Ctrl multi-place (P1-05), Shift/map rotate (P1-06), faction submode (P1-07), crew UI (P1-10)
 - Compositions, triggers, waypoints, connection/sync, transform widget + snap grids (P2)
 - Menu bar, class:/mod: search, fuller attribute fields (P2)
+
+*(P1-01..P1-04, P1-09 shipped T-053–T-056.)*
 
 **Truly deferred (post-Eden / P3 / external blockers):**
 - Track A **map tiles A-01** + **DEM A-03/A-04** (and DEM-dependent Phase 8 LoS/viewshed)

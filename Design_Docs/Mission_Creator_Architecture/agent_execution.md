@@ -46,17 +46,18 @@ Read CLAUDE.md first. Mission Creator is Eden-first (locked 2026-06): the shell 
 PRE-3.5–9 are DONE (T-033–T-040). Open work = the Eden parity backlog in
 eden/gap_analysis.md — P0 remaining + P1 + P2 — shipped as T-053+ slices BEFORE Track A
 Phase 2 (map tiles A-01, DEM A-03/A-04) and DEM-dependent Phase 8 tools. Authority:
-ROADMAP.md §Current strategy → this file's Decisions log for UX locks. Next slices:
-P1-07 faction submode, P1-05 Ctrl multi-place (P1-01 additive select shipped T-053; P1-09
-Attributes entry shipped T-054; P1-04 asset search shipped T-055; P1-02 copy/paste shipped T-056). A thin Track B registry (B-01) for
-Eden P0 (P0-01..03) is in scope; full registry/Arsenal and tiles/DEM are deferred. After
-each slice: `cd frontend && npm run build && npm run lint`. Do not commit unless I ask.
+ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **Interrupt:**
+**T-057 map perf hotfix** (60 fps pan/zoom @ 200+ slots) before more Eden P1. Then T-058+
+slices: P1-07 faction submode, P1-05 Ctrl multi-place (P1-01..P1-04, P1-09 shipped T-053–T-056).
+A thin Track B registry (B-01) for Eden P0 (P0-01..03) is in scope; full registry/Arsenal and
+tiles/DEM are deferred. After each slice: `cd frontend && npm run build && npm run lint`. Do not
+commit unless I ask.
 ```
 
 Shorter variant:
 
 ```
-@ROADMAP.md §Current strategy + @eden/gap_analysis.md backlog (P0 remaining + P1 + P2) → @agent_execution.md Decisions log. Eden-first as T-053+; tiles/DEM deferred. Verify build/lint each slice.
+@ROADMAP.md §Current strategy + @eden/gap_analysis.md backlog (P0 remaining + P1 + P2) → @agent_execution.md Decisions log. **T-057 perf hotfix first**, then Eden T-058+; tiles/DEM deferred. Verify build/lint each slice.
 ```
 
 ## Document hierarchy (read in this order — do not mix sources)

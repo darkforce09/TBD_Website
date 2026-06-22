@@ -53,6 +53,7 @@ Left and right panels are **docked flush** to the viewport edges; the map fills 
 | Delete / Backspace | Delete selected entities (undoable) |
 | Click empty map | Clear selection only (**plain** LMB; Ctrl/Cmd+empty preserves — T-053) |
 | Ctrl/Cmd + click entity | Toggle in/out of selection (T-053); Shift unbound |
+| Cmd/Ctrl+C / Cmd/Ctrl+V | Copy slot selection / paste at cursor (relative layout; off-map +20m nudge) (T-056) |
 | Asset Browser search | Filter Factions catalog tree by name; X/Esc clears (T-055) |
 | Click outliner row | Select entity (**no** camera move until Spacebar) |
 
@@ -74,7 +75,7 @@ Left and right panels are **docked flush** to the viewport edges; the map fills 
 | **Load conflict** | When API `json_payload` and local IndexedDB disagree → **prompt user** to choose which to keep. |
 | **Autosave** | **Debounced autosave** overwrites a single server **draft** on the mission. **Undo** = in-session. Manual **Save Version** creates semver snapshots for future Visual-Git/history. |
 | **Time of day** | Match **Arma 3 Eden** environment control (slider/scrub in environment UI — not preset-only dropdowns). Expose quick readout in top bar; fine control in Mission Settings. |
-| **Phase order** | **Commit/finish uncommitted tree wiring FIRST** (pre-3.5), then DOC-0 → 3.5 → 7b → 7a → 9. |
+| **Copy/paste** (T-056) | **Ctrl/Cmd+C** copies selected **slots** to an in-editor clipboard; **Ctrl/Cmd+V** pastes at the map cursor preserving relative layout (centroid → cursor; off-map → +20m/+20m). One undo step. Cut / paste-at-original deferred. |
 
 ---
 

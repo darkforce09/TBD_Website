@@ -48,11 +48,11 @@ If a spec exists for the task (e.g. [`t048_library_create_dialog.md`](../Design_
 | Eden UI parity | `eden/gap_analysis.md` + maybe `eden/ui_anatomy.md` |
 | Shipped git milestone | [`CLAUDE.md`](../CLAUDE.md) §Status + rows above (MC ROADMAP, frontend ROADMAP, TAGS, mission-editor, gap_analysis, feature_inventory, agent_execution as applicable) |
 
-Shell phases PRE-3.5–9 are **done** (T-033–T-040). **Open work = the Eden P0–P2 backlog** ([`eden/gap_analysis.md`](../Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md)) per MC ROADMAP **§Current strategy** (Eden-first); Track A map tiles/DEM deferred until after.
+Shell phases PRE-3.5–9 are **done** (T-033–T-040). **Interrupt: T-057 map perf hotfix** (60 fps @ 200+ slots). Then **Eden P0–P2 backlog** ([`eden/gap_analysis.md`](../Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md)) per MC ROADMAP **§Current strategy**; Track A map tiles/DEM deferred until after Eden + perf contract met.
 
 ### Mission Creator slice workflow
 
-Eden slices ship as **T-053+** following the **spec → code → same-commit docs** pattern proven by T-048..T-055:
+Eden slices ship as **T-053+** following the **spec → code → same-commit docs** pattern proven by T-048..T-056. **Perf slices** (T-057+) follow the same pattern with [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md).
 
 1. **Spec** — write or locate the `t0xx_*.md` spec under `Design_Docs/Mission_Creator_Architecture/` for the gap_analysis item.
 2. **Code** — implement; `cd frontend && npm run build && npm run lint`.
