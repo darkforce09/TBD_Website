@@ -160,4 +160,4 @@ items d/e (design preserved above).
 
 ## After T-059
 
-**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ code complete (1 MB global cap had reached the version route; curl 140 MB → 201; browser Save → 201 pending). **T-061..T-067:** … typed-array IconLayer, incremental bindings, spatial index, virtualized outliner, LOD, worker, spatial chunks. **Eden T-068+.**
+**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ shipped (`b1fd25a`). **Active: T-061..T-067:** typed-array IconLayer, incremental bindings, spatial index, virtualized outliner, LOD, worker, spatial chunks. **Eden T-068+.**

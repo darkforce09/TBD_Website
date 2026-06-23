@@ -15,7 +15,7 @@
 | Do now | Defer until after Eden (+ assets where noted) |
 |--------|-----------------------------------------------|
 | ~~**T-057 map perf hotfix** — ≥55 fps pan/zoom @ 200+ slots~~ ✅ **shipped** | Track A **A-01** map imagery |
-| **T-059..T-067 scale program** — path to **1M–10M** (~~T-059 bulk paste~~ ✅; T-060..T-060.1.4 code ✅ — save mid-upload FIXED, curl 140 MB → 201; browser Save → 201 pending before tag) | Track A **A-03/A-04** DEM + Z sampling |
+| **T-059..T-067 scale program** — path to **1M–10M** (~~T-059 bulk paste~~ ✅; ~~T-060..T-060.1.4~~ ✅ shipped `b1fd25a`) | Track A **A-03/A-04** DEM + Z sampling |
 | Eden **P0** remaining — registry, markers, vehicles, ORBAT authoring (P0-01..03, P0-05) — **T-068+** | **A-08** mod golden coord test (needs mod team + accurate map) |
 | Eden **P1/P2** — faction submode, multi-place, compositions, triggers, … — **T-068+** | gap_analysis **P3-02/03** (DEM snap, full loadout forge — Track C) |
 | Thin **Track B** registry as needed to unblock Eden P0 (not “full registry completeness”) | **T-051** title PATCH sync (optional; not Eden-blocking) |
@@ -27,7 +27,7 @@
 
 Work [`eden/gap_analysis.md`](eden/gap_analysis.md) **numbered backlog** in priority tier, interleaving small **P1** slices between heavier **P0** blocks:
 
-1. **P1 quick (code-only)** — … → ~~**T-060.1.3 Save observability**~~ ✅ → ~~**T-060.1.4 mid-upload fix**~~ ✅ (browser Save → 201 pending) → **T-061..T-067 scale** → …
+1. **P1 quick (code-only)** — … → ~~**T-060.1.3 Save observability**~~ ✅ → ~~**T-060.1.4 mid-upload fix**~~ ✅ → ~~**T-060**~~ ✅ → **T-061..T-067 scale** → …
 2. **P0 ship-blocking** — P0-01 registry (+ thin B-01) → P0-02 markers → P0-03 vehicles → P0-05 ORBAT authoring UI
 3. **P1 remainder** — P1-05..P1-11 (multi-place, rotate, Space conflict, vehicle crew, …)
 4. **P2 power-user** — P2-01..P2-07
@@ -48,18 +48,18 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | Pan | `useOrthographicView` `setViewState` every pan frame re-renders `TacticalMap` + children | ✅ `useSelectTool` rAF-coalesces pan to one `setViewState`/frame (layers already memoized) |
 | Gestures | `pickObject` on pointerdown + hover during pan | ✅ Hover picking removed entirely; pointerdown pick (icon vs empty) unchanged; pan never picks |
 
-**1M–10M editable entities** is the **north star** (Arma 3 reference ~8M map objects); reach it **step-by-step** (not one commit). **Validated (2026-06):** pan/zoom **100+ fps @ 360k** (T-057 + T-059); repeat **6k paste** loops smooth. **Bulk paste freeze — fixed (T-059).** **T-060..T-060.1.4 code complete** (uncommitted). Load partial pass @ ~360k. **Save mid-upload `ERR_NETWORK` FIXED (T-060.1.4)** — the 1 MB global body cap had been reaching the version route (hardened `GlobalBodyLimit` skip + production-like IT; **curl 140 MB → 201**). **Tag T-060** after the user confirms browser Save → 201 (restart `make api`). Remaining bottlenecks (→ **T-062+**): full `docToSnapshot` cost @ scale (incremental bindings), linear picking, sidebar virtualization. Phased track:
+**1M–10M editable entities** is the **north star** (Arma 3 reference ~8M map objects); reach it **step-by-step** (not one commit). **Validated (2026-06):** pan/zoom **100+ fps @ 360k** (T-057 + T-059); repeat **6k paste** loops smooth. **Bulk paste freeze — fixed (T-059).** **T-060 shipped** (`b1fd25a`, 2026-06-23): load partial pass @ ~360k; Save @ ~367k/~142 MB → **201** (browser + curl). **Active: T-061..T-067.** Remaining bottlenecks (→ **T-062+**): full `docToSnapshot` cost @ scale (incremental bindings), linear picking, sidebar virtualization. Phased track:
 
 | Tag | Phase | Entity target | FPS / UX target |
 |-----|-------|---------------|-----------------|
 | **T-057** ✅ | Hotfix | 200+ | ≥55 fps pan/zoom — **shipped**. Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) |
 | **T-058** ✅ | Scale prep | — | Toolbelt **OBJ** + **SEL** — **shipped**. Spec: [`t058_entity_count_readout.md`](t058_entity_count_readout.md) |
 | **T-059** ✅ | Bulk ops | 360k+ paste/pan | Batch O(n) paste; selection/outliner caps — **shipped** (validated **360k @ 100+ fps** pan). Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md) |
-| **T-060** ✅ code | Fast load + save | 10k–1M | Load gate + bulk sync + overlay; chunked compile + Save progress; **256 MB** version POST + **413** — **code shipped**, **360k acceptance → T-060.1**. Spec: [`t060_fast_initial_load.md`](t060_fast_initial_load.md) |
-| **T-060.1.1** ✅ code | IDB progress | 300k+ | `restoring` phase + `yieldToUi` — **code complete**, load partial pass (~30 s–1 min; 0→300k jump) |
-| **T-060.1.2** | Save upload fixes | 300k+ | E1/E2/E3b ✅ — Blob, preparing, proxy bypass. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.2 |
-| **T-060.1.3** | Save observability | 300k+ | **Shipped** — measured size, debug panel, failure diagnosed @ 367k. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.3 |
-| **T-060.1.4** | Fix mid-upload | 300k+ | **Code complete** — 1 MB global cap had reached the version route; hardened skip + production-like IT; curl 140 MB → 201; browser Save → 201 pending. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.4 |
+| **T-060** ✅ | Fast load + save | 10k–1M | Load gate + bulk sync + overlay; chunked compile + Save progress; **256 MB** version POST + **413** — **shipped** `b1fd25a`. Spec: [`t060_fast_initial_load.md`](t060_fast_initial_load.md) |
+| **T-060.1.1** ✅ | IDB progress | 300k+ | `restoring` phase + `yieldToUi` — **shipped**; load partial pass (~30 s–1 min; 0→300k jump) |
+| **T-060.1.2** ✅ | Save upload fixes | 300k+ | E1/E2/E3b — **shipped**. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.2 |
+| **T-060.1.3** ✅ | Save observability | 300k+ | **Shipped** — measured size, debug panel, failure diagnosed @ 367k. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.3 |
+| **T-060.1.4** ✅ | Fix mid-upload | 300k+ | **Shipped** — hardened skip + production-like IT; browser ~142 MB + curl 140 MB → 201. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.4 |
 | **T-061** | Scale-A | 50k–500k | Typed-array IconLayer (optional headroom) |
 | **T-062** | Scale-B | 50k+ | Incremental `bindings.ts` (patch vs full snapshot) |
 | **T-063** | Scale-C | 50k+ pick | Spatial index (rbush) for pick/marquee |
@@ -75,12 +75,12 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 
 | Objects | Pan/zoom | Bulk paste | Load / Save |
 |---------|----------|------------|-------------|
-| 10k–360k | ✅ 100+ fps | ✅ T-059 | T-060..T-060.1.4 ✅ (save mid-upload fixed; curl 140 MB → 201; browser Save → 201 pending) |
+| 10k–360k | ✅ 100+ fps | ✅ T-059 | ✅ T-060 (load partial pass; Save ~142 MB → 201) |
 | 1M ideal | T-061–T-065 | ✅ T-059 | T-060 + **≤10 s** stretch (**T-062** incremental bindings + **T-066** worker) |
 
 | 1M–10M props | T-061–T-067 + **T-070+** | ✅ T-059 | Terrain base + deltas; mission patch save |
 
-**T-057–T-059 shipped; T-060..T-060.1.4 code complete (uncommitted)** — save mid-upload FIXED (curl 140 MB → 201). **Tag T-060 after the user confirms browser Save → 201.** **Then: T-061..T-067** → Eden **T-068+** → **T-070+** terrain base (optional).
+**T-057–T-060 shipped** (`b1fd25a`). **Active: T-061..T-067** → Eden **T-068+** → **T-070+** terrain base (optional).
 
 Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shipped T-057).
 
@@ -107,8 +107,8 @@ Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shippe
 | **[`artifacts/README.md`](../../artifacts/README.md)** | Generated artifacts policy |
 | **[`t058_entity_count_readout.md`](t058_entity_count_readout.md)** | **T-058** — Toolbelt OBJ/SEL entity counts (shipped) |
 | **[`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md)** | **T-059** — Bulk paste/delete at scale (shipped) |
-| **[`t060_fast_initial_load.md`](t060_fast_initial_load.md)** | **T-060** — Fast load + save (code shipped; acceptance → T-060.1) |
-| **[`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md)** | **T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4** — Load/save @ 360k (**T-060.1.4 code complete**; save mid-upload fixed; browser Save → 201 pending) |
+| **[`t060_fast_initial_load.md`](t060_fast_initial_load.md)** | **T-060** — Fast load + save (**shipped** `b1fd25a`) |
+| **[`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md)** | **T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4** — Load/save @ 360k (**shipped**) |
 | **[`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md)** | **T-057** — Map perf hotfix: ≥55 fps pan/zoom @ 200+ slots (shipped) |
 | **[`t056_eden_p1_copy_paste.md`](t056_eden_p1_copy_paste.md)** | **T-056** — Eden P1-02: Ctrl+C/V copy-paste at cursor (slots) (shipped) |
 | **[`t055_asset_browser_search.md`](t055_asset_browser_search.md)** | **T-055** — Eden P1-04: Asset browser search (filters Factions tree) (shipped) |
@@ -122,7 +122,7 @@ Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shippe
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Surface spec for `/missions/:id/edit` |
 | [`frontend/docs/pages/mission-creator.md`](../../frontend/docs/pages/mission-creator.md) | Archived — wizard moved into library (T-048) |
 | **[`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md)** | **T-070+** — Terrain base + mission layers (future; Base + Delta for props only) |
-| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-060..T-060.1.4 code; save mid-upload fixed (curl 140 MB → 201); browser Save → 201 pending before tag |
+| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-060 shipped; active T-061..T-067 |
 
 ---
 
@@ -239,7 +239,7 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 |------|------|-------------|
 | **Ctrl/Cmd+Z/Y undo-redo** | [`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **P1-03** / KEY-UNDO-001. |
 
-**Next (see §Current strategy):** ~~T-057~~ ✅ … ~~T-060.1.3~~ ✅ ~~T-060.1.4~~ ✅ (save mid-upload fixed; curl 140 MB → 201; browser Save → 201 = user's final check before T-060 tag). **Then: T-061..T-067**. **Eden P1-07+** at **T-068+**.
+**Next (see §Current strategy):** ~~T-057~~ ✅ … ~~T-060~~ ✅ shipped `b1fd25a`. **Active: T-061..T-067**. **Eden P1-07+** at **T-068+**.
 
 ---
 

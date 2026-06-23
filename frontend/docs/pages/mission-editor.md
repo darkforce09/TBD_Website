@@ -82,7 +82,7 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.12 — [x] T-057 Map perf hotfix (≥55 fps pan/zoom @ 200+ slots: cursor→store rAF, no Deck `onHover` pick, pan rAF-coalesce, `React.memo` panels)
 ### M3.13 — [x] T-058 Toolbelt OBJ/SEL entity counts (total placed slots + selected count; scale telemetry)
 ### M3.14 — [x] T-059 Bulk paste/delete at scale (batch O(n) append; selection cap 500; outliner leaf cap 500 both trees; validated **360k @ 100+ fps** pan)
-### M3.15 — [~] T-060 scale load/save (T-060..T-060.1.4 code complete; save mid-upload FIXED — curl 140 MB → 201; browser Save → 201 = user's final check before tag)
+### M3.15 — [x] T-060 scale load/save (shipped `b1fd25a` — load partial pass @ ~360k; Save ~142 MB → 201)
 ### M4 — [ ] T-061+ scale program + DEM/registry (see MC ROADMAP §Map performance)
 
 ## Test Plan
@@ -98,5 +98,5 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 - **[PERF-001] ~~Map pan/zoom FPS collapse~~** — **Resolved T-057** (100+ fps @ 10k validated); **T-058** OBJ/SEL entity-count telemetry shipped.
 - **[PERF-002] ~~Bulk paste 10k freeze~~** — **Resolved T-059** (validated **360k @ 100+ fps** pan; 6k paste loops smooth).
 - **[PERF-003] Initial load** — **T-060.1.1 code complete:** restoring label within 1–2 s; ~30 s–1 min @ 360k; 0→300k jump (T-062 for incremental). Pan verify pending.
-- **[PERF-004] Save Version** — **Resolved T-060.1.4.** Upload reached ~4% / **~135 MB** then `ERR_NETWORK`; T-060.1.3 observability diagnosed it (direct route, 135 MB < 256 MB cap). **Root cause:** the **1 MB `GlobalBodyLimit` cap was reaching the version route** (skip not applying — most likely a stale `go run` binary); `MaxBytesReader` reset the socket mid-stream → `ERR_NETWORK` at ~5 MB buffered. **Fix:** hardened `isMissionVersionPOST` skip (FullPath + URL-path fallback) + production-like integration test mounting `GlobalBodyLimit`. **Verified curl 140 MB → 201**; browser Save → 201 = user's final check.
+- **[PERF-004] Save Version** — **Resolved T-060.1.4 / shipped T-060.** Root cause: 1 MB `GlobalBodyLimit` on stale API; hardened `isMissionVersionPOST` skip + production-like IT. **Verified:** curl 140 MB → 201; browser Save @ ~367k/~142 MB → 201 (2026-06-23).
 - [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).

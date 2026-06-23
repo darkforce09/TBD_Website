@@ -1,11 +1,11 @@
 # T-060.1 — Scale load/save completion (determinate progress + 360k acceptance)
 
 **Status:** **T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4 shipped** — load partial pass @ ~360k; **Save @ ~367k / ~142 MB → 201** (browser + curl 140 MB verified).
-**Git tag on ship:** **T-060** (same milestone — do **not** tag until 360k acceptance passes)
+**Git tag on ship:** **T-060** (commit `b1fd25a`, 2026-06-23 — T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4)
 **Authority:** [MC ROADMAP](ROADMAP.md) §Map performance · [agent_execution.md](agent_execution.md) §ACTIVE SLICE
 **Builds on:** [t060_fast_initial_load.md](t060_fast_initial_load.md) (T-060 code landed; acceptance slices T-060.1 → **T-060.1.3**)
 
-**Prerequisites:** T-057–T-059 shipped; T-060 **code** landed (256 MB route, bulk sync, chunked compile, overlay) — **uncommitted** pending this slice.
+**Prerequisites:** T-057–T-059 shipped; T-060 **shipped** in `b1fd25a` (256 MB route, bulk sync, chunked compile, overlay + T-060.1..T-060.1.4 acceptance).
 
 ---
 
@@ -232,7 +232,7 @@ proxy: {
 |-----|--------|
 | [t060_fast_initial_load.md](t060_fast_initial_load.md) | Status + §Shipped timings; blockers table |
 | [t060_1_scale_load_save_completion.md](t060_1_scale_load_save_completion.md) | §Manual verify; §T-060.1.3 + §T-060.1.4 |
-| [agent_execution.md](agent_execution.md) | ACTIVE SLICE → **T-060 tag gate** (browser Save → 201 pending) |
+| [agent_execution.md](agent_execution.md) | ACTIVE SLICE → **T-061..T-067** scale program |
 | [CLAUDE.md](../../CLAUDE.md) §Status | T-060 bullet + 360k acceptance |
 | [docs/TAGS.md](../../docs/TAGS.md) | T-060.1 note |
 | [feature_inventory.md](feature_inventory.md) | PERF-LOAD-001 / PERF-SAVE-001 acceptance |
@@ -400,9 +400,7 @@ Requires root `.env` `ALLOWED_ORIGINS=http://localhost:5173` (already set). **Ve
 
 ---
 
-## After T-060.1.4 (tag T-060)
-
-**Git tag T-060** = single commit: T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + **T-060.1.4** (when Save → **201** @ ~360k).
+## After T-060.1.4 (shipped in T-060 `b1fd25a`)
 
 **T-061..T-067:** mission-layer scale (typed-array → incremental bindings → …). **Eden T-068+.** **T-070+:** optional terrain base + deltas — [`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md).
 
@@ -521,14 +519,14 @@ Once exact `compiledBytes` is known:
 - [x] On failure, debug panel shows bytes, route, URL, phase, axios code — **no more bare ERR_NETWORK**.
 - [x] Payload < 256 MB confirmed (135 MB) — pre-gate did not block.
 - [x] Failure **fully diagnosed** (exact bytes + route + axios code) @ 367k.
-- [x] Save → **201** — **fixed in T-060.1.4** (curl 140 MB → 201; browser acceptance pending).
+- [x] Save → **201** @ ~367k — **shipped T-060.1.4** (curl 140 MB → 201; browser ~142 MB → 201, 2026-06-23).
 - [x] Load unchanged; small mission save unchanged.
 
 ---
 
-## T-060.1.4 — Fix mid-upload socket reset @ ~135 MB (**code complete + root cause proven**; browser acceptance pending)
+## T-060.1.4 — Fix mid-upload socket reset @ ~135 MB (**shipped**)
 
-**Status:** **code complete** — root cause **proven** with curl + server log. The mid-upload
+**Status:** **shipped** in `b1fd25a` (2026-06-23) — root cause **proven** with curl + server log; browser Save @ ~367k/~142 MB → **201**. The mid-upload
 `ERR_NETWORK` was the **1 MB global body cap reaching the version route** (the `GlobalBodyLimit`
 skip not applying — most likely a **stale `go run ./cmd/api` binary**; `go run` does not hot-reload,
 and the user's running API predated the correct skip). `http.MaxBytesReader` tripped at 1 MB and
@@ -671,6 +669,8 @@ curl dies mid-upload → server/middleware. curl **201** → browser/axios/memor
 | **Batch upload / dedup** | **T-062** — not this slice |
 
 ---
+
+> **Historical archive — prompts below are pre-ship (T-060 shipped `b1fd25a`, 2026-06-23). Preserved for archaeology; do not execute.**
 
 ## Claude Code prompt (copy-paste — T-060.1.4)
 

@@ -36,7 +36,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
 | `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-060..T-060.1.4 code complete; save mid-upload FIXED (curl 140 MB → 201); browser Save → 201 = user's final check before tag |
+| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-060 shipped; active T-061..T-067 scale program |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
 | `/events/:id/missions/:emid/orbat` | [event-hub.md § ORBAT deep-link](../../frontend/docs/pages/event-hub.md) | |
@@ -74,9 +74,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 | Item | Spec | Notes |
 |------|------|-------|
-| **T-060..T-060.1.1 scale load (code complete)** | [t060_1](../../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) | Four-phase load overlay; load partial pass @ 360k |
-| **T-060.1.3 Save observability (shipped)** | [t060_1 §T-060.1.3](../../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) | Measured size, debug panel, 256 MB gate; failure diagnosed @ 367k |
-| **T-060.1.4 Fix mid-upload (code complete)** | [t060_1 §T-060.1.4](../../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) | 1 MB global cap had reached the version route — hardened skip + production-like IT; curl 140 MB → 201; browser Save → 201 pending |
+| **T-060 scale load/save (shipped `b1fd25a`)** | [t060_1](../../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) · [t060](../../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md) | Four-phase load; Save @ ~367k/~142 MB → 201 (browser + curl); mid-upload fix T-060.1.4 |
 | **T-059 Bulk paste at scale** | [t059_bulk_paste_operations.md](../../Design_Docs/Mission_Creator_Architecture/t059_bulk_paste_operations.md) | Batch O(n) `pasteSlots`; selection cap 500; outliner leaf cap 500 (Editor Layers + ORBAT). **Validated: 360k @ 100+ fps** pan; 6k paste loops smooth |
 | **T-058 Toolbelt OBJ/SEL counts** | [t058_entity_count_readout.md](../../Design_Docs/Mission_Creator_Architecture/t058_entity_count_readout.md) | Bottom toolbelt shows OBJ (total placed slots, memoized `selectSlotCount`) + SEL (selected count); mono, right of X/Y/Z; subscribes in the memoized toolbelt so no cursor-move re-render; scale telemetry |
 | **T-057 Map perf hotfix** | [t057_map_performance_hotfix.md](../../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) | ≥55 fps pan/zoom @ 200+ slots: cursor → transient store (rAF), drop Deck `onHover` (no per-move pick), pan rAF-coalesce, `React.memo` panels; interactions unchanged |
@@ -91,7 +89,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 ## Recommended next work
 
-1. **Mission Creator — T-060.1.4 (code complete; browser Save → 201 pending before T-060 tag)** → **T-061..T-067** → Eden **T-068+** → **T-070+** terrain base ([spec](../../Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md)).
+1. **Mission Creator — T-061..T-067 scale program** (T-060 shipped) → Eden **T-068+** → **T-070+** terrain base ([spec](../../Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md)).
 2. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — **deferred until Eden P0–P2**
 3. **FD-008** — wiki markdown (low risk, high UX)
 4. **FD-001** — when backend exposes server/RCON endpoints

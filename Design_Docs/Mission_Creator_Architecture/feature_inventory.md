@@ -995,8 +995,8 @@
 | **Inputs** | Semver, notes |
 | **Outputs** | API |
 | **Edge cases** | 409 duplicate semver; invalid UUID; **413 payload >256 MB** → "Mission too large…" (T-060); backend `error` surfaced (no more generic-only) |
-| **Acceptance** | `- [x] Save 0.1.1 succeeds on real mission` `- [x] Save @ ~360k fully diagnosed (T-060.1.3)` `- [x] Version POST 140 MB → 201 via curl (T-060.1.4)` `- [ ] Browser Save @ ~367k → 201 (user's final check)` `- [x] >1 MB + production-like GlobalBodyLimit version POST round-trips (make test-it)` |
-| **Status** | **code complete** — E1/E2/E3b + T-060.1.3 + **T-060.1.4** (mid-upload fixed: 1 MB global cap had reached the route; hardened skip + production-like IT; curl 140 MB → 201); browser Save → 201 pending |
+| **Acceptance** | `- [x] Save 0.1.1 succeeds on real mission` `- [x] Save @ ~360k fully diagnosed (T-060.1.3)` `- [x] Version POST 140 MB → 201 via curl (T-060.1.4)` `- [x] Browser Save @ ~367k → 201 (2026-06-23)` `- [x] >1 MB + production-like GlobalBodyLimit version POST round-trips (make test-it)` |
+| **Status** | **working** — T-060 shipped (`b1fd25a`); Save @ ~367k/~142 MB → 201 (browser + curl) |
 | **Eden parity** | Eden:FILE-SAVE-001 |
 | **Evidence** | `TopCommandStrip.tsx`, `useMissionEditor.ts`, `compile.ts` |
 
@@ -1151,7 +1151,7 @@
 | **Edge cases** | T-060.1.1: count **0→300k jump** (single `Y.applyUpdate`); ~30 s–1 min @ 360k. Incremental IDB → **T-062** |
 | **Acceptance** | `- [x] Overlay + bulk-sync (T-060)` `- [x] Determinate % + chunked snapshot/hydrate (T-060.1)` `- [x] Hydrate inside bulk window (T-060.1)` `- [x] Restoring phase + label within 1–2 s @ ~360k (T-060.1.1)` `- [ ] Pan regression clean (manual)` |
 | **Eden parity** | — |
-| **Status** | **T-060.1.1 code complete** — load partial pass; pan verify pending |
+| **Status** | **shipped (T-060)** — load partial pass @ ~360k; pan ≥55 fps @ 360k (T-057/T-059 validated) |
 | **Evidence** | `useMissionDoc.ts`, `bindings.ts`, `ydoc.ts`, `MissionCreatorPage.tsx`, `t060_1_scale_load_save_completion.md` |
 
 ---

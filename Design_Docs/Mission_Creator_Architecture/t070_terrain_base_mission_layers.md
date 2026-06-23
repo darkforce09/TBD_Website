@@ -1,6 +1,6 @@
 # T-070+ — Terrain base + mission layers (future architecture)
 
-**Status:** **future / not started** — do **not** implement before T-060 tag + **T-061..T-067** + Eden **T-068+** unless product explicitly reprioritizes.
+**Status:** **future / not started** — do **not** implement before **T-061..T-067** + Eden **T-068+** unless product explicitly reprioritizes. (T-060 shipped `b1fd25a`.)
 **Authority:** [ROADMAP.md](ROADMAP.md) §Map performance · [engineering_plan.md](engineering_plan.md)
 **Relates to:** External “Base + Delta / event sourcing” proposal (2026-06) — **adopt the good parts here**, not as a rewrite of the current Y.Doc mission model.
 
@@ -8,7 +8,7 @@
 
 ## Why this doc exists
 
-At **10M** scale, saving every object as JSON (current `editor.slots[]` superset) will crash the browser and blow HTTP/DB limits. That is already visible @ **360k** (load stringify, save `ERR_NETWORK`).
+At **10M** scale, saving every object as JSON (current `editor.slots[]` superset) will crash the browser and blow HTTP/DB limits. That was visible @ **360k** (load stringify, save mid-upload reset — **fixed T-060.1.4**, shipped `b1fd25a`).
 
 Two **different** entity classes must not be conflated:
 

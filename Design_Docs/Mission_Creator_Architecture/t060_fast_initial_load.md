@@ -1,6 +1,6 @@
 # T-060 — Fast load + save at scale (hydrate gate + progress UX + API body limit)
 
-**Status:** **T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4 code complete** (uncommitted). Load partial pass @ ~360k. Save mid-upload @ ~135 MB **FIXED (T-060.1.4)** — the 1 MB global body cap had been reaching the version route (hardened `GlobalBodyLimit` skip + production-like IT; **curl 140 MB → 201**). See [t060_1_scale_load_save_completion.md](t060_1_scale_load_save_completion.md) §T-060.1.4. **Tag T-060** after the user confirms browser Save → **201** (restart `make api` — the failing instance was stale).
+**Status:** **T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4 shipped** (`b1fd25a`, 2026-06-23). Load partial pass @ ~360k. Save @ ~367k / ~142 MB → **201** (browser semver 0.1.3/0.1.4 + curl 140 MB). Mid-upload reset fixed (T-060.1.4). See [t060_1_scale_load_save_completion.md](t060_1_scale_load_save_completion.md).
 **Implementation note:** the 256 MB cap is **route-specific middleware** on the versions POST
 (`internal/middleware/bodylimit.go` `BodyLimit`), with `GlobalBodyLimit` opting that route out of the
 1 MB global cap — a route-level `MaxBytesReader` can't loosen a global one wrapped first. Load
@@ -111,14 +111,12 @@ Evidence:
 
 | Mission | Load wall time | Save wall time | Notes |
 |---------|----------------|----------------|-------|
-| ~360k (warm IDB) | ~30 s–1 min | curl 140 MB → **201** in ~1.2 s (server-side); browser pending | Mid-upload reset fixed (T-060.1.4) |
+| ~360k (warm IDB) | ~30 s–1 min | browser ~142 MB → **201** (2026-06-23); curl 140 MB → **201** in ~1.2 s | Mid-upload reset fixed (T-060.1.4) |
 
 ---
 
-## After T-060 (tag after the user's browser Save → 201)
+## After T-060 (shipped `b1fd25a`)
 
 **T-061..T-067:** mission-layer scale. **Eden T-068+.** **T-070+:** terrain base — [`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md).
 
 **Authority for acceptance slices:** [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md).
-
-**T-060.1.4 (mid-upload fix) — code complete; browser Save → 201 pending.** Spec/prompt: [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md) §T-060.1.4.
