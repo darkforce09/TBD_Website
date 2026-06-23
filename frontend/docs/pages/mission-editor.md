@@ -31,14 +31,14 @@
 
 ### Primary flow
 1. Navigate from Mission Library **+ New Mission** dialog (T-048) or dossier **OPEN IN MISSION CREATOR** → `/missions/:id/edit`.
-2. `useMissionDoc` hydrates Y.Doc from y-indexeddb; `useMissionEditor` loads current version from API with conflict prompt. The mission **row** (`title`, `terrain`, time/weather) hydrates into `meta` on every load — including new missions whose `json_payload` is `{}` (T-049). Terrain drives viewport bounds. **Known gap (T-060):** **10k+** slot missions open slowly with **no loading indicator** — `docToSnapshot` during IndexedDB replay blocks the shell.
+2. `useMissionDoc` hydrates Y.Doc from y-indexeddb; `useMissionEditor` loads current version from API with conflict prompt. The mission **row** (`title`, `terrain`, time/weather) hydrates into `meta` on every load — including new missions whose `json_payload` is `{}` (T-049). Terrain drives viewport bounds. **T-060:** a bulk-sync window (`beginBulkSync`/`endBulkSync`) coalesces the IndexedDB replay + seed into one store flush, and `docStatus` gates a full-bleed loading overlay (held until local sync **and** server hydrate settle); the LeftSidebar mount is deferred until ready.
 3. Author places entities via palette drop, moves selection on map, organizes layers in outliner.
 4. **Save Version** → `POST /missions/:id/versions` with compiled `json_payload`.
 5. **Export** downloads camelCase mod envelope without saving.
 
 ### States
 - **Chromeless:** No platform Sidebar/TopNav (`fullBleed` + `chromeless` route handles).
-- **Loading:** Version fetch + IndexedDB sync. **T-060:** full-bleed loading overlay + progress for large snapshots (planned).
+- **Loading:** Four-phase overlay: **restoring** (T-060.1.1 ✅) → download → apply → local flush. Manual @ ~360k: ~30 s–1 min; 0→~300k jump. **Save:** upload ~4% / ~135 MB then `ERR_NETWORK` — **T-060.1.4 FIXED** (the 1 MB global body cap had been reaching the version route; hardened `GlobalBodyLimit` skip + production-like IT; curl 140 MB → 201).
 - **Dirty:** Local autosave to y-indexeddb; server save is manual semver POST.
 - **Blocked phases:** DEM/Z-axis (Phase 2), asset registry (Phase 5/6), ruler/LoS viewshed (Phase 8).
 
@@ -64,7 +64,7 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 |----------|--------|-------------|----------------|
 | `GET /missions/:id` | GET | Boot | `Mission` |
 | `GET /missions/:id/versions/current` | GET | Hydrate | `MissionVersion` |
-| `POST /missions/:id/versions` | POST | Save Version | `MissionVersion` (409 dup semver; **413 if payload >256 MB** — T-060 raises limit from 1 MB global) |
+| `POST /missions/:id/versions` | POST | Save Version | `MissionVersion` (409 dup semver; **256 MB** route cap → **413** over it, T-060; other JSON routes stay 1 MB) |
 | `GET /missions/:id/export` | GET | Export preview | camelCase envelope |
 
 ## Milestones
@@ -82,7 +82,7 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.12 — [x] T-057 Map perf hotfix (≥55 fps pan/zoom @ 200+ slots: cursor→store rAF, no Deck `onHover` pick, pan rAF-coalesce, `React.memo` panels)
 ### M3.13 — [x] T-058 Toolbelt OBJ/SEL entity counts (total placed slots + selected count; scale telemetry)
 ### M3.14 — [x] T-059 Bulk paste/delete at scale (batch O(n) append; selection cap 500; outliner leaf cap 500 both trees; validated **360k @ 100+ fps** pan)
-### M3.15 — [ ] T-060 Fast load + save (progress bars; hydrate coalesce; **≤10 s ideal @ 1M**)
+### M3.15 — [~] T-060 scale load/save (T-060..T-060.1.4 code complete; save mid-upload FIXED — curl 140 MB → 201; browser Save → 201 = user's final check before tag)
 ### M4 — [ ] T-061+ scale program + DEM/registry (see MC ROADMAP §Map performance)
 
 ## Test Plan
@@ -97,6 +97,6 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 
 - **[PERF-001] ~~Map pan/zoom FPS collapse~~** — **Resolved T-057** (100+ fps @ 10k validated); **T-058** OBJ/SEL entity-count telemetry shipped.
 - **[PERF-002] ~~Bulk paste 10k freeze~~** — **Resolved T-059** (validated **360k @ 100+ fps** pan; 6k paste loops smooth).
-- **[PERF-003] Initial load on large missions** — **Active T-060:** progress bar + hydrate coalesce; **≤10 s ideal @ 1M**.
-- **[PERF-004] Save Version on large missions** — **Active T-060:** API **1 MB → 256 MB** on version POST; compile progress bar; **360k save must return 201**; **≤10 s ideal @ 1M**.
+- **[PERF-003] Initial load** — **T-060.1.1 code complete:** restoring label within 1–2 s; ~30 s–1 min @ 360k; 0→300k jump (T-062 for incremental). Pan verify pending.
+- **[PERF-004] Save Version** — **Resolved T-060.1.4.** Upload reached ~4% / **~135 MB** then `ERR_NETWORK`; T-060.1.3 observability diagnosed it (direct route, 135 MB < 256 MB cap). **Root cause:** the **1 MB `GlobalBodyLimit` cap was reaching the version route** (skip not applying — most likely a stale `go run` binary); `MaxBytesReader` reset the socket mid-stream → `ERR_NETWORK` at ~5 MB buffered. **Fix:** hardened `isMissionVersionPOST` skip (FullPath + URL-path fallback) + production-like integration test mounting `GlobalBodyLimit`. **Verified curl 140 MB → 201**; browser Save → 201 = user's final check.
 - [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).

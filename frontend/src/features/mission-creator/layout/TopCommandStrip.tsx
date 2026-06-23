@@ -4,7 +4,7 @@
 // history stub, Undo/Redo, Mission Settings gear, Save Version (semver snapshot → server),
 // and Export (download the camelCase mod JSON). Persistence wired in Phase 9.
 
-import { memo, useEffect, useReducer, useState } from 'react'
+import { memo, useEffect, useMemo, useReducer, useState } from 'react'
 import { Download, History, Redo2, Save, Settings2, Undo2 } from 'lucide-react'
 import {
   setTitle,
@@ -18,7 +18,20 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { overlayDocked } from './overlay'
 import { MissionSettingsDialog } from './MissionSettingsDialog'
-import type { SaveResult } from '../hooks/useMissionEditor'
+import type { SaveDebugReport, SaveProgress, SaveResult } from '../hooks/useMissionEditor'
+import {
+  estimateCompiledBytes,
+  formatBytes,
+  getLocalDocBytes,
+  SERVER_VERSION_BODY_LIMIT,
+} from '../lib/missionSize'
+
+const WARN_BYTES = 200 * 1_000_000 // amber above ~200 MB (still under the 256 MB cap)
+const ROUTE_LABEL: Record<NonNullable<SaveProgress['uploadRoute']>, string> = {
+  direct: 'direct → :8080',
+  proxy: 'proxy',
+  configured: 'configured',
+}
 
 interface TopCommandStripProps {
   md: MissionDoc
@@ -26,7 +39,11 @@ interface TopCommandStripProps {
   dirty: boolean
   suggestedSemver: string
   onExport: () => void
-  onSaveVersion: (semver: string, notes?: string) => Promise<SaveResult>
+  onSaveVersion: (
+    semver: string,
+    notes?: string,
+    onProgress?: (p: SaveProgress) => void,
+  ) => Promise<SaveResult>
 }
 
 const MENUS = ['File', 'Edit', 'View', 'Mission', 'Environment']
@@ -61,23 +78,61 @@ function TopCommandStripInner({
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [phase, setPhase] = useState<SaveProgress | null>(null)
+  const [debug, setDebug] = useState<SaveDebugReport | null>(null)
+  const [copied, setCopied] = useState(false)
   const [, bump] = useReducer((n: number) => n + 1, 0)
   // Re-render on undo-stack changes so Undo/Redo reflect canUndo/canRedo.
   useEffect(() => undo.subscribe(bump), [undo])
+
+  // Measured size shown before save starts (T-060.1.3): estimate + slot count + local Y.Doc bytes.
+  // Computed once per dialog open (reads the live store / doc).
+  const preInfo = useMemo(() => {
+    if (!saveOpen) return null
+    const snap = useMapStore.getState()
+    return {
+      slotCount: Object.keys(snap.slotsById).length,
+      estimatedBytes: estimateCompiledBytes(snap),
+      localDocBytes: getLocalDocBytes(md),
+    }
+  }, [saveOpen, md])
 
   const openSave = () => {
     setSemver(suggestedSemver)
     setNotes('')
     setSaveError(null)
+    setPhase(null)
+    setDebug(null)
+    setCopied(false)
     setSaveOpen(true)
   }
   const submitSave = async () => {
     setSaving(true)
-    const res = await onSaveVersion(semver, notes)
+    setSaveError(null)
+    setDebug(null)
+    const res = await onSaveVersion(semver, notes, setPhase)
     setSaving(false)
+    setPhase(null)
     if (res.ok) setSaveOpen(false)
-    else setSaveError(res.error ?? 'Could not save')
+    else {
+      setSaveError(res.error ?? 'Could not save')
+      setDebug(res.debug ?? null)
+    }
   }
+  const copyDebug = async () => {
+    if (!debug) return
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(debug, null, 2))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      /* clipboard blocked — user can still read the panel */
+    }
+  }
+
+  // Warn (amber) when the estimate/exact bytes are large but still under the server cap.
+  const warnBytes = phase?.compiledBytes ?? preInfo?.estimatedBytes ?? 0
+  const showAmber = warnBytes > WARN_BYTES && warnBytes <= SERVER_VERSION_BODY_LIMIT
 
   const iconBtn =
     'rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent'
@@ -243,12 +298,75 @@ function TopCommandStripInner({
                 className="w-full rounded-md border border-outline-variant/40 bg-surface-container-lowest/60 px-2.5 py-1.5 text-label-md text-on-surface outline-none focus:border-primary/60"
               />
             </label>
+            {/* Measured size before save starts (T-060.1.3). */}
+            {!phase && !saveError && preInfo && (
+              <p className="font-mono text-code-md tabular-nums text-on-surface-variant">
+                ~{formatBytes(preInfo.estimatedBytes)} estimated · {preInfo.slotCount.toLocaleString()} objects
+                <span className="ml-2 text-outline">LOC {formatBytes(preInfo.localDocBytes)}</span>
+              </p>
+            )}
+            {showAmber && !saveError && (
+              <p className="text-label-sm normal-case text-tactical-yellow">
+                Large mission — close to the 256 MB server limit. Save may be slow.
+              </p>
+            )}
+            {phase && (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between text-label-sm normal-case text-on-surface-variant">
+                  <span>
+                    {phase.phase === 'compiling'
+                      ? 'Compiling mission…'
+                      : phase.phase === 'preparing'
+                        ? `Preparing upload… ${formatBytes(phase.compiledBytes ?? phase.estimatedBytes ?? 0)}`
+                        : `Uploading ${formatBytes(phase.bytesLoaded ?? 0)} / ${formatBytes(phase.bytesTotal ?? phase.compiledBytes ?? 0)}`}
+                  </span>
+                  {phase.value != null && (
+                    <span className="font-mono tabular-nums">{Math.round(phase.value * 100)}%</span>
+                  )}
+                </div>
+                <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                  {phase.value != null ? (
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-150"
+                      style={{ width: `${Math.round(phase.value * 100)}%` }}
+                    />
+                  ) : (
+                    <div className="h-full w-1/3 animate-mc-load-bar rounded-full bg-primary" />
+                  )}
+                </div>
+                {phase.phase === 'uploading' && phase.uploadRoute && (
+                  <span className="self-start rounded bg-white/10 px-1.5 py-0.5 font-mono text-code-md text-on-surface-variant">
+                    {ROUTE_LABEL[phase.uploadRoute]}
+                  </span>
+                )}
+              </div>
+            )}
             {saveError && <p className="text-label-sm normal-case text-error">{saveError}</p>}
+            {debug && (
+              <details className="rounded-md border border-outline-variant/30 bg-surface-container-lowest/40">
+                <summary className="cursor-pointer px-2.5 py-1.5 text-label-sm normal-case text-on-surface-variant">
+                  Debug details
+                </summary>
+                <div className="flex flex-col gap-1.5 px-2.5 pb-2.5">
+                  <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-black/30 p-2 font-mono text-code-md text-on-surface-variant">
+                    {JSON.stringify(debug, null, 2)}
+                  </pre>
+                  <button
+                    type="button"
+                    onClick={copyDebug}
+                    className="self-start rounded-md border border-outline-variant/40 px-2 py-1 text-label-sm text-on-surface-variant transition-colors hover:bg-white/5"
+                  >
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+              </details>
+            )}
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setSaveOpen(false)}
-                className="rounded-md border border-outline-variant/40 px-3 py-1.5 text-label-md text-on-surface-variant transition-colors hover:bg-white/5"
+                disabled={saving}
+                className="rounded-md border border-outline-variant/40 px-3 py-1.5 text-label-md text-on-surface-variant transition-colors hover:bg-white/5 disabled:opacity-40"
               >
                 Cancel
               </button>

@@ -41,12 +41,20 @@ export {
   removeEditorLayer,
   ensureDefaultLayer,
   hydrateMissionDoc,
+  hydrateMissionDocWithProgress,
   LOCAL_ORIGIN,
 } from './state/ydoc'
 export type { MissionDoc, EntityMapName } from './state/ydoc'
-export { bindStoreToDoc, docToSnapshot } from './state/bindings'
+export {
+  bindStoreToDoc,
+  docToSnapshot,
+  docToSnapshotWithProgress,
+  beginBulkSync,
+  endBulkSync,
+} from './state/bindings'
 export { createUndoManager } from './state/undo'
 export type { UndoController } from './state/undo'
+export { yieldToUi } from './state/yieldToUi'
 export {
   selectSlotIcons,
   selectSlotCount,

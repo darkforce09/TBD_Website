@@ -104,7 +104,9 @@ func (h *Handler) Register(rg *gin.RouterGroup) {
 	authed.GET("/missions/:id", h.GetMission)
 	authed.PATCH("/missions/:id", h.UpdateMission)
 	authed.POST("/missions/:id/submit", h.SubmitMission)
-	authed.POST("/missions/:id/versions", h.CreateVersion)
+	// Mission versions carry the full compiled payload (hundreds of MB at scale), so
+	// this route gets its own high body cap; the global limiter skips it (see middleware.BodyLimit).
+	authed.POST("/missions/:id/versions", middleware.BodyLimit(h.cfg.MissionVersionBodyLimit()), h.CreateVersion)
 	authed.GET("/missions/:id/versions/:vid", h.GetVersion)
 	authed.GET("/missions/:id/armory", h.GetArmory)
 	authed.PUT("/missions/:id/armory", h.SetArmory)

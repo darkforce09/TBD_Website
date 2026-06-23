@@ -8,25 +8,85 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   applyMissionRowMeta,
   hydrateMissionDoc,
+  hydrateMissionDocWithProgress,
   useMapStore,
   type MissionDoc,
 } from '@/features/tactical-map'
 import { LOCAL_ORIGIN } from '@/features/tactical-map'
 import { api } from '@/api/client'
 import type { MissionDetail } from '@/types/api'
-import { useMissionDoc, type MissionDocHandle } from './useMissionDoc'
-import { compileMission } from '../compiler/compile'
+import {
+  useMissionDoc,
+  applyPhase,
+  downloadPhase,
+  type LoadProgress,
+  type MissionDocHandle,
+} from './useMissionDoc'
+import { buildVersionBlob, compileMission, compileMissionWithProgress } from '../compiler/compile'
 import { toMissionExport } from '../compiler/exportSchema'
+import {
+  estimateCompiledBytes,
+  formatBytes,
+  getLocalDocBytes,
+  SERVER_VERSION_BODY_LIMIT,
+} from '../lib/missionSize'
 
 export interface SaveResult {
   ok: boolean
   error?: string
+  /** Always populated on failure (and on success); see SaveDebugReport. T-060.1.3. */
+  debug?: SaveDebugReport
+}
+
+/** Which network path the version POST took (T-060.1.2/.3). `direct` = dev proxy bypass to :8080;
+ *  `configured` = VITE_API_URL is already absolute; `proxy` = default /api/v1 (Vite dev proxy). */
+export type UploadRoute = 'proxy' | 'direct' | 'configured'
+
+/** Save Version progress: phase + optional 0..1 fraction (undefined = indeterminate).
+ *  `preparing` = building the (chunked) request body before the upload starts (T-060.1.2).
+ *  The size/route fields (T-060.1.3) feed the Save dialog readout. */
+export interface SaveProgress {
+  phase: 'compiling' | 'preparing' | 'uploading'
+  value?: number
+  // T-060.1.3 observability (all optional — populated as each step learns them):
+  slotCount?: number
+  compiledBytes?: number // exact request-body bytes once buildVersionBlob is done
+  estimatedBytes?: number // fast pre-compile estimate
+  localDocBytes?: number // local Y.Doc footprint
+  bytesLoaded?: number
+  bytesTotal?: number
+  uploadRoute?: UploadRoute
+  uploadUrl?: string // resolved base + path, no token
+  elapsedMs?: number
+}
+
+/** Full diagnostic snapshot returned on save failure (and success). Surfaced in the Save dialog's
+ *  copyable "Debug details" so a mid-upload ERR_NETWORK is diagnosable in one attempt. T-060.1.3. */
+export interface SaveDebugReport {
+  phaseAtFailure: SaveProgress['phase']
+  slotCount: number
+  estimatedBytes: number
+  localDocBytes: number
+  compiledBytes?: number
+  bytesLoaded?: number
+  bytesTotal?: number
+  uploadRoute?: UploadRoute
+  uploadUrl?: string
+  axiosCode?: string
+  axiosMessage?: string
+  responseStatus?: number
+  elapsedMs: number
+  timestamp: string
 }
 
 export interface MissionEditorHandle extends MissionDocHandle {
   dirty: boolean
   suggestedSemver: string
-  saveVersion: (semver: string, notes?: string) => Promise<SaveResult>
+  saveVersion: (
+    semver: string,
+    notes?: string,
+    onProgress?: (p: SaveProgress) => void,
+  ) => Promise<SaveResult>
   exportJson: () => void
   /** Server payload awaiting a keep-local / load-server decision; null when none. */
   conflict: Record<string, unknown> | null
@@ -38,6 +98,29 @@ export interface MissionEditorHandle extends MissionDocHandle {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const NEEDS_REAL_ID =
   'This editor URL needs a real mission id — create one from Mission Library first.'
+
+// A large version POST in dev must skip the Vite dev proxy: http-proxy drops big POST bodies
+// (~2 MB+) → ECONNRESET, which the browser reports as ERR_NETWORK with no HTTP response. CORS on
+// the API already allows :5173, so we override the baseURL for that one request to hit :8080
+// directly. Small saves + prod keep the default client baseURL. T-060.1.2 (E3b).
+const DIRECT_UPLOAD_THRESHOLD = 1_048_576 // 1 MB
+let warnedDirectUpload = false
+/** Resolve the version POST baseURL + a label for it. `baseURL: undefined` → axios uses the client
+ *  default (proxy in dev, or an already-absolute VITE_API_URL). T-060.1.2/.3. */
+function resolveVersionUpload(bodyBytes: number): { baseURL: string | undefined; route: UploadRoute } {
+  const configured = import.meta.env.VITE_API_URL
+  // Client baseURL already absolute → axios hits the API directly; nothing to override.
+  if (typeof configured === 'string' && configured.startsWith('http')) {
+    return { baseURL: undefined, route: 'configured' }
+  }
+  if (import.meta.env.DEV && bodyBytes > DIRECT_UPLOAD_THRESHOLD) {
+    return {
+      baseURL: import.meta.env.VITE_API_DIRECT_URL ?? 'http://localhost:8080/api/v1',
+      route: 'direct',
+    }
+  }
+  return { baseURL: undefined, route: 'proxy' } // small save / prod → default /api/v1
+}
 
 const bumpPatch = (semver: string | null): string => {
   const m = semver?.match(/^(\d+)\.(\d+)\.(\d+)/)
@@ -68,11 +151,16 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
 
   // After the local snapshot syncs, reconcile with the server's current version.
   const onSynced = useCallback(
-    (md: MissionDoc) => {
+    (md: MissionDoc, onLoadProgress?: (p: LoadProgress) => void) => {
       if (!missionId) return
-      api
-        .get(`/missions/${missionId}`)
-        .then((res) => {
+      // Return the chain so useMissionDoc holds the loading overlay until the server
+      // payload is hydrated (or the request fails); the .catch resolves either way.
+      return api
+        .get(`/missions/${missionId}`, {
+          // Large missions ship a multi-MB payload — report the download phase to the overlay.
+          onDownloadProgress: (e) => onLoadProgress?.(downloadPhase(e.loaded, e.total)),
+        })
+        .then(async (res) => {
           if (!mounted.current) return
           const data = res.data as MissionDetail
           // Always hydrate the mission-row meta — even for a brand-new mission whose
@@ -96,7 +184,11 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
           if (hasLocalContent(md)) {
             setConflict(payload) // local edits + server version → prompt the user
           } else {
-            hydrateMissionDoc(md, payload) // empty local → adopt server
+            // Empty local → adopt server. Chunked so a 300k payload reports the apply phase
+            // and doesn't block; runs inside the still-open bulk window (one snapshot after).
+            await hydrateMissionDocWithProgress(md, payload, (d, t) =>
+              onLoadProgress?.(applyPhase(d, t)),
+            )
             applyMissionRowMeta(md, row) // row title wins (compile omits title from payload)
           }
         })
@@ -107,7 +199,7 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
     [missionId],
   )
 
-  const { md, undo } = useMissionDoc(missionId, { onSynced })
+  const { md, undo, docStatus, loadProgress } = useMissionDoc(missionId, { onSynced })
 
   // Mark unsaved on any local (user) edit; INIT/persistence-origin updates don't count.
   useEffect(() => {
@@ -125,32 +217,161 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
   const invalidMissionId = !!missionId && !UUID_RE.test(missionId)
 
   const saveVersion = useCallback(
-    async (semver: string, notes?: string): Promise<SaveResult> => {
+    async (
+      semver: string,
+      notes?: string,
+      onProgress?: (p: SaveProgress) => void,
+    ): Promise<SaveResult> => {
       if (!missionId || invalidMissionId) return { ok: false, error: NEEDS_REAL_ID }
-      const payload = compileMission(useMapStore.getState())
+      // Measure up-front (T-060.1.3) so every progress tick + the debug report carry real bytes.
+      const t0 = performance.now()
+      const snapshot = useMapStore.getState()
+      const slotCount = Object.keys(snapshot.slotsById).length
+      const report: SaveDebugReport = {
+        phaseAtFailure: 'compiling',
+        slotCount,
+        estimatedBytes: estimateCompiledBytes(snapshot),
+        localDocBytes: getLocalDocBytes(md),
+        elapsedMs: 0,
+        timestamp: new Date().toISOString(),
+      }
+      const logPhase = (phase: SaveProgress['phase']) => {
+        report.phaseAtFailure = phase
+        report.elapsedMs = Math.round(performance.now() - t0)
+        if (import.meta.env.DEV) console.debug('[mission-save]', phase, { ...report })
+      }
       try {
-        await api.post(`/missions/${missionId}/versions`, {
-          semver,
-          payload,
-          editor_notes: notes ?? '',
+        // Compile off the render path, chunked + yielding so a 50k+ mission doesn't hang.
+        const payload = await compileMissionWithProgress(snapshot, (done, total) =>
+          onProgress?.({
+            phase: 'compiling',
+            value: total ? done / total : undefined,
+            slotCount,
+            estimatedBytes: report.estimatedBytes,
+            localDocBytes: report.localDocBytes,
+          }),
+        )
+        logPhase('compiling')
+        // Build the request body as a Blob, streaming editor.slots (T-060.1.2): posting a pre-built
+        // Blob means axios sends it as-is (no second 100MB+ graph stringify) and keeps the tab
+        // responsive. The Blob does NOT fix ERR_NETWORK on its own — see resolveVersionUpload.
+        const body = await buildVersionBlob(semver, payload, notes ?? '', (done, total) =>
+          onProgress?.({
+            phase: 'preparing',
+            value: total ? done / total : undefined,
+            slotCount,
+            estimatedBytes: report.estimatedBytes,
+          }),
+        )
+        report.compiledBytes = body.size
+        report.bytesTotal = body.size
+        logPhase('preparing')
+
+        // In dev, large uploads bypass the Vite proxy (which drops big POST bodies → ERR_NETWORK)
+        // and hit the API directly; small saves + prod keep the default baseURL.
+        const { baseURL, route } = resolveVersionUpload(body.size)
+        report.uploadRoute = route
+        const base =
+          baseURL ??
+          (typeof import.meta.env.VITE_API_URL === 'string' ? import.meta.env.VITE_API_URL : '/api/v1')
+        report.uploadUrl = `${base}/missions/${missionId}/versions`
+        if (route === 'direct' && !warnedDirectUpload) {
+          warnedDirectUpload = true
+          console.info(
+            `[mission-creator] Large save (${formatBytes(body.size)}) bypassing the Vite dev proxy → ${baseURL}`,
+          )
+        }
+
+        // Pre-upload gate (T-060.1.3): reject an over-cap body before POSTing, with exact bytes —
+        // the server's MaxBytesReader otherwise aborts mid-stream and the browser sees ERR_NETWORK.
+        if (body.size > SERVER_VERSION_BODY_LIMIT) {
+          report.phaseAtFailure = 'preparing'
+          report.elapsedMs = Math.round(performance.now() - t0)
+          if (import.meta.env.DEV) console.error('[mission-save] OVER LIMIT', { ...report })
+          return {
+            ok: false,
+            error:
+              `Compiled payload is ${formatBytes(body.size)} — server limit is ${SERVER_VERSION_BODY_LIMIT >> 20} MB. ` +
+              `This mission duplicates slot data (orbat + editor); needs T-062 incremental save, or raise ` +
+              `MISSION_VERSION_MAX_BODY_BYTES on the dev API.`,
+            debug: { ...report },
+          }
+        }
+
+        await api.post(`/missions/${missionId}/versions`, body, {
+          baseURL, // undefined → axios falls back to the client baseURL
+          // A 360k payload is tens–hundreds of MB and minutes to upload — without these the
+          // default/proxy timeout drops the request and we get a no-response network error.
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 600_000,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+          onUploadProgress: (e) => {
+            // The upload has begun — record it so a mid-upload failure reports
+            // phaseAtFailure: 'uploading' rather than the stale 'preparing' (T-060.1.4).
+            report.phaseAtFailure = 'uploading'
+            // axios `total` is often undefined for a Blob → fall back to body.size (the "4%" red herring).
+            const bytesTotal = e.total ?? body.size
+            report.bytesLoaded = e.loaded
+            report.bytesTotal = bytesTotal
+            onProgress?.({
+              phase: 'uploading',
+              value: bytesTotal ? e.loaded / bytesTotal : undefined,
+              slotCount,
+              compiledBytes: body.size,
+              bytesLoaded: e.loaded,
+              bytesTotal,
+              uploadRoute: route,
+              uploadUrl: report.uploadUrl,
+            })
+          },
         })
+        logPhase('uploading')
         if (mounted.current) {
           setCurrentSemver(semver)
           setDirty(false)
         }
-        return { ok: true }
+        return { ok: true, debug: { ...report } }
       } catch (e) {
-        const resp = (e as { response?: { status?: number; data?: { error?: string } } }).response
-        // Prefer the backend's message ("version already exists", "not your mission", …).
-        return {
-          ok: false,
-          error:
-            resp?.data?.error ??
-            (resp?.status === 409 ? `Version ${semver} already exists` : 'Could not save version'),
+        // Surface the real failure (T-060): the body cap (413) and backend messages were
+        // previously hidden behind a generic "Could not save version".
+        const err = e as {
+          response?: { status?: number; data?: { error?: string } }
+          code?: string
+          message?: string
         }
+        const resp = err.response
+        report.elapsedMs = Math.round(performance.now() - t0)
+        report.axiosCode = err.code
+        report.axiosMessage = err.message
+        report.responseStatus = resp?.status
+        if (import.meta.env.DEV) console.error('[mission-save] FAILED', { ...report })
+        const debug: SaveDebugReport = { ...report }
+        if (!resp) {
+          // No HTTP response: timeout, or a connection drop mid-upload (proxy or direct). Surface
+          // axios code + message (e.g. ECONNABORTED, ERR_NETWORK) — full bytes/route in `debug`.
+          const detail = [err.code, err.message].filter(Boolean).join(': ')
+          return {
+            ok: false,
+            error: `Could not reach the server${detail ? ` (${detail})` : ' (network error or timeout)'}.`,
+            debug,
+          }
+        }
+        const backend = resp.data?.error
+        if (resp.status === 413) {
+          return {
+            ok: false,
+            error: backend ?? 'Mission too large for the server limit (max 256 MB).',
+            debug,
+          }
+        }
+        if (resp.status === 409) {
+          return { ok: false, error: backend ?? `Version ${semver} already exists`, debug }
+        }
+        return { ok: false, error: backend ?? 'Could not save version', debug }
       }
     },
-    [missionId, invalidMissionId],
+    [missionId, invalidMissionId, md],
   )
 
   const exportJson = useCallback(() => {
@@ -183,6 +404,8 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
   return {
     md,
     undo,
+    docStatus,
+    loadProgress,
     dirty,
     suggestedSemver: bumpPatch(currentSemver),
     saveVersion,

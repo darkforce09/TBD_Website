@@ -11,6 +11,7 @@ import { ENTITY_MAPS } from './schema'
 import type { ClipboardSlot, EditorLayer, ID, MissionMeta, Slot } from './schema'
 import { getTerrain } from '../coords/terrains'
 import type { TerrainId } from '../coords/terrains'
+import { yieldToUi } from './yieldToUi'
 
 const VALID_TERRAINS: ReadonlySet<MissionMeta['terrain']> = new Set([
   'everon',
@@ -554,6 +555,73 @@ export function hydrateMissionDoc(md: MissionDoc, payload: Record<string, unknow
     }
     layer.set('entityIds', filed)
   }, INIT_ORIGIN)
+}
+
+/** Async, chunked variant of hydrateMissionDoc (T-060.1). Writing 300k+ slots in one
+ *  transaction blocks the main thread for minutes with no progress; here the small entities
+ *  go in one transaction and `editor.slots` are written in `chunkSize` batches (each its own
+ *  INIT_ORIGIN transaction), yielding + reporting progress between chunks so the load overlay
+ *  advances. Only the lossless `editor` path is chunked; the small/lossy `orbat`-only path (and
+ *  an empty editor block) delegate to the sync hydrateMissionDoc. */
+export async function hydrateMissionDocWithProgress(
+  md: MissionDoc,
+  payload: Record<string, unknown>,
+  onProgress?: (done: number, total: number) => void,
+  chunkSize = 5000,
+): Promise<void> {
+  const p = payload ?? {}
+  const editor = p.editor as
+    | { factions?: unknown[]; squads?: unknown[]; slots?: unknown[]; editorLayers?: unknown[] }
+    | undefined
+  const slots = editor?.slots
+  // No editor block, or small enough to not need chunking → the sync path is fine.
+  if (!editor || !Array.isArray(slots) || slots.length <= chunkSize) {
+    hydrateMissionDoc(md, p)
+    onProgress?.(slots?.length ?? 0, slots?.length ?? 0)
+    return
+  }
+
+  const map = p.map as { terrain?: string } | undefined
+  const setEach = (name: EntityMapName, rows: unknown[] | undefined) => {
+    for (const row of rows ?? []) {
+      const r = row as Record<string, unknown>
+      if (r && typeof r.id === 'string') md.entities[name].set(r.id, entityToYMap(r))
+    }
+  }
+
+  // Transaction 1: clear + meta + the small maps + factions/squads/layers (everything but slots).
+  md.doc.transact(() => {
+    for (const name of ENTITY_MAPS) md.entities[name].clear()
+    if (p.environment) md.meta.set('environment', p.environment)
+    if (map?.terrain) md.meta.set('terrain', map.terrain)
+    setEach('objectives', p.objectives as unknown[] | undefined)
+    setEach('vehicles', p.vehicles as unknown[] | undefined)
+    setEach('markers', p.markers as unknown[] | undefined)
+    const loadouts = p.loadouts as Record<string, unknown> | undefined
+    if (loadouts) for (const v of Object.values(loadouts)) setEach('loadouts', [v])
+    setEach('factions', editor.factions)
+    setEach('squads', editor.squads)
+    setEach('editorLayers', editor.editorLayers)
+  }, INIT_ORIGIN)
+
+  // Slots in chunks: one INIT_ORIGIN transaction per batch, yielding between.
+  const total = slots.length
+  onProgress?.(0, total)
+  for (let i = 0; i < total; i += chunkSize) {
+    const end = Math.min(i + chunkSize, total)
+    md.doc.transact(() => {
+      for (let j = i; j < end; j++) {
+        const r = slots[j] as Record<string, unknown>
+        if (r && typeof r.id === 'string') md.entities.slots.set(r.id, entityToYMap(r))
+      }
+    }, INIT_ORIGIN)
+    onProgress?.(end, total)
+    await yieldToUi()
+  }
+
+  if (md.entities.editorLayers.size === 0) {
+    md.doc.transact(() => ensureDefaultLayer(md), INIT_ORIGIN)
+  }
 }
 
 export function setTitle(md: MissionDoc, title: string): void {

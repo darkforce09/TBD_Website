@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -170,6 +171,17 @@ func TestMissionLifecycleIntegration(t *testing.T) {
 	}
 	if !detail.Bookmarked {
 		t.Error("overview should show bookmarked=true for this viewer")
+	}
+
+	// --- a version payload larger than the old 1 MB global cap still round-trips ---
+	// (T-060). CreateVersion itself has no size ceiling; the body cap is purely the
+	// middleware.BodyLimit on the route (256 MB by default). The oversize/413 path is
+	// middleware-level — exercised manually against the running stack, not here. Run
+	// last so making this the current version doesn't disturb the 1.0.0 assertions above.
+	bigNote := strings.Repeat("x", 2<<20) // ~2 MB, comfortably over the old 1 MB default
+	bigBody := `{"semver":"1.1.0","payload":{"spawns":[]},"editor_notes":"` + bigNote + `"}`
+	if w := do(r, "POST", "/api/v1/missions/"+mid+"/versions", reqOpt{bearer: makerTok, body: bigBody}); w.Code != http.StatusCreated {
+		t.Fatalf("create large (~2MB) version = %d (want 201), body len=%d", w.Code, w.Body.Len())
 	}
 }
 

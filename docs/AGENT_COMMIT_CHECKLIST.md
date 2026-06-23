@@ -4,6 +4,8 @@
 
 **Authority ladder:** running code → [`CLAUDE.md`](../CLAUDE.md) §Status → domain **ROADMAP.md** → supporting docs → archive.
 
+**Doc ownership (locked 2026-06):** **Cursor (Composer 2.5)** writes and syncs all documentation. **Claude Code** reads docs and implements code only — do not assign doc-sync steps to Claude Code (saves tokens). After Claude Code ships, return to Cursor for the §Same-commit sync table pass before the human commits.
+
 ---
 
 ## Before you code
@@ -48,15 +50,15 @@ If a spec exists for the task (e.g. [`t048_library_create_dialog.md`](../Design_
 | Eden UI parity | `eden/gap_analysis.md` + maybe `eden/ui_anatomy.md` |
 | Shipped git milestone | [`CLAUDE.md`](../CLAUDE.md) §Status + rows above (MC ROADMAP, frontend ROADMAP, TAGS, mission-editor, gap_analysis, feature_inventory, agent_execution as applicable) |
 
-Shell phases PRE-3.5–9 are **done** (T-033–T-040). **T-057–T-059 shipped** (validated **360k @ 100+ fps** pan). **Active: T-060** fast load + save (**256 MB** version API limit fixes 1 MB blocker), then **T-061..T-067 scale program** (1M–10M north star). Eden **T-068+** per MC ROADMAP **§Current strategy**; Track A map tiles/DEM deferred until after Eden + scale milestones.
+Shell phases PRE-3.5–9 are **done**. **T-057–T-059 shipped**; **T-060..T-060.1.4 code complete** (uncommitted); save mid-upload **FIXED** (1 MB global cap had reached the version route — hardened skip + production-like IT; curl 140 MB → 201). **Tag T-060 after the user confirms browser Save → 201 @ ~367k** (restart `make api` — the failing instance was stale). Then **T-061..T-067** → Eden **T-068+** → **T-070+** terrain base (see [`t070_terrain_base_mission_layers.md`](../Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md)).
 
 ### Mission Creator slice workflow
 
-Eden slices ship as **T-053+** following the **spec → code → same-commit docs** pattern proven by T-048..T-056. **Perf slices** (T-057+) follow the same pattern with [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md).
+Eden slices ship as **T-053+** following the **spec → code → same-commit docs** pattern proven by T-048..T-056. **Perf/scale slices** (T-057+) follow the same pattern — see [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md), [`t059_bulk_paste_operations.md`](../Design_Docs/Mission_Creator_Architecture/t059_bulk_paste_operations.md), [`t060_fast_initial_load.md`](../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md), [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.4. **Tag T-060 only after the user's browser Save → 201 @ ~367k** (code complete; server-side proven via curl 140 MB → 201 + `make test-it`). Spec: [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.4.
 
-1. **Spec** — write or locate the `t0xx_*.md` spec under `Design_Docs/Mission_Creator_Architecture/` for the gap_analysis item.
-2. **Code** — implement; `cd frontend && npm run build && npm run lint`.
-3. **Docs (same commit)** — sync [`CLAUDE.md`](../CLAUDE.md) §Status + MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) + [`docs/frontend/ROADMAP.md`](frontend/ROADMAP.md) + [`docs/TAGS.md`](TAGS.md) + relevant [`frontend/docs/pages/mission-editor.md`](../frontend/docs/pages/mission-editor.md) + the closed [`eden/gap_analysis.md`](../Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md) item + [`feature_inventory.md`](../Design_Docs/Mission_Creator_Architecture/feature_inventory.md) FEDS row + [`agent_execution.md`](../Design_Docs/Mission_Creator_Architecture/agent_execution.md) Decisions log.
+1. **Spec** — **Cursor** writes or updates the `t0xx_*.md` spec under `Design_Docs/Mission_Creator_Architecture/` (Claude Code reads it; does not author specs).
+2. **Code** — **Claude Code** (or Cursor) implements; `cd frontend && npm run build && npm run lint`; `make test-it` when backend touched.
+3. **Docs (same commit)** — **Cursor only** — sync [`CLAUDE.md`](../CLAUDE.md) §Status + MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) + [`docs/frontend/ROADMAP.md`](frontend/ROADMAP.md) + [`docs/TAGS.md`](TAGS.md) + relevant [`frontend/docs/pages/mission-editor.md`](../frontend/docs/pages/mission-editor.md) + the closed [`eden/gap_analysis.md`](../Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md) item + [`feature_inventory.md`](../Design_Docs/Mission_Creator_Architecture/feature_inventory.md) FEDS row + [`agent_execution.md`](../Design_Docs/Mission_Creator_Architecture/agent_execution.md) Decisions log. Claude Code returns verify output; Cursor flips checkboxes and §Status from that report.
 
 ---
 

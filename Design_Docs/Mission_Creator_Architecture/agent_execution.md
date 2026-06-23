@@ -1,6 +1,6 @@
 ---
 name: Mission Creator — Agent Execution Plan
-overview: "Self-contained agent handoff for Mission Creator. T-057–T-059 shipped (perf + OBJ/SEL + bulk paste; validated 360k @ 100+ fps). Active: T-060 fast load + save, then T-061-T-067 scale to 1M-10M. Eden T-068+ after scale milestones."
+overview: "Self-contained agent handoff for Mission Creator. T-057–T-059 shipped. T-060..T-060.1.4 code complete (uncommitted); save mid-upload FIXED (global 1 MB cap reached the version route — hardened skip; curl 140MB→201). Browser Save→201 = user's final check before single T-060 tag. Then T-061-T-067. Eden T-068+."
 todos:
   - id: step-0-publish
     content: "STEP 0: Plan published to Design_Docs/Mission_Creator_Architecture/agent_execution.md"
@@ -24,7 +24,7 @@ todos:
     content: "PHASE 9: Compiler + Export + useMissionEditor autosave (only after 3.5, 7b, 7a complete)"
     status: completed
   - id: eden-backlog
-    content: "T-057–T-059 SHIPPED. Validated 360k @ 100+ fps pan; 6k paste loops smooth. Active: T-060 fast load + save, then T-061-T-067 scale to 1M-10M, then Eden T-068+."
+    content: "T-057–T-059 SHIPPED. T-060..T-060.1.4 code complete (uncommitted); save mid-upload FIXED (hardened GlobalBodyLimit skip + production-like IT; curl 140MB→201). Browser Save→201 = user's final check before single T-060 tag. Then T-061-T-067, Eden T-068+."
     status: in_progress
   - id: phase-blocked
     content: "DEFERRED until after Eden P0-P2: Phase 2 DEM/tiles, full registry/Arsenal (Phases 5-6), Phase 8 tools — do not start without user approval"
@@ -35,7 +35,7 @@ isProject: false
 # AGENT EXECUTION CONTRACT
 
 > **Phase completion log (T-033–T-040):** PRE-3.5 ✅ DOC-0 ✅ 3.5 ✅ 7b ✅ 7a ✅ 9 ✅.
-> **North star:** **1M–10M editable entities** via **T-059..T-067** scale program. **T-059 shipped** — bulk paste fixed; **validated 360k @ 100+ fps** pan. **Active blocker:** **initial load** at 10k+ (no loading UX) → **T-060 fast load + save**. Eden **T-068+** after scale milestones.
+> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-060..T-060.1.4 code complete** (uncommitted). Load partial pass @ ~360k. Save @ 367k mid-upload reset **FIXED** — root cause was the **1 MB global body cap reaching the version route** (`GlobalBodyLimit` skip not applying — most likely a stale `go run` binary); `MaxBytesReader` reset mid-stream → browser `ERR_NETWORK` @ ~5 MB. Hardened `isMissionVersionPOST` skip (FullPath + URL-path fallback) + production-like IT mounting `GlobalBodyLimit`; **curl 140 MB → 201** verified. **Browser Save → 201** is the user's final acceptance before the single **T-060** tag (restart `make api` — the failing instance was stale). Eden **T-068+** after scale milestones.
 
 > **For the human:** Open a new Cursor Agent / CLI session and paste the prompt below. The agent reads this file; execute **open** phases only.
 
@@ -46,8 +46,7 @@ Read CLAUDE.md first. Mission Creator is Eden-first (locked 2026-06): the shell 
 PRE-3.5–9 are DONE (T-033–T-040). Open work = the Eden parity backlog in
 eden/gap_analysis.md — P0 remaining + P1 + P2 — shipped as T-053+ slices BEFORE Track A
 Phase 2 (map tiles A-01, DEM A-03/A-04) and DEM-dependent Phase 8 tools. Authority:
-ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **Interrupt:**
-**T-060 fast load + save** (loading overlay + hydrate coalesce), then **T-061..T-067** scale program. Then **T-068+** Eden slices.
+ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **T-060.1.4 code complete** (save mid-upload FIXED — hardened GlobalBodyLimit skip; curl 140MB→201). After the user confirms **browser Save → 201**, tag **T-060** → **T-061..T-067** → Eden **T-068+**.
 A thin Track B registry (B-01) for Eden P0 (P0-01..03) is in scope; full registry/Arsenal and
 tiles/DEM are deferred. After each slice: `cd frontend && npm run build && npm run lint`. Do not
 commit unless I ask.
@@ -56,10 +55,27 @@ commit unless I ask.
 Shorter variant:
 
 ```
-@ROADMAP.md §Current strategy + §Map performance → @agent_execution.md Decisions log. **T-060 fast load next** (T-057–T-059 shipped), then **T-061..T-067 scale to 1M-10M**, then Eden **T-068+**; tiles/DEM deferred. Verify build/lint each slice.
+ROADMAP.md §Current strategy → @agent_execution.md §ACTIVE SLICE. **T-060.1.4 code complete** (save mid-upload FIXED; curl 140MB→201). Tag T-060 after the user confirms **browser** Save → 201 → **T-061..T-067** → Eden **T-068+**. Spec: t060_1_scale_load_save_completion.md §T-060.1.4. Do not commit until I say.
 ```
 
-## Document hierarchy (read in this order — do not mix sources)
+## Agent roles — Cursor vs Claude Code (locked 2026-06)
+
+**Human workflow:** save tokens on Claude Code by splitting **code** vs **documentation**.
+
+| Role | Tool | Does | Does NOT |
+|------|------|------|----------|
+| **Documentation owner** | **Cursor — Composer 2.5** | Write and sync all project docs (specs, ROADMAPs, `CLAUDE.md`, `agent_execution.md`, `TAGS.md`, page specs, acceptance checkboxes, Claude Code prompts, plan files) | — |
+| **Code implementer** | **Claude Code** | Read docs as source of truth; implement code + tests; run verify commands; report outcomes (logs, curl results, manual verify) back to the human | Edit documentation files (no doc sync passes — Cursor handles that in a separate step or session) |
+
+**Handoff pattern:**
+
+1. **Cursor** — plan, diagnose, write/update specs + prompts + doc sync table; paste a **code-only** Claude Code prompt (no `PART N — DOCS`).
+2. **Claude Code** — read listed docs; ship code; return verify output + bullet summary for Cursor.
+3. **Cursor** — flip acceptance checkboxes, §Status, ACTIVE SLICE, TAGS, etc., in the same commit the human requests (or before the next Claude Code slice).
+
+Claude Code prompts in `t0xx_*.md` files should end with **DO NOT edit documentation** — list which files Cursor will sync instead.
+
+---
 
 | Priority | Document | Agent uses it for |
 |----------|----------|-------------------|
@@ -304,11 +320,14 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Attributes entry points** (T-054) | One double-click contract for opening **Attributes**. **Map:** native `onDoubleClick` on the gesture-host container + `deckRef.pickObject('slot-icons')` → `onEntityActivate` — replaced the hand-rolled 350ms `lastClick` timer in `onClick`. **ORBAT tree:** `OrbatSection` gains `onActivateSlot` (threaded from `LeftSidebar`, same as `EditorLayersSection`) and passes `onActivate` to its `TreeView`, which fires on a slot row's native `onDoubleClick`. Multi-select suppression (`onEntityActivate` `ids.length <= 1`) and T-053 Ctrl/Cmd toggle unchanged; no TreeView/store change. Closes gap_analysis **P1-09** / SEL-ORBAT-DBL-001 (hardens SEL-MAP-004). |
 | **Map performance** (T-057) | The toolbelt cursor read-out is **transient `useMapStore.cursor`** (set rAF-throttled), not page state — so a pointer move re-renders only `BottomToolbelt`, never the Outliner trees. Cursor coords come from **unprojecting the mouse ourselves** (`view.makeViewport(...).unproject` on the container `onPointerMove`), **not** Deck's `onHover` — `onHover` is removed and `getCursor` is constant `'crosshair'`, so Deck does **no per-move hover pick**. Picking is kept only for click / dbl-click / marquee / drag-start. Pan is **rAF-coalesced** in `useSelectTool` (one `setViewState`/frame, flushed on pointer-up). `React.memo` on `TacticalMap`, `LeftSidebar`, `AssetPalette`, `TopCommandStrip`, `BottomToolbelt`, `AttributesModal`. **Accepted UX trade:** the pointer no longer changes to a "pointer" glyph over an icon (no hover pick). No schema/compiler/backend change; all interactions unchanged. Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md). |
 | **Entity count readout** (T-058) | Bottom toolbelt shows **OBJ** = total placed slots (memoized `selectSlotCount(slotsById)` in `selectors.ts`, re-exported from `index.ts`) + **SEL** = `selection.ids.length` when `kind==='slot'` else 0, in a mono `tabular-nums` block right of the X/Y/Z coords. Both subscribe **inside the already-memoized `BottomToolbelt`** so they track add/remove/paste/delete/selection but **never** a cursor move (T-057 channel untouched). Slots only — vehicles/markers join in a later P0 slice; plain integers (no commas) so 100000+ doesn't break layout. Closes `BOTTOM-OBJCOUNT-001`. |
-| **Mission version API body limit** (T-060) | **Observed:** Save Version on **360k** slots hangs then **"Could not save version"**. **Cause:** global `maxJSONBody = 1 MB` in `cmd/api/main.go` — compiled payload is **>> 1 MB**. **Fix:** route-specific **256 MB** cap on `POST /missions/:id/versions` only; **413** with clear error; frontend surfaces message. Postgres `jsonb` already supports large documents. |
+| **Mission version API body limit** (T-060 — **code shipped**) | **Was:** global 1 MB rejected 360k payloads. **Fix (T-060 code):** `internal/middleware/bodylimit.go` — `GlobalBodyLimit` skips versions POST; route `BodyLimit(256 MB)`; **413** in `CreateVersion`. **Upload @ scale (T-060.1):** version POST `timeout: 600_000` + `maxBody/maxContentLength: Infinity`; Vite `/api` proxy `timeout`/`proxyTimeout: 600_000`; chunked `editor.slots` assembly; `!resp` catch surfaces axios `code`/`message`. |
+| **Load gate + save progress** (T-060..**T-060.1.4 code complete**) | **Load:** four-phase overlay; partial pass @ 360k. **Save:** mid-upload reset **FIXED** — 1 MB global cap had reached the version route (stale `go run` binary); hardened `isMissionVersionPOST` skip + production-like IT; curl 140 MB → 201. **Pending:** browser Save → 201 @ ~367k (restart `make api`) → single **T-060** tag. Spec: [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md) §T-060.1.4. |
+| **Save mid-upload @ 135 MB** (T-060.1.4) | **Proven root cause:** stale API binary let the 1 MB `GlobalBodyLimit` wrap the version POST; `MaxBytesReader` reset mid-stream → `ERR_NETWORK` @ ~5 MB buffered. **Fix:** `isMissionVersionPOST` (FullPath + URL-path fallback), `setupITProd` + `missions_bodylimit_integration_test.go`, `bodylimit_test.go`, `phaseAtFailure` fix, `scripts/mission-version-upload-repro.sh`. **Ops note:** restart `make api` after pulling — `go run` does not hot-reload. |
+| **Dual-layer scale model** (2026-06) | **Mission layer** (ORBAT slots, markers — Y.Doc, **T-061..T-062**) = authored entities. **Terrain layer** (millions of map props) → **T-070+** binary base + sparse deltas; **not** a Y.Doc rewrite. External Base+Delta adopted for terrain only. Spec: [`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md). |
 | **Bulk paste at scale** (T-059) | `pasteSlots` batch O(n) append (`Map<squadId, ID[]>` + layer accumulator); post-paste selection cap (`BULK_SELECT_CAP = 500` → `none`); outliner leaf cap (`OUTLINER_LEAF_CAP = 500`) in **both** `EditorLayersSection.buildTree` and `OrbatSection.buildOrbat`. Chunked paste not needed. **Validated:** 6k paste loops smooth; **360k @ 100+ fps** pan. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md). |
-| **Eden-first program order** (2026-06) | Complete Eden parity backlog (**gap_analysis P0 remaining + P1 + P2**) **before** Track A Phase 2+ (A-01 map tiles, A-03/A-04 DEM, DEM-dependent tools). **Exception:** **T-057..T-067** perf/scale program runs first (1M–10M north star; **T-060 fast load** active). Eden **T-068+**. Thin Track B registry only as needed for Eden P0 (P0-01..03). Flat grid + manual Z acceptable during Eden push. |
+| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-060.1.4 code complete** — save mid-upload fixed; browser Save → 201 pending before T-060 tag). Eden **T-068+**; **T-070+** terrain base after that. … |
 | **Mission title hydrate** (T-049) | On editor load the **PostgreSQL mission row** (`title`, `terrain`, time/weather) hydrates `meta` via `applyMissionRowMeta` (INIT_ORIGIN) — including new missions whose `json_payload` is `{}`. **No PATCH-back** in T-049; Save Version still compiles payload only. |
-| **Phase order** | Shell phases **PRE-3.5 → DOC-0 → 3.5 → 7b → 7a → 9 complete** (T-033–T-040). **T-057–T-059 shipped.** **Next:** **T-060** fast load → **T-061..T-067** → Eden **T-068+**. Track A tiles/DEM **after** Eden. Track C loadouts deferred. |
+| **Phase order** | … **T-057–T-059 shipped; T-060..T-060.1.4 code complete (uncommitted)** (save mid-upload fixed; curl 140 MB → 201). After the user confirms browser Save → 201, tag **T-060** → **T-061..T-067** → Eden **T-068+** → **T-070+** terrain base (optional). … |
 | **Eden completeness** | Eden parity checklist = `eden/interactions.md`, `eden/ui_anatomy.md`, `eden/attributes.md`, `eden/gap_analysis.md` + scrape artifacts. Read `eden/ui_anatomy.md` / `eden/attributes.md` before implementing UI/attrs. Implement the P0 backlog from `eden/gap_analysis.md`. Feature status lives in `feature_inventory.md` + `reference/feds_schema.md`; new TBD features → FEDS row in `feature_inventory.md`. Wiki cache = `eden/wiki_manifest.yaml` + `artifacts/eden-wiki/`; regenerate via `node scripts/tools/scrape-eden-wiki.mjs` when the wiki updates. |
 
 ---
@@ -316,7 +335,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 ## Agent rules (mandatory)
 
 1. **Read first:** `CLAUDE.md` (conventions), then this file, then `engineering_plan.md` §0–§2.
-2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-057–T-059 shipped** (validated **360k @ 100+ fps** pan). **Active: T-060** fast load + save, then **T-061..T-067** toward **1M–10M**. Eden **T-068+**.
+2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-060.1.3 shipped**; **T-060.1.4 code complete** (save mid-upload fixed; curl 140 MB → 201). After the user confirms browser Save → 201, tag T-060 → **T-061..T-067**. Eden **T-068+**.
 3. **Verify gate** after every phase:
    ```bash
    cd frontend && npm run build && npm run lint
@@ -333,13 +352,17 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 
 ---
 
-## ACTIVE SLICE — T-060 fast load + save (T-057 + T-058 + T-059 shipped)
+## ACTIVE SLICE — T-060 tag gate (**T-060.1.4 code complete**; browser Save → 201 = final acceptance)
 
-**T-059 bulk paste/delete — shipped.** Validated: **6k paste loops** smooth; **360k objects @ 100+ fps** pan. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md).
+**T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4 code complete (uncommitted).** Spec: [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md) §T-060.1.4.
 
-**Now — T-060 (fast load + save):** loading overlay + progress bar; hydrate coalesce; **backend: raise `POST /missions/:id/versions` body limit from 1 MB to 256 MB** (keep 1 MB elsewhere); Save Version progress + error surfacing (413 payload too large); chunked compile. **Target:** **360k save returns 201**; **≤10 s ideal @ 1M**. Spec: [`t060_fast_initial_load.md`](t060_fast_initial_load.md).
+**Load manual verify partial pass:** ~30 s–1 min; "Reading local save…" within 1–2 s; count **0 → ~300k jump** then fast — **do not regress**.
 
-**Then:** T-061 typed-array IconLayer → T-062..T-067 scale milestones → 1M–10M. Eden **T-068+**.
+**Root cause (proven 2026-06-23):** the **1 MB `GlobalBodyLimit` cap was reaching the version route** (the skip not applying — most likely a **stale `go run` binary**; a clean build's `c.FullPath()` matches `/api/v1/missions/:id/versions` correctly). `http.MaxBytesReader` reset the socket mid-stream → browser `ERR_NETWORK` at ~5 MB buffered (the locked `5,573,612` = TCP overshoot past the 1 MB read point). 135 MB was never near the 256 MB route cap.
+
+**Proven with curl:** original (stale) binary reset 10/140 MB mid-upload (and 400'd 2 MB); a fresh build with the hardened skip returns **201** at 2/10/140 MB (140 MB in ~1.2 s, clean `content_length=146800700 status=201`). A `gin` probe confirmed `FullPath()` is correct on a clean build → it was a stale binary, and the hardened skip + production-like IT make the regression impossible to ship.
+
+**T-060.1.4 done:** (F2) `isMissionVersionPOST` adds a URL-path fallback to the `GlobalBodyLimit` skip (`bodylimit.go`); (F3) production-like IT mounts `GlobalBodyLimit` (`missions_bodylimit_integration_test.go` `setupITProd`) + `bodylimit_test.go` unit test; (F5) `phaseAtFailure='uploading'` on first upload tick (`useMissionEditor.ts`); (F6) curl repro `scripts/mission-version-upload-repro.sh`. **F4 (body streaming) not needed** — `ShouldBindJSON` binds 135 MB in ~1.2 s; route `BodyLimit` already maps over-cap → 413. **Acceptance:** server-side proven (curl 140 MB → 201 + `make test-it`); **browser Save → 201 @ ~367k** (restart `make api`) → then **tag T-060** (single commit T-060..T-060.1.4).
 
 ---
 

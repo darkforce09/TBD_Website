@@ -150,4 +150,4 @@ hovering an icon (no per-move hover pick). Click/dbl-click/marquee/drag picking 
 
 ## After T-057
 
-**T-058** — toolbelt entity-count telemetry. **T-059** bulk paste ✅ shipped (**360k @ 100+ fps** validated). **T-060** fast load + save (active). Then **T-061..T-067** scale program. Eden **T-068+**.
+**T-058** — toolbelt entity-count telemetry. **T-059** bulk paste ✅ shipped (**360k @ 100+ fps** validated). **T-060..T-060.1.4 code** ✅ (save mid-upload fixed — 1 MB global cap had reached the version route; curl 140 MB → 201; browser Save → 201 pending before T-060 tag). Then **T-061..T-067** scale program. Eden **T-068+**.

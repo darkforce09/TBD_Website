@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -22,10 +21,8 @@ import (
 )
 
 const (
-	maxJSONBody      = 1 << 20 // 1 MB cap on JSON request bodies
-	maxMultipartBody = 6 << 20 // 6 MB cap for multipart (uploads enforced at 5MB in-handler)
-	maxMultipart     = 8 << 20 // in-memory multipart buffer
-	shutdownGrace    = 10 * time.Second
+	maxMultipart  = 8 << 20 // in-memory multipart buffer
+	shutdownGrace = 10 * time.Second
 )
 
 func main() {
@@ -57,7 +54,9 @@ func main() {
 		middleware.Logger(),
 		gin.Recovery(),
 		middleware.CORS(cfg.AllowedOrigins),
-		bodyLimit(),
+		// 1 MB cap on all JSON routes (multipart bumped); the mission-version POST is
+		// skipped here and wrapped at its own higher cap where it's registered.
+		middleware.GlobalBodyLimit(middleware.MaxJSONBody),
 		middleware.RateLimit(globalLimiter, authLimiter, []string{"/auth/", "/ingest/"}),
 	)
 
@@ -101,20 +100,6 @@ func main() {
 		log.Printf("graceful shutdown failed: %v", err)
 	}
 	log.Println("stopped")
-}
-
-// bodyLimit caps the request body size to defend against oversized payloads.
-// Multipart uploads get a larger cap (the per-file 5MB limit is enforced in the
-// upload handler); everything else is held to the JSON cap.
-func bodyLimit() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		limit := int64(maxJSONBody)
-		if strings.HasPrefix(c.GetHeader("Content-Type"), "multipart/form-data") {
-			limit = maxMultipartBody
-		}
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, limit)
-		c.Next()
-	}
 }
 
 // registerRoutes wires handler groups onto the /api/v1 router group.

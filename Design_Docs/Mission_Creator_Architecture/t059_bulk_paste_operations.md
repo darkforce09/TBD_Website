@@ -46,7 +46,7 @@ Then [`bindings.ts`](../../frontend/src/features/tactical-map/state/bindings.ts)
 | Post-paste selection | If pasted count **> 500**: **do not** put all new ids in `selection.ids`. Clear selection (`none`) or keep prior — **recommend `none`**; OBJ updates, user box-selects if needed |
 | Outliner cap | If layer `entityIds.length > 500` (same threshold): `buildTree` shows folder label `"Layer (N entities)"` **without** N slot leaf nodes |
 | Chunked paste | If single transact still blocks >~100ms after batch fix: paste in chunks of **1000** slots per `requestAnimationFrame`, show toolbelt progress `Pasting… 3000/10000`. Prefer **one Y.Doc transaction** wrapping all chunks for one undo step |
-| Bulk snapshot | Optional `_bulkMode` in `bindings.ts`: suppress `docToSnapshot` flush until bulk op ends → single flush (pairs with T-061; implement in T-059 if still needed after batch fix) |
+| Bulk snapshot | Optional `_bulkMode` in `bindings.ts`: suppress `docToSnapshot` flush until bulk op ends → single flush (**T-060 code** bulk window; **T-060.1** adds determinate progress + hydrate timing fix) |
 | Copy | No change required for T-059 unless profiling shows copy 10k is slow (ClipboardSlot[] snapshot is acceptable) |
 | Delete 10k | Audit `removeEntities` — apply same batch patterns if spread loops exist |
 
@@ -120,11 +120,11 @@ export function runBulk(md, fn) { bulkDepth++; try { fn() } finally { bulkDepth-
 
 | Doc | Update |
 |-----|--------|
-| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-059 bullet; validation notes; Next → T-060 fast load |
-| [`ROADMAP.md`](ROADMAP.md) | Scale table T-059 ✅; validation notes; Next → T-060 fast load |
+| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-059 bullet; validation notes; Next → **T-060.1.1** |
+| [`ROADMAP.md`](ROADMAP.md) | Scale table T-059 ✅; Next → **T-060.1.1** |
 | [`t056_eden_p1_copy_paste.md`](t056_eden_p1_copy_paste.md) | Note: bulk scale limits addressed T-059 |
 | [`feature_inventory.md`](feature_inventory.md) | ACTION-PASTE bulk row or amend KEY-COPY-001 |
-| [`agent_execution.md`](agent_execution.md) | Decisions log; ACTIVE SLICE → T-060 |
+| [`agent_execution.md`](agent_execution.md) | Decisions log; ACTIVE SLICE → **T-060.1.1** |
 | [`docs/TAGS.md`](../../docs/TAGS.md) | T-059 shipped row |
 | [`mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | M3.14 milestone; PERF-002 bulk paste |
 
@@ -160,4 +160,4 @@ items d/e (design preserved above).
 
 ## After T-059
 
-**T-060:** fast load + save (loading overlay + hydrate coalesce — **active blocker** at 10k+ open). **T-061..T-067:** typed-array IconLayer, incremental bindings, spatial index, virtualized outliner, LOD, worker, spatial chunks. **Eden T-068+.**
+**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ code complete (1 MB global cap had reached the version route; curl 140 MB → 201; browser Save → 201 pending). **T-061..T-067:** … typed-array IconLayer, incremental bindings, spatial index, virtualized outliner, LOD, worker, spatial chunks. **Eden T-068+.**

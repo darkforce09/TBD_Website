@@ -60,6 +60,8 @@ open it in the browser to log in, or curl it and read `access_token` from the
 
 Keep docs in sync **in the same commit** as the code change (or immediately before — never merge stale docs).
 
+**Agent split (2026-06):** **Cursor (Composer 2.5)** owns all documentation writes and sync. **Claude Code** reads specs and ships code only — return verify output to Cursor for doc updates. See [`agent_execution.md`](Design_Docs/Mission_Creator_Architecture/agent_execution.md) §Agent roles and [`docs/AGENT_COMMIT_CHECKLIST.md`](docs/AGENT_COMMIT_CHECKLIST.md).
+
 **Before every T-0xx commit, check what changed:**
 
 | Change type | Update |
@@ -77,10 +79,44 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest feature work: T-059 — 2026-06-22)
+## Status (latest: **T-060 shipped** — 2026-06-23; load partial pass @ ~360k; Save @ ~367k/~142 MB → **201** browser + curl verified)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-060 **Mission Creator — fast load + save at scale (API body limit + progress UX)**. Unblocks
+  large-mission save/load in the T-059..T-067 scale program (spec:
+  `Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md`). Three blockers fixed:
+  **(A) API 1 MB body cap** — `cmd/api/main.go` wrapped **every** JSON route in
+  `http.MaxBytesReader(1 MB)`, rejecting a 360k-slot payload (tens–hundreds of MB) before
+  `CreateVersion` ran. The limiter moved to `internal/middleware/bodylimit.go`: `GlobalBodyLimit`
+  (1 MB default, multipart bumped) now **skips** the versions POST, and that route is registered
+  with its own `BodyLimit(cfg.MissionVersionBodyLimit())` — **256 MB** default, override
+  `MISSION_VERSION_MAX_BODY_BYTES` (`Config.MissionVersionBodyLimit()` falls back to 256 MB so a
+  manually-built config still works). `CreateVersion` maps an over-cap body to **413**
+  `{"error":"payload too large (max … MB)"}` (via `*http.MaxBytesError`) instead of a generic 400.
+  **(B) Load freeze** — a bulk-sync window in `tactical-map/state/bindings.ts`
+  (`beginBulkSync`/`endBulkSync`; the prime + observer defer while open) coalesces the boot
+  sequence (IndexedDB replay + seed) into **one** store snapshot; `useMissionDoc` opens it before
+  binding/replay and exposes `docStatus: 'loading' | 'ready'`, holding `loading` until the local
+  sync **and** the server hydrate settle (`onSynced` now returns its promise). `MissionCreatorPage`
+  shows a full-bleed loading overlay (indeterminate bar — y-indexeddb has no per-entity signal) and
+  **defers the LeftSidebar mount** until ready so the outliner tree isn't built mid-boot.
+  **(C) Save hang + hidden errors** — `compiler/compile.ts` gains async `compileMissionWithProgress`
+  (chunked, yields every ~5k slots, reports compile %); `useMissionEditor.saveVersion` runs
+  Compiling→Uploading phases (axios `onUploadProgress`) and **surfaces real errors** (413 → "too
+  large", 409 → semver, else backend `error`) instead of always "Could not save version";
+  `TopCommandStrip` renders the phase + progress bar in the Save dialog. Backend + four frontend
+  modules + one CSS keyframe. The initial T-060 manual verify @ ~300k failed (load 2–3 min on an
+  **indeterminate** bar; save upload → "Could not reach the server"), so **T-060.1** completes
+  acceptance (spec: `Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md`):
+  **(1) determinate load** — `docToSnapshotWithProgress` (chunked snapshot) + `hydrateMissionDocWithProgress`
+  (per-chunk INIT_ORIGIN transactions) + `api.get` `onDownloadProgress` feed a `loadProgress`
+  {phase,value,label,done,total} threaded to a determinate overlay ("N / M objects"; download 0–0.2,
+  apply 0.2–0.5, local 0.5–1.0); **(2) bulk-timing fix** — `endBulkSync` is now async and runs the
+  single coalesced snapshot **after** the server hydrate (was firing before → double 300k flush);
+  **(3) save upload** — version POST `timeout: 600_000` + `maxBody/maxContentLength: Infinity`, Vite
+  `/api` proxy `timeout`/`proxyTimeout: 600_000`, chunked `editor.slots` assembly, and the `!resp`
+  catch surfaces axios `code`/`message`. Verified: `make test-it` + FE build/lint clean. **T-060.1.1:** load partial pass @ ~360k. **T-060.1.2 (E1/E2/E3b):** `buildVersionBlob`, preparing, direct `:8080` bypass — code complete. **T-060.1.3 shipped:** @ 367k, `SaveDebugReport` captured **141,574,630 bytes** compiled, **`direct`** route, failure at **5,573,612 bytes** (~3.9%), `ERR_NETWORK` — failure fully diagnosed (not 256 MB cap, not proxy). **T-060.1.4 (mid-upload reset FIXED):** root cause was the **1 MB `GlobalBodyLimit` cap reaching the version route** (the skip not applying — most likely a **stale `go run` binary**; a clean build's `FullPath()` matches correctly). `http.MaxBytesReader` tripped at 1 MB and reset the socket mid-stream → browser `ERR_NETWORK` at ~5 MB buffered (TCP overshoot past the 1 MB read point = the locked `5,573,612`). Fixes: **`isMissionVersionPOST(c)`** in `bodylimit.go` keeps the `FullPath()` suffix match **and** adds a concrete-URL-path fallback (`/…/missions/<id>/versions`) so the 1 MB wrap can never silently apply; **production-like integration test** (`missions_bodylimit_integration_test.go` `setupITProd` mounts `GlobalBodyLimit` like `main.go` — the blind spot `setupIT` missed) asserts 2/3.5 MB → 201 and over-cap → 413 JSON, plus a `bodylimit_test.go` unit test; `useMissionEditor.ts` sets `phaseAtFailure='uploading'` on the first upload tick; repro `scripts/mission-version-upload-repro.sh`. **No body streaming needed** — `ShouldBindJSON` binds 135 MB in ~1.2 s and the route `BodyLimit` already maps over-cap → 413. **Verified:** curl **140 MB → 201** (clean `content_length`/`status=201` log), `make test-it` + FE build/lint clean. **Browser Save → 201** (restart `make api`) is the user's final check before the single **T-060** git tag (T-060..T-060.1.4).
 - T-059 **Mission Creator — bulk paste/delete at scale**. First slice of the
   **T-059..T-067 scale program** toward the **1M–10M editable-entity** north star. Pasting ~10k
   slots hard-froze the tab; three confirmed causes fixed (spec:
@@ -95,15 +131,14 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   leaf cap** (`OUTLINER_LEAF_CAP = 500`, exported from `EditorLayersSection`): a layer
   (`buildTree`) or ORBAT squad (`OrbatSection.buildOrbat`) over the cap renders a
   `"(N units/slots)"` count label with **no** per-slot leaf rows — rendering 10k+ DOM rows was
-  the dominant freeze (real virtualization is T-063). The conditional **chunked paste + progress**
+  the dominant freeze (real virtualization is **T-064**). The conditional **chunked paste + progress**
   and `bindings._bulkMode` (spec items d/e) were **not** needed after the batch fix — the single
   transact + existing one-flush-per-transaction coalescing meets the no-freeze bar; revisit only if
   a manual 10k paste still stalls. Slots only; no schema/compiler/backend change. Four real files
   (`ydoc.ts`, `MissionCreatorPage.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx`). Verified:
   frontend build + lint clean (10k no-freeze + ≥55 fps pan after = manual in-browser check).
   **Live validated (2026-06):** repeat **6k-object paste** loops smooth; **360k objects @ 100+ fps**
-  pan/zoom. **New blocker surfaced:** initial editor open with **10k+** objects is slow with no
-  loading indicator → **T-060** fast load + save.
+  pan/zoom. Load/save at scale deferred to **T-060** / **T-060.1** (see §Status T-060 bullet).
 - T-058 **Mission Creator — toolbelt entity count readout (OBJ total + SEL selected)**. Scale
   telemetry ahead of the T-059..T-067 scale program: the bottom toolbelt now shows **OBJ** =
   total placed slots and **SEL** = selected slot count, right of the X/Y/Z block (JetBrains Mono,
@@ -409,11 +444,9 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-059** bulk paste/delete **landed** (batch append +
-selection/outliner caps). **Validated:** **360k objects @ 100+ fps** pan; repeat **6k paste**
-smooth. **Active blocker:** **initial load** slow at **10k+**; **Save Version fails @ 360k** (API **1 MB** body cap + sync compile hang) → **T-060** (progress bars + **256 MB** version route + compile UX). Then **T-061..T-067**
-scale program toward **1M–10M** (typed-array IconLayer → incremental bindings → spatial index →
-virtualized outliner → LOD → worker → spatial chunks; see [MC ROADMAP §Map performance](Design_Docs/Mission_Creator_Architecture/ROADMAP.md#map-performance-contract--scale-program)). **Eden P1-07+** resumes at **T-068+**. Track A Phase 2 (map tiles, DEM) deferred until Eden P0–P2.
+**Not yet built / next (Mission Creator):** **T-060..T-060.1.4 code complete** (uncommitted); save mid-upload **FIXED** (1 MB global cap had reached the version route — hardened skip + production-like IT; curl 140 MB → 201). Load partial pass @ ~360k. **T-059** validated **360k @ 100+ fps** pan. **Pending:** user confirms **browser Save → 201** (restart `make api`), then single **T-060** git tag. **After T-060 tag:** **T-061..T-067**
+scale program toward **1M–10M** authored mission entities (typed-array IconLayer → incremental bindings → spatial index →
+virtualized outliner → LOD → worker → spatial chunks). **T-070+** (after Eden T-068+): optional **terrain base + sparse deltas** for millions of map props — dual-layer model; do **not** replace Y.Doc/ORBAT. See [t070_terrain_base_mission_layers.md](Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md). **Eden P1-07+** resumes at **T-068+**.
 - **Deferred until after Eden P0–P2:** Phase 2 **DEM / Z-axis** + aligned map tiles (A-01/A-03; blocked on hosted assets).
 - **During Eden P0:** thin **registry** (Phase 5 / B-01) as needed for real palette + markers/vehicles — not full Track C.
 - Phase 8 **ruler/LoS/viewshed** (needs DEM for LoS) — after heightmap phase.

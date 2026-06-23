@@ -120,7 +120,7 @@ Re-export: `selectSlotCount` alongside `selectSlotIcons`.
 | [`agent_execution.md`](agent_execution.md) | Decisions log row; ACTIVE SLICE → T-059 bulk paste |
 | [`ux_spec.md`](ux_spec.md) | Interaction table row for OBJ/SEL readout |
 | [`docs/TAGS.md`](../../docs/TAGS.md) | T-058 row → shipped |
-| [`docs/frontend/ROADMAP.md`](../../docs/frontend/ROADMAP.md) | Recently shipped row + recommended next → T-059 bulk paste |
+| [`docs/frontend/ROADMAP.md`](../../docs/frontend/ROADMAP.md) | Recently shipped row + recommended next → **T-060.1** acceptance |
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Element inventory row 5 + M3.13 milestone |
 
 **One T-058 commit** on `main`: code + doc finalize + CLAUDE §Status. Co-Authored-By when applicable.
@@ -131,4 +131,4 @@ Re-export: `selectSlotCount` alongside `selectSlotIcons`.
 
 **T-059 (bulk paste/delete):** fix O(n²) spreads, cap selection/outliner after bulk paste, optional chunked paste — **10k paste without hard freeze**. Use **OBJ** to confirm totals. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md).
 
-**T-060:** fast load + save. **T-061..T-067:** typed-array IconLayer, incremental bindings, spatial index, virtualized outliner, LOD, worker, spatial chunks. **Eden T-068+.**
+**T-060.1.4** Fix mid-upload @ ~135 MB — ✅ code complete (curl 140 MB → 201; browser Save → 201 pending before T-060 tag). **T-061..T-067:** mission-layer scale. **T-070+:** terrain base + sparse deltas ([`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md)). **Eden T-068+.**

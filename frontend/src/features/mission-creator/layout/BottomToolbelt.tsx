@@ -3,11 +3,12 @@
 // Ruler / Line-of-Sight / Place Objective are visible placeholders (their tools land
 // in Phase 8). Floating HudBar-style bar over the map.
 
-import { memo } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { Eye, MousePointer2, Ruler } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { selectSlotCount, useMapStore, type ToolId } from '@/features/tactical-map'
 import { cn } from '@/lib/utils'
+import { estimateCompiledBytes, formatBytes } from '../lib/missionSize'
 import { overlayPanel } from './overlay'
 
 interface Tool {
@@ -49,6 +50,14 @@ function BottomToolbeltInner() {
   const selectedCount = useMapStore((s) =>
     s.selection.kind === 'slot' ? s.selection.ids.length : 0,
   )
+
+  // SZ = estimated compiled server-save size (T-060.1.3). Debounced 500ms on slot-count change so
+  // we don't re-sample on every add/paste; the estimate samples slots (no full compile).
+  const [estBytes, setEstBytes] = useState(0)
+  useEffect(() => {
+    const id = setTimeout(() => setEstBytes(estimateCompiledBytes(useMapStore.getState())), 500)
+    return () => clearTimeout(id)
+  }, [totalSlots])
 
   const fmt = (n: number) => Math.round(n).toString().padStart(5, ' ')
 
@@ -112,6 +121,9 @@ function BottomToolbeltInner() {
         </span>
         <span>
           SEL<span className="ml-1 text-on-surface">{selectedCount}</span>
+        </span>
+        <span title="Estimated server save size">
+          SZ<span className="ml-1 text-on-surface">{estBytes > 0 ? formatBytes(estBytes) : '—'}</span>
         </span>
       </div>
     </div>

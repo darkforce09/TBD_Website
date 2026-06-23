@@ -195,9 +195,13 @@ export default function MissionCreatorPage() {
           />
         </div>
 
-        <div className="absolute bottom-0 left-0 top-12 w-64">
-          <LeftSidebar md={md} onActivateSlot={setAttributesId} />
-        </div>
+        {/* Outliner builds a tree over every slot — defer its mount until the doc is
+            ready so a 10k+ load doesn't pay for it mid-boot (T-060). */}
+        {editor.docStatus === 'ready' && (
+          <div className="absolute bottom-0 left-0 top-12 w-64">
+            <LeftSidebar md={md} onActivateSlot={setAttributesId} />
+          </div>
+        )}
 
         <div className="absolute bottom-0 right-0 top-12 w-80">
           <AssetPalette />
@@ -217,6 +221,42 @@ export default function MissionCreatorPage() {
 
         <FpsCounter />
       </div>
+
+      {/* Load gate: covers the shell until the local snapshot (and any server hydrate) is in
+          the store. Determinate bar (T-060.1) driven by loadProgress — download → apply →
+          reflect phases, each chunked so the % advances at scale. */}
+      {editor.docStatus === 'loading' && (
+        <div className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm">
+          <p className="text-label-md text-on-surface-variant">{editor.loadProgress.label}</p>
+          {(() => {
+            const lp = editor.loadProgress
+            // IndexedDB replay has no total → indeterminate sweep + count-only readout, so
+            // the bar shows motion instead of a frozen 0%. Every other phase is determinate.
+            const restoring = lp.phase === 'restoring' && lp.total == null
+            return (
+              <>
+                <div className="h-1 w-56 overflow-hidden rounded-full bg-white/10">
+                  {restoring ? (
+                    <div className="animate-mc-load-bar h-full w-1/3 rounded-full bg-primary" />
+                  ) : (
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-150"
+                      style={{ width: `${Math.round(lp.value * 100)}%` }}
+                    />
+                  )}
+                </div>
+                <p className="font-mono text-code-md tabular-nums text-outline">
+                  {restoring
+                    ? `${(lp.done ?? 0).toLocaleString()} objects restored`
+                    : lp.done != null && lp.total
+                      ? `${lp.done.toLocaleString()} / ${lp.total.toLocaleString()} objects`
+                      : `${Math.round(lp.value * 100)}%`}
+                </p>
+              </>
+            )
+          })()}
+        </div>
+      )}
 
       <AttributesModal
         md={md}

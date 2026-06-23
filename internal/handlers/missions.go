@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -352,6 +355,11 @@ type createVersionInput struct {
 
 // CreateVersion stores a new mission version and makes it current (author/admin).
 func (h *Handler) CreateVersion(c *gin.Context) {
+	// Observability for large-payload saves (T-060.1.3): log the declared body size on entry and
+	// the outcome + duration on exit, so a mid-upload failure is diagnosable from the server side.
+	start := time.Now()
+	log.Printf("CreateVersion: mission=%s content_length=%d", c.Param("id"), c.Request.ContentLength)
+
 	m, ok := h.loadMission(c)
 	if !ok {
 		return
@@ -362,6 +370,19 @@ func (h *Handler) CreateVersion(c *gin.Context) {
 	}
 	var in createVersionInput
 	if err := c.ShouldBindJSON(&in); err != nil {
+		// A compiled mission can be hundreds of MB; the version route allows it up to
+		// cfg.MissionVersionMaxBodyBytes. Over that, http.MaxBytesReader trips the read —
+		// surface a clear 413 instead of a generic "required fields" 400.
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) || strings.Contains(err.Error(), "request body too large") {
+			log.Printf("CreateVersion: mission=%s status=413 over_limit max_mb=%d dur=%s",
+				c.Param("id"), h.cfg.MissionVersionBodyLimit()>>20, time.Since(start))
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+				"error": fmt.Sprintf("payload too large (max %d MB)", h.cfg.MissionVersionBodyLimit()>>20),
+			})
+			return
+		}
+		log.Printf("CreateVersion: mission=%s status=400 bind_error=%v dur=%s", c.Param("id"), err, time.Since(start))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "semver and payload are required"})
 		return
 	}
@@ -385,6 +406,8 @@ func (h *Handler) CreateVersion(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not set current version"})
 		return
 	}
+	log.Printf("CreateVersion: mission=%s semver=%s payload_bytes=%d status=201 dur=%s",
+		m.ID, in.Semver, len(in.Payload), time.Since(start))
 	c.JSON(http.StatusCreated, version)
 }
 

@@ -1,20 +1,28 @@
 # T-060 — Fast load + save at scale (hydrate gate + progress UX + API body limit)
 
-**Status:** planned (T-060 — next slice)
-**Git tag on ship:** T-060
+**Status:** **T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4 code complete** (uncommitted). Load partial pass @ ~360k. Save mid-upload @ ~135 MB **FIXED (T-060.1.4)** — the 1 MB global body cap had been reaching the version route (hardened `GlobalBodyLimit` skip + production-like IT; **curl 140 MB → 201**). See [t060_1_scale_load_save_completion.md](t060_1_scale_load_save_completion.md) §T-060.1.4. **Tag T-060** after the user confirms browser Save → **201** (restart `make api` — the failing instance was stale).
+**Implementation note:** the 256 MB cap is **route-specific middleware** on the versions POST
+(`internal/middleware/bodylimit.go` `BodyLimit`), with `GlobalBodyLimit` opting that route out of the
+1 MB global cap — a route-level `MaxBytesReader` can't loosen a global one wrapped first. Load
+progress was **indeterminate** in T-060 code; **T-060.1** added determinate download/apply/local phases;
+**T-060.1.1** added **`restoring`** phase (rAF slot-count poll + `yieldToUi`). `compileMissionWithProgress`
+is added alongside the sync `compileMission` (export still uses the sync one).
+**Git tag on ship:** T-060 (single commit: T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + **T-060.1.4**)
 **Authority:** [MC ROADMAP](ROADMAP.md) §Map performance · [agent_execution.md](agent_execution.md) §ACTIVE SLICE
 
 **Prerequisites:** **T-057–T-059** shipped. **Validated (2026-06):** **360k objects @ 100+ fps** pan; repeat **6k paste** smooth.
 
-**Active blockers:**
+**Blocker status @ ~360k (2026-06 manual verify):**
 
-| # | Blocker | Symptom (observed @ 360k) |
-|---|---------|---------------------------|
-| 1 | **Load** — no gate/coalesce | Editor open **slow**; **no loading bar**; shell looks frozen |
-| 2 | **Save compile** — sync main thread | UI **hangs** on Save Version while `compileMission` runs |
-| 3 | **API body limit 1 MB** | After hang → generic **"Could not save version"** — payload never accepted |
-
-**Blocker 3 (confirmed in code):** [`cmd/api/main.go`](../../../cmd/api/main.go) sets `maxJSONBody = 1 << 20` (**1 MB**) on **all** JSON routes via `bodyLimit()` middleware. A **360k-slot** compiled payload is **tens–hundreds of MB**. PostgreSQL `jsonb` has no practical 1 MB limit — the **HTTP middleware** rejects the request before `CreateVersion` runs. Frontend fallback hides the real error (`useMissionEditor.ts` → `"Could not save version"` when `response.data.error` is missing).
+| # | Blocker | Status | Fix |
+|---|---------|--------|-----|
+| 1 | **IDB replay dead zone / stuck 0%** | ✅ **T-060.1.1** — restoring label within 1–2 s; 0→300k jump acceptable | Incremental counts → **T-062** |
+| 2 | **Load snapshot sync cost** | ✅ **T-060.1** — `docToSnapshotWithProgress` | — |
+| 3 | **Hydrate outside bulk window** | ✅ **T-060.1** — `endBulkSync` after hydrate | — |
+| 4 | **Save instant proxy drop @ 0%** | ✅ **T-060.1.2 E3b** | Auto direct `:8080` in dev |
+| 5 | **Save mid-upload ERR_NETWORK @ ~4% / ~135 MB** | ✅ **T-060.1.4** | 1 MB global cap had reached the version route — hardened `isMissionVersionPOST` skip + production-like IT; curl 140 MB → 201 |
+| ~~5~~ | ~~**API body limit 1 MB**~~ | ✅ **T-060** | — |
+| ~~6~~ | ~~**Save compile hang**~~ | ✅ **T-060** (`compileMissionWithProgress`) | — |
 
 ---
 
@@ -65,21 +73,24 @@ Make **load** and **Save Version** work at scale: visible **progress bars**, fas
 
 ---
 
-## Root cause — save (full chain)
+## Root cause — save (updated chain)
 
 ```mermaid
 flowchart TD
-  click[Save Version] --> compile[compileMission 360k — main thread hang]
-  compile --> post[axios POST huge JSON]
-  post --> limit[bodyLimit maxJSONBody 1MB]
-  limit --> fail[413 / truncated read / no error JSON]
-  fail --> ui["Could not save version" generic]
+  click[Save Version] --> compile[compileMissionWithProgress]
+  compile --> blob[buildVersionBlob preparing]
+  blob --> bypass{body greater than 1MB dev?}
+  bypass -->|yes E3b| direct[POST direct :8080]
+  bypass -->|no| proxy[Vite proxy]
+  direct --> upload[Uploading progress]
+  upload --> failMid["ERR_NETWORK mid-upload ~4%"]
+  failMid --> t614[T-060.1.4 fix mid-upload]
 ```
 
 Evidence:
-- [`cmd/api/main.go`](../../../cmd/api/main.go): `maxJSONBody = 1 << 20`
-- [`internal/handlers/missions.go`](../../../internal/handlers/missions.go): `CreateVersion` only reached if body parses
-- [`useMissionEditor.ts`](../../frontend/src/features/mission-creator/hooks/useMissionEditor.ts): catch fallback line 149
+- [`useMissionEditor.ts`](../../frontend/src/features/mission-creator/hooks/useMissionEditor.ts): E3b `versionUploadBaseURL`, Blob POST
+- [`compiler/compile.ts`](../../frontend/src/features/mission-creator/compiler/compile.ts): `buildVersionBlob`
+- [`internal/middleware/bodylimit.go`](../../../internal/middleware/bodylimit.go): 256 MB route cap
 
 ---
 
@@ -87,84 +98,27 @@ Evidence:
 
 | Decision | Choice |
 |----------|--------|
-| **Mission version body limit** | **256 MB** default for `POST /missions/:id/versions` only (configurable `MISSION_VERSION_MAX_BODY_BYTES` env, default `268435456`). Rationale: 1M slots × ~200 B/slot ≈ 200 MB headroom; Postgres `jsonb` fine at this scale for T-060 |
-| **Global JSON cap** | **Keep 1 MB** for all other routes via existing `bodyLimit()` |
-| **Implementation** | Route-specific middleware on the versions POST **or** skip global `bodyLimit` for that path and apply higher cap in a dedicated wrapper registered **before** handler (document in `cmd/api/main.go` + [`docs/backend/architecture.md`](../../../docs/backend/architecture.md)) |
-| **413 UX** | Backend explicit message; frontend maps to user-visible **"Mission too large for server limit (max 256 MB)"** or similar |
-| Load gate / progress | Unchanged from prior T-060 spec (`docStatus`, overlay, bar, bulk sync) |
-| Save compile | `compileMissionWithProgress` + chunked yields; worker deferred to T-066 if needed |
-| 1M ≤10 s ideal | Document baseline; incremental bindings (T-062) + worker (T-066) if benchmarks miss |
+| **Mission version body limit** | **256 MB** default for `POST /missions/:id/versions` only |
+| **Global JSON cap** | **Keep 1 MB** for all other routes |
+| **Load phases (execution order)** | restoring 0–15% → download 15–35% → apply 35–55% → local 55–100% |
+| **Save phases** | compiling → preparing → uploading |
+| **Batch upload** | **Not T-060** — needs T-062 incremental API |
+| **≤10 s @ 1M** | Out of scope — **T-062** / **T-066** |
 
 ---
 
-## Implementation specification
+## Shipped timings (manual — record on T-060 tag)
 
-### Backend (required — ship in T-060)
-
-**k. `cmd/api/main.go` + routing**
-
-```go
-const (
-  maxJSONBody           = 1 << 20          // 1 MB — default JSON routes
-  maxMissionVersionBody = 256 << 20        // 256 MB — POST .../missions/:id/versions only
-)
-```
-
-- Add `bodyLimitBytes(limit int64) gin.HandlerFunc` (or parameterize existing `bodyLimit`).
-- Register `POST /missions/:id/versions` with **256 MB** cap; keep global 1 MB on the rest.
-- Optional: read `MISSION_VERSION_MAX_BODY_BYTES` from config in `internal/config`.
-
-**l. `CreateVersion` error handling**
-
-- If `ShouldBindJSON` fails due to size: return **413** + clear `error` string (not generic 400).
-- Log payload size on 500 for ops debugging (dev only).
-
-**m. Integration test**
-
-- Extend [`missions_integration_test.go`](../../../internal/handlers/missions_integration_test.go): version POST still works; document that oversize behavior is middleware-level.
-
-### Frontend — load (a–e)
-
-Unchanged: `bindings.ts` bulk sync, `useMissionDoc` `docStatus`, `MissionLoadOverlay`, hydrate bulk wrap, optional sidebar defer.
-
-### Frontend — save (f–j)
-
-**f–j.** Progress state, `compileMissionWithProgress`, `saveVersion` phases, TopCommandStrip bar.
-
-**n. `useMissionEditor.saveVersion` — error surfacing**
-
-```ts
-// Map axios errors: 413 → payload too large; network → timeout message;
-// always prefer resp?.data?.error
-```
-
-**o. `TopCommandStrip`** — show progress bar + error text from (n).
+| Mission | Load wall time | Save wall time | Notes |
+|---------|----------------|----------------|-------|
+| ~360k (warm IDB) | ~30 s–1 min | curl 140 MB → **201** in ~1.2 s (server-side); browser pending | Mid-upload reset fixed (T-060.1.4) |
 
 ---
 
-## Verification
+## After T-060 (tag after the user's browser Save → 201)
 
-1. Build/lint/test as above.
-2. **360k** mission: load bar; Save Version **0.1.x** → **201**; GET version returns payload with slot count.
-3. Payload **>256 MB** (if testable): **413** with readable error in UI.
-4. Small mission (<500 slots): unchanged behavior.
-5. Record §Shipped timings: load ms, compile ms, upload ms @ 360k.
+**T-061..T-067:** mission-layer scale. **Eden T-068+.** **T-070+:** terrain base — [`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md).
 
----
+**Authority for acceptance slices:** [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md).
 
-## Documentation sync (same commit — T-060)
-
-| Doc | Update |
-|-----|--------|
-| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-060 includes API body limit fix |
-| [`ROADMAP.md`](ROADMAP.md) | T-060 row; scale ladder save row |
-| [`agent_execution.md`](agent_execution.md) | Decisions log: API 1 MB blocker + fix |
-| [`docs/backend/architecture.md`](../../../docs/backend/architecture.md) | §Request body limits + mission version exception |
-| [`feature_inventory.md`](feature_inventory.md) | TOP-SAVE-001 edge case; PERF-SAVE-001 |
-| [`mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | PERF-004 + API limit note |
-
----
-
-## After T-060
-
-**T-061:** typed-array IconLayer. **T-062:** incremental bindings. **T-066:** worker compile @ 1M. **Future:** gzip upload, blob storage if 256 MB insufficient. **Eden T-068+.**
+**T-060.1.4 (mid-upload fix) — code complete; browser Save → 201 pending.** Spec/prompt: [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md) §T-060.1.4.

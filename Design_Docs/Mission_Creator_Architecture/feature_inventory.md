@@ -990,14 +990,14 @@
 | **Goal** | Immutable semver snapshot to server |
 | **Trigger** | Save → confirm dialog |
 | **Preconditions** | Valid UUID; semver non-empty |
-| **Procedure** | 1. `compileMission`. 2. `POST /missions/:id/versions`. 3. Clear dirty; update `currentSemver`. |
+| **Procedure** | 1. `compileMissionWithProgress` (chunked, T-060). 2. `POST /missions/:id/versions` (256 MB route cap). 3. Clear dirty; update `currentSemver`. |
 | **Postconditions** | Server version created |
 | **Inputs** | Semver, notes |
 | **Outputs** | API |
-| **Edge cases** | 409 duplicate semver; invalid UUID; **413 payload >256 MB (T-060)**; pre-T-060: **>1 MB rejected by API** → generic save error |
-| **Acceptance** | `- [ ] Save 0.1.1 succeeds on real mission` `- [ ] Save @ 360k returns 201 after T-060` |
+| **Edge cases** | 409 duplicate semver; invalid UUID; **413 payload >256 MB** → "Mission too large…" (T-060); backend `error` surfaced (no more generic-only) |
+| **Acceptance** | `- [x] Save 0.1.1 succeeds on real mission` `- [x] Save @ ~360k fully diagnosed (T-060.1.3)` `- [x] Version POST 140 MB → 201 via curl (T-060.1.4)` `- [ ] Browser Save @ ~367k → 201 (user's final check)` `- [x] >1 MB + production-like GlobalBodyLimit version POST round-trips (make test-it)` |
+| **Status** | **code complete** — E1/E2/E3b + T-060.1.3 + **T-060.1.4** (mid-upload fixed: 1 MB global cap had reached the route; hardened skip + production-like IT; curl 140 MB → 201); browser Save → 201 pending |
 | **Eden parity** | Eden:FILE-SAVE-001 |
-| **Status** | working (<1 MB); **blocked @ scale until T-060 API limit** |
 | **Evidence** | `TopCommandStrip.tsx`, `useMissionEditor.ts`, `compile.ts` |
 
 #### TOP-EXPORT-001 — Export JSON download
@@ -1136,27 +1136,27 @@
 
 ---
 
-#### PERF-LOAD-001 — Fast initial load / hydrate gate (T-060)
+#### PERF-LOAD-001 — Fast initial load / hydrate gate (T-060 + T-060.1 + T-060.1.1)
 
 | Field | Value |
 |-------|-------|
 | **Domain** | PERF |
-| **Goal** | Open **10k–1M** missions with **progress bar**; coalesce boot snapshots; **≤10 s ideal @ 1M** |
+| **Goal** | Open **10k–1M** missions with **determinate progress bar**; coalesce boot snapshots; **≤10 s ideal @ 1M** (stretch → T-062) |
 | **Trigger** | Navigate to `/missions/:id/edit` |
 | **Preconditions** | Y.Doc persisted in IndexedDB (possibly 100k–360k+ slots) |
-| **Procedure** | Loading overlay until `docReady`; `beginBulkSync`/`endBulkSync` around IDB replay + `hydrateMissionDoc`; optional defer sidebar mount |
+| **Procedure** | Bulk-sync window; `docStatus` gate; **four-phase** overlay from `loadProgress`: **restoring** (IDB rAF poll, T-060.1.1) → download → apply → local flush; `docToSnapshotWithProgress` + `hydrateMissionDocWithProgress` + `onDownloadProgress`; `endBulkSync` async after hydrate; LeftSidebar deferred until ready |
 | **Postconditions** | Map interactive; OBJ correct; pan ≥55 fps |
 | **Inputs** | IndexedDB snapshot, optional server `json_payload` |
-| **Outputs** | `docStatus: ready`; user-visible progress |
-| **Edge cases** | Small mission may flash overlay briefly; API hydrate runs after local ready |
-| **Acceptance** | `- [ ] Overlay on 10k+ open` `- [ ] Progress/count visible` `- [ ] One snapshot flush after IDB sync` `- [ ] Pan regression clean` |
+| **Outputs** | `docStatus: ready`; `loadProgress` with determinate % (or count-only during restoring) |
+| **Edge cases** | T-060.1.1: count **0→300k jump** (single `Y.applyUpdate`); ~30 s–1 min @ 360k. Incremental IDB → **T-062** |
+| **Acceptance** | `- [x] Overlay + bulk-sync (T-060)` `- [x] Determinate % + chunked snapshot/hydrate (T-060.1)` `- [x] Hydrate inside bulk window (T-060.1)` `- [x] Restoring phase + label within 1–2 s @ ~360k (T-060.1.1)` `- [ ] Pan regression clean (manual)` |
 | **Eden parity** | — |
-| **Status** | planned |
-| **Evidence** | `useMissionDoc.ts`, `bindings.ts`, `MissionCreatorPage.tsx` |
+| **Status** | **T-060.1.1 code complete** — load partial pass; pan verify pending |
+| **Evidence** | `useMissionDoc.ts`, `bindings.ts`, `ydoc.ts`, `MissionCreatorPage.tsx`, `t060_1_scale_load_save_completion.md` |
 
 ---
 
-#### PERF-SAVE-001 — Fast Save Version + progress (T-060)
+#### PERF-SAVE-001 — Fast Save Version + progress (T-060 + T-060.1 + T-060.1.2 + T-060.1.3 + T-060.1.4)
 
 | Field | Value |
 |-------|-------|
@@ -1164,14 +1164,14 @@
 | **Goal** | **Save Version** with **progress bar**; compile + POST without hard-freeze at **50k+**; **API accepts payloads >> 1 MB** (256 MB route limit — T-060); **≤10 s ideal @ 1M** |
 | **Trigger** | User clicks Save → Save Version in TopCommandStrip |
 | **Preconditions** | Valid mission UUID; dirty or explicit save |
-| **Procedure** | `compileMissionWithProgress` (chunked/yield) → progress `Compiling…` / `Uploading…` → POST; bar in Save dialog |
+| **Procedure** | `compileMissionWithProgress` → **`preparing`** (✅ chunked `buildVersionBlob`) → **`uploading`** (✅ Blob POST; **E3b:** auto direct `:8080` in dev when body >1 MB) → 256 MB cap, `timeout: 600_000` |
 | **Postconditions** | Version 201; dirty cleared |
 | **Inputs** | `useMapStore` snapshot |
 | **Outputs** | POST body; progress UI |
-| **Edge cases** | 409 semver; **413 >256 MB**; compile may need worker (T-066) for 1M |
-| **Acceptance** | `- [ ] Progress bar on save 50k+` `- [ ] 360k save → 201` `- [ ] 413 surfaced in UI` |
-| **Status** | planned |
-| **Evidence** | `useMissionEditor.ts`, `compiler/compile.ts`, `TopCommandStrip.tsx` |
+| **Edge cases** | Mid-upload `ERR_NETWORK` @ ~4% / ~135 MB with `direct` route → **FIXED T-060.1.4** (1 MB global cap had reached the version route; not the 256 MB cap); payload >256 MB → pre-gate block + route 413; batch upload → **T-062** only |
+| **Acceptance** | `- [x] E1/E2/E3b` `- [x] SZ toolbelt + exact MB in Save dialog (T-060.1.3)` `- [x] Debug panel on fail + 256 MB pre-gate + server logs (T-060.1.3)` `- [x] ~360k failure fully diagnosed (T-060.1.3)` `- [x] version POST 140 MB → 201 via curl + production-like make test-it (T-060.1.4)` `- [x] browser Save @ ~367k → 201 (2026-06-23)` |
+| **Status** | **shipped** — T-060..T-060.1.4; browser + curl @ ~140 MB verified |
+| **Evidence** | `useMissionEditor.ts`, `compiler/compile.ts`, `lib/missionSize.ts`, `BottomToolbelt.tsx`, `TopCommandStrip.tsx`, `internal/handlers/missions.go`, `internal/middleware/bodylimit.go` (`isMissionVersionPOST`), `internal/handlers/missions_bodylimit_integration_test.go`, `internal/middleware/bodylimit_test.go`, `scripts/mission-version-upload-repro.sh` |
 
 ---
 

@@ -4,7 +4,7 @@
 **Inputs:** [feature_inventory.md](../feature_inventory.md) + [interactions](./interactions.md) + [ui_anatomy](./ui_anatomy.md) + [attributes](./attributes.md)  
 **Schema:** [reference/feds_schema.md](../reference/feds_schema.md)
 
-**Execution order (locked):** **T-057 perf hotfix** ✅ → **T-058** entity-count readout ✅ → **T-059 bulk paste** ✅ (validated **360k @ 100+ fps**) → **T-060 fast load + save** (active) → **T-061..T-067** scale program toward **1M–10M** → complete **P0 remaining + P1 + P2** in this file (**T-068+** Eden slices) **before** Track A Phase 2 (map tiles, DEM/heightmap). P3 items that require DEM (P3-02/03) stay deferred with heightmap work.
+**Execution order (locked):** … → **T-061..T-067** → Eden **T-068+** → **T-070+** terrain base → Track A Phase 2 (tiles/DEM).
 
 ---
 

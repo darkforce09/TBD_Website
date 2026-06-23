@@ -508,7 +508,23 @@ Authorization helpers: `RequireAuth`, `RequireRole(mission_maker)`, `RequireRole
 
 ### Request body limits
 
-Global middleware in [`cmd/api/main.go`](../../cmd/api/main.go) caps JSON bodies at **1 MB** (`maxJSONBody = 1 << 20`) for DoS protection. **Exception (T-060):** `POST /missions/:id/versions` (Save Version from the 2D editor) uses a **separate higher limit** — default **256 MB** (`MISSION_VERSION_MAX_BODY_BYTES`) — because compiled `json_payload` for large missions (100k–1M+ slot entities) exceeds 1 MB by orders of magnitude. PostgreSQL `jsonb` on `mission_versions` has no 1 MB constraint; the prior bottleneck was HTTP-only. Oversize requests return **413** with `{"error":"payload too large (max … MB)"}`. All other JSON routes remain at 1 MB.
+The limiter lives in [`internal/middleware/bodylimit.go`](../../internal/middleware/bodylimit.go):
+
+- **`GlobalBodyLimit(MaxJSONBody)`** (in the `cmd/api/main.go` `r.Use` chain) caps **all** JSON bodies at **1 MB** (`MaxJSONBody = 1 << 20`); multipart bumped to **6 MB** (`MaxMultipartBody`, per-file 5 MB enforced in-handler). It **skips** the mission-version POST via **`isMissionVersionPOST(c)`** — a `c.FullPath()` suffix match on `MissionVersionRoute` **plus** a concrete-URL-path fallback (`/…/missions/<id>/versions`) added in **T-060.1.4**. The skip is mandatory because a global `http.MaxBytesReader(1 MB)` wrapped first cannot be loosened by a later route-level limiter (the innermost limit wins) — if the 1 MB cap reaches this route, a 100MB+ save trips `MaxBytesReader` at 1 MB and the socket is **reset mid-upload**, which the browser surfaces as `ERR_NETWORK` (see Dev note below).
+- **`POST /missions/:id/versions`** is registered with its own **`BodyLimit(cfg.MissionVersionBodyLimit())`** — **256 MB** default. Compiled `json_payload` for large missions (100k–360k+ slot entities) is tens–hundreds of MB; PostgreSQL `jsonb` on `mission_versions` handles it. Override with env **`MISSION_VERSION_MAX_BODY_BYTES`** (`Config.MissionVersionBodyLimit()` falls back to 256 MB when unset, e.g. a config built without `Load()`).
+- **Over the cap → 413** `{"error":"payload too large (max … MB)"}` from `CreateVersion` (detected via `errors.As(err, *http.MaxBytesError)`), not a silent connection error or generic 400. The frontend `saveVersion` maps 413/409/backend `error` to a user-visible message.
+
+(T-060.)
+
+**Dev note (T-060.1 / T-060.1.2 / T-060.1.3 / T-060.1.4):** At ~300k slots the compiled POST body is tens–hundreds of MB.
+
+1. **Vite dev proxy** — drops POSTs >~2 MB → instant `ERR_NETWORK` @ 0%. **Fixed (T-060.1.2 E3b):** auto-bypass to `:8080` when body >1 MB in dev.
+2. **Sync stringify** — **Fixed (T-060.1.2 E1/E2):** `buildVersionBlob` + `preparing`.
+3. **Mid-upload failure — FIXED (T-060.1.4).** @ 367k / **~135 MB** compiled, upload reached ~4% (**5.5 MB loaded**) then `ERR_NETWORK` with **`direct`** route. **Root cause:** the **1 MB `GlobalBodyLimit` cap was reaching the version route** (the skip not applying — most likely a **stale `go run ./cmd/api` binary** — `go run` does not hot-reload, and a clean build's `c.FullPath()` matches the route correctly). `http.MaxBytesReader` tripped at 1 MB and **reset the connection mid-stream**; the browser saw `ERR_NETWORK` at ~5 MB buffered (TCP send-buffer overshoot past the 1 MB server read point = the observed 5,573,612 bytes). The 135 MB body was never near the 256 MB route cap. **Fixes:** (a) `isMissionVersionPOST(c)` adds a URL-path fallback so the 1 MB wrap can never silently apply; (b) a **production-like integration test** (`missions_bodylimit_integration_test.go`, `setupITProd`) mounts `GlobalBodyLimit` like `main.go` — closing the blind spot that `setupIT()` registered routes on a bare router and never exercised the global cap. **Proven:** curl `--data-binary` **140 MB → 201** (clean `content_length`/`status=201`); a 5 MB body over a pinned 4 MB route cap → clean **413 JSON**. No body streaming needed (`ShouldBindJSON` binds 135 MB in ~1.2 s; the route `BodyLimit` already maps over-cap → 413). Batch upload → **T-062** only.
+
+**Symptom cheat sheet:** `ERR_NETWORK` @ **0%** → proxy. @ **1%+** with `uploadRoute: direct` → 1 MB global cap reaching the route (T-060.1.4 — verify `GlobalBodyLimit` skip; **restart a stale `make api`**). `413` → body over the 256 MB route cap. `409` → semver clash. Repro: [`scripts/mission-version-upload-repro.sh`](../../scripts/mission-version-upload-repro.sh).
+
+The 256 MB route cap (`BodyLimit`) is correct; `ERR_NETWORK` is not a 413.
 
 ### 2.1 Auth & Identity
 
@@ -551,7 +567,7 @@ Global middleware in [`cmd/api/main.go`](../../cmd/api/main.go) caps JSON bodies
 | POST | `/missions` | mission_maker | Library create dialog → create `draft` + initial version |
 | GET | `/missions/:id` | user | Overview: briefing, armory, ORBAT template, version, command actions |
 | PATCH | `/missions/:id` | author/admin | Update metadata |
-| POST | `/missions/:id/versions` | author/admin | Save new `json_payload` version from 2D editor (**body limit 256 MB default — T-060**; global JSON cap elsewhere 1 MB) |
+| POST | `/missions/:id/versions` | author/admin | Save new `json_payload` version from 2D editor (**256 MB** route-specific cap, T-060 — global JSON cap elsewhere stays 1 MB; **413** over the cap) |
 | GET | `/missions/:id/versions/:vid` | user | Fetch specific version payload |
 | GET | `/missions/:id/export` | mission_maker | Export strict `mission.json` (Mission Injection) |
 | POST | `/missions/:id/submit` | author | Move `draft → pending_approval` |
