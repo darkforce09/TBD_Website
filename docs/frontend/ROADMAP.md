@@ -36,7 +36,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
 | `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-060 shipped; active T-061..T-067 scale program |
+| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-062..T-067 scale program active; Eden T-068+ after |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
 | `/events/:id/missions/:emid/orbat` | [event-hub.md § ORBAT deep-link](../../frontend/docs/pages/event-hub.md) | |
@@ -74,7 +74,8 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 | Item | Spec | Notes |
 |------|------|-------|
-| **T-060 scale load/save (shipped `b1fd25a`)** | [t060_1](../../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) · [t060](../../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md) | Four-phase load; Save @ ~367k/~142 MB → 201 (browser + curl); mid-upload fix T-060.1.4 |
+| **T-061 drag-move @ 360k (shipped — good enough)** | [t061_drag_move_hotfix.md](../../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) | T-061.0 motion ~60 fps + T-061.0.1 `slotIconCache` + slot fast path; mega opts deferred |
+| **T-060 scale load/save (shipped `b1fd25a`)** | [t060_1](../../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) · [t060](../../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md) | Four-phase load; Save @ ~367k/~142 MB → 201 |
 | **T-059 Bulk paste at scale** | [t059_bulk_paste_operations.md](../../Design_Docs/Mission_Creator_Architecture/t059_bulk_paste_operations.md) | Batch O(n) `pasteSlots`; selection cap 500; outliner leaf cap 500 (Editor Layers + ORBAT). **Validated: 360k @ 100+ fps** pan; 6k paste loops smooth |
 | **T-058 Toolbelt OBJ/SEL counts** | [t058_entity_count_readout.md](../../Design_Docs/Mission_Creator_Architecture/t058_entity_count_readout.md) | Bottom toolbelt shows OBJ (total placed slots, memoized `selectSlotCount`) + SEL (selected count); mono, right of X/Y/Z; subscribes in the memoized toolbelt so no cursor-move re-render; scale telemetry |
 | **T-057 Map perf hotfix** | [t057_map_performance_hotfix.md](../../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) | ≥55 fps pan/zoom @ 200+ slots: cursor → transient store (rAF), drop Deck `onHover` (no per-move pick), pan rAF-coalesce, `React.memo` panels; interactions unchanged |
@@ -89,7 +90,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 ## Recommended next work
 
-1. **Mission Creator — T-061..T-067 scale program** (T-060 shipped) → Eden **T-068+** → **T-070+** terrain base ([spec](../../Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md)).
+1. **Mission Creator — T-062 incremental bindings** (MC [ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance) → **T-063..T-067** → Eden **T-068+** → **T-070+** terrain base. Mega optimizations deferred (MC ROADMAP §Deferred mega optimizations).
 2. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — **deferred until Eden P0–P2**
 3. **FD-008** — wiki markdown (low risk, high UX)
 4. **FD-001** — when backend exposes server/RCON endpoints

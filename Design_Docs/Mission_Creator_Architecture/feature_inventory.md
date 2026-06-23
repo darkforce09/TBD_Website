@@ -1175,6 +1175,26 @@
 
 ---
 
+#### PERF-DRAG-001 — Drag-move preview @ 360k (T-061)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | **Drag-move** of selected slots acceptable @ ~360k (motion, pickup, release); preview transient (Y.Doc commit on pointer-up) |
+| **Trigger** | Left-drag a selected slot icon (or selection) on the map |
+| **Preconditions** | T-057 pan/cursor path shipped; mission has many slots (stress @ 360k) |
+| **Procedure** | T-061.0: dual IconLayer + split drag state + rAF delta. T-061.0.1: `slotIconCache` O(k) + bindings slot fast path (`fastSlotPatchIds`) |
+| **Postconditions** | Icons follow pointer smoothly; commit on release; undo reverts |
+| **Inputs** | Pointer gesture in `useSelectTool` |
+| **Outputs** | Transient store preview; Y.Doc update on release |
+| **Edge cases** | 1 vs N selected; asset palette drop lag → **T-062** (full incremental bindings; single-slot add may hit T-061.0.1 fast path). Release: possible single dropped frame (two cache bumps) — **deferred** |
+| **Acceptance** | `- [x] Drag motion 1 slot @ 360k ≥55 fps` `- [x] Drag motion ~10 selected @ 360k ≥55 fps` `- [x] Pickup/release good enough (not perfect)` `- [x] build + lint clean` `- [ ] Full regression sweep documented` |
+| **Eden parity** | Eden:XFORM-MOVE-001 |
+| **Status** | **shipped (good enough)** — spec [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md) |
+| **Evidence** | `slotIconCache.ts`, `useMapStore.ts`, `bindings.ts`, `useIconLayer.ts`, `useSelectTool.ts`, `selectors.ts`, `TacticalMap.tsx` |
+
+---
+
 ## ATTR — Attributes & settings
 
 #### ATTR-MODAL-001 — Attributes dialog shell

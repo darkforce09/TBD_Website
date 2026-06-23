@@ -79,10 +79,18 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest: **T-060 shipped** — 2026-06-23; load partial pass @ ~360k; Save @ ~367k/~142 MB → **201** browser + curl verified)
+## Status (latest: **T-061 shipped (good enough)** — 2026-06; drag @ ~360k motion ~60 fps; boundaries via `slotIconCache`)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-061 **Mission Creator — drag-move performance @ 360k (good enough)**. T-061.0: dual
+  IconLayer + split `dragPreviewIds`/`dragPreviewDelta` + rAF-coalesced delta — sustained
+  ~60 fps while dragging @ ~360k (was 5–10 fps). T-061.0.1: `slotIconCache` O(k) exclude/restore
+  + bindings `fastSlotPatchIds` slot-position fast path — pickup/release materially improved
+  (no ~10 fps release collapse). Build + lint clean. **Product call:** good enough for Eden-blocking
+  work; mega optimizations (T-061.1 typed-array, release repack collapse, T-066 worker, T-070+
+  terrain) deferred — see MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md)
+  §Deferred mega optimizations. Spec: [`t061_drag_move_hotfix.md`](Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md).
 - T-060 **Mission Creator — fast load + save at scale (API body limit + progress UX)**. Unblocks
   large-mission save/load in the T-059..T-067 scale program (spec:
   `Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md`). Three blockers fixed:
@@ -444,9 +452,11 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-060 shipped** (`b1fd25a`, 2026-06-23) — load partial pass @ ~360k; **Save @ ~367k / ~142 MB → 201** (browser + curl). **Active: T-061..T-067**
-scale program toward **1M–10M** authored mission entities (typed-array IconLayer → incremental bindings → spatial index →
-virtualized outliner → LOD → worker → spatial chunks). **T-070+** (after Eden T-068+): optional **terrain base + sparse deltas** for millions of map props — dual-layer model; do **not** replace Y.Doc/ORBAT. See [t070_terrain_base_mission_layers.md](Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md). **Eden P1-07+** resumes at **T-068+**.
+**Not yet built / next (Mission Creator):** **T-061 shipped (good enough).** **Active: T-062..T-067**
+scale program toward **1M–10M** authored mission entities (full incremental bindings → spatial index →
+virtualized outliner → LOD → worker → spatial chunks). Mega render/bindings optimizations **deferred**
+— MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations.
+**T-070+** (after Eden T-068+): optional **terrain base + sparse deltas** for millions of map props — dual-layer model; do **not** replace Y.Doc/ORBAT. See [t070_terrain_base_mission_layers.md](Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md). **Eden P1-07+** resumes at **T-068+**.
 - **Deferred until after Eden P0–P2:** Phase 2 **DEM / Z-axis** + aligned map tiles (A-01/A-03; blocked on hosted assets).
 - **During Eden P0:** thin **registry** (Phase 5 / B-01) as needed for real palette + markers/vehicles — not full Track C.
 - Phase 8 **ruler/LoS/viewshed** (needs DEM for LoS) — after heightmap phase.

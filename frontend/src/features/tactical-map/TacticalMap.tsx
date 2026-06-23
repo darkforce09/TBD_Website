@@ -11,7 +11,7 @@ import type { PickingInfo } from '@deck.gl/core'
 import { getTerrain } from './coords/terrains'
 import { useOrthographicView } from './view/useOrthographicView'
 import { useBaseMapLayer } from './layers/useBaseMapLayer'
-import { useIconLayer } from './layers/useIconLayer'
+import { useIconLayer, useDragIconLayer } from './layers/useIconLayer'
 import { useSelectionLayer } from './layers/useSelectionLayer'
 import { useSelectTool } from './tools/useSelectTool'
 import { MapContextProvider, createMapContextValue } from './context/MapContext'
@@ -34,6 +34,7 @@ function TacticalMapInner({
     useOrthographicView(terrain)
   const baseMap = useBaseMapLayer(terrain)
   const iconLayer = useIconLayer()
+  const dragIconLayer = useDragIconLayer()
   const selectionLayer = useSelectionLayer()
   const setSelection = useMapStore((s) => s.setSelection)
   // Drop zone + pointer-gesture host: Deck's controller ignores HTML5 drag/drop and
@@ -231,7 +232,7 @@ function TacticalMapInner({
           }
           // dragPan off: left-drag is select/move, middle/right-drag pans (useSelectTool).
           controller={{ dragPan: false, doubleClickZoom: false }}
-          layers={[...(showGrid ? [baseMap] : []), iconLayer, selectionLayer]}
+          layers={[...(showGrid ? [baseMap] : []), iconLayer, dragIconLayer, selectionLayer]}
           onClick={onClick}
           // No onHover: cursor coords come from our own rAF unproject (emitCursor) so Deck
           // doesn't run a per-move pick pass. getCursor is constant for the same reason

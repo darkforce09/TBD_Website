@@ -4,7 +4,6 @@
 // (and thus the layer) when an unrelated slice mutates.
 
 import type { Faction, ID, Selection, Slot, Squad } from './schema'
-import type { DragState } from './useMapStore'
 
 export interface SlotIcon {
   id: ID
@@ -63,21 +62,48 @@ export const selectSlotCount = memo1(
   (slotsById: Record<ID, Slot>): number => Object.keys(slotsById).length,
 )
 
-// Selected ids drive the highlight; a live `drag` offsets the dragged icons so the move
-// previews without touching the Y.Doc (Phase 7b).
-export const selectSlotIcons = memo3(
-  (slotsById: Record<ID, Slot>, selection: Selection, drag: DragState | null): SlotIcon[] => {
+// Base map icons (T-061): every slot EXCEPT the ones currently being drag-previewed.
+// `excludeIds` only changes at drag start/end, so this O(n) scan over ~360k slots does
+// NOT re-run per frame during a move — the dragged icons render in the cheap overlay
+// layer (selectDragOverlayIcons) instead. Selected ids drive the highlight.
+export const selectSlotIconsBase = memo3(
+  (slotsById: Record<ID, Slot>, selection: Selection, excludeIds: Set<ID> | null): SlotIcon[] => {
     const selected = selection.kind !== 'none' ? new Set(selection.ids) : null
-    const dragging = drag ? new Set(drag.ids) : null
-    return Object.values(slotsById).map((s) => {
-      const isDragging = dragging?.has(s.id) ?? false
-      return {
+    const out: SlotIcon[] = []
+    for (const s of Object.values(slotsById)) {
+      if (excludeIds?.has(s.id)) continue
+      out.push({
         id: s.id,
-        x: s.position.x + (isDragging ? drag!.dx : 0),
-        y: s.position.y + (isDragging ? drag!.dy : 0),
+        x: s.position.x,
+        y: s.position.y,
         selected: selected?.has(s.id) ?? false,
-      }
-    })
+      })
+    }
+    return out
+  },
+)
+
+// Drag-preview overlay (T-061): only the dragged ids, offset by the live world delta.
+// O(k) in the selection size — the per-frame path during a move — never O(total slots).
+export const selectDragOverlayIcons = memo3(
+  (
+    slotsById: Record<ID, Slot>,
+    ids: ID[] | null,
+    delta: { dx: number; dy: number } | null,
+  ): SlotIcon[] => {
+    if (!ids?.length || !delta) return []
+    const out: SlotIcon[] = []
+    for (const id of ids) {
+      const s = slotsById[id]
+      if (!s) continue
+      out.push({
+        id: s.id,
+        x: s.position.x + delta.dx,
+        y: s.position.y + delta.dy,
+        selected: true,
+      })
+    }
+    return out
   },
 )
 

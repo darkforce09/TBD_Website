@@ -3,6 +3,7 @@
 // into a single store update via queueMicrotask → push a plain snapshot. Returns an
 // unbind fn. y-indexeddb durability is wired by the wrapper (useMissionDoc), not here.
 
+import type * as Y from 'yjs'
 import type {
   EditorLayer,
   Faction,
@@ -19,6 +20,38 @@ import type {
 import { trackedTypes, type MissionDoc } from './ydoc'
 import { useMapStore, type MapSnapshot } from './useMapStore'
 import { yieldToUi } from './yieldToUi'
+
+/** Largest changed-slot count the incremental fast path will handle; above this the full
+ *  snapshot is cheaper / safer. Drag-move + single-slot edits sit far under this. */
+const FAST_PATCH_CAP = 512
+
+/** Decide whether a transaction is a pure "existing slots' positions/fields changed" edit
+ *  that the O(k) fast path can apply, and if so return the changed slot ids. Returns null
+ *  for anything structural or multi-map (add/delete/paste/hydrate) → caller does a full
+ *  snapshot. Eligibility reads the WHOLE transaction (`txn.changed`) so a per-subtree
+ *  observeDeep firing can't mistake a multi-map txn for a slot-only one; the ids come from
+ *  this firing's `events` (paths relative to the slots map). */
+function fastSlotPatchIds(md: MissionDoc, events: Y.YEvent<Y.AbstractType<unknown>>[], txn: Y.Transaction): ID[] | null {
+  const slotsMap = md.entities.slots as unknown as Y.AbstractType<unknown>
+  // Whole-transaction eligibility: every changed type must be a slot's own child map.
+  for (const type of txn.changed.keys()) {
+    const t = type as unknown as Y.AbstractType<unknown>
+    if (t === slotsMap) return null // structural slots add/delete
+    if (t.parent !== slotsMap) return null // some other map (or its child) changed
+  }
+  if (txn.changed.size === 0) return null
+  // Collect changed slot ids from this firing's events (path is relative to the slots map).
+  const ids: ID[] = []
+  const seen = new Set<ID>()
+  for (const e of events) {
+    const id = e.path[0]
+    if (typeof id !== 'string' || seen.has(id)) continue
+    seen.add(id)
+    ids.push(id)
+    if (ids.length > FAST_PATCH_CAP) return null
+  }
+  return ids.length ? ids : null
+}
 
 export function docToSnapshot(md: MissionDoc): MapSnapshot {
   const e = md.entities
@@ -111,6 +144,7 @@ export function bindStoreToDoc(md: MissionDoc): () => void {
   const maps = trackedTypes(md)
 
   let scheduled = false
+  let lastFastTxn: Y.Transaction | null = null
   const flush = () => {
     scheduled = false
     useMapStore.getState()._applySnapshot(docToSnapshot(md))
@@ -120,13 +154,37 @@ export function bindStoreToDoc(md: MissionDoc): () => void {
   }
   activeFlush = flush
   activeBulkFlush = bulkFlush
-  const observer = () => {
+  const observer = (events: Y.YEvent<Y.AbstractType<unknown>>[], txn: Y.Transaction) => {
     // Inside a bulk window, just mark dirty — endBulkSync does the single flush.
     if (bulkDepth > 0) {
       bulkPending = true
       return
     }
+    // A full flush already queued for this microtask wins — don't also fast-patch.
     if (scheduled) return
+    // O(k) fast path: pure slot position/field edits (drag-move, updateSlot) patch only the
+    // changed slots instead of re-deriving the whole 360k snapshot. Anything ambiguous or
+    // structural falls through to the full snapshot — never wrong state (T-061.0.1).
+    try {
+      if (txn !== lastFastTxn) {
+        const ids = fastSlotPatchIds(md, events, txn)
+        if (ids) {
+          lastFastTxn = txn
+          const patches: Record<ID, Slot> = {}
+          for (const id of ids) {
+            const slot = md.entities.slots.get(id)
+            if (slot) patches[id] = slot.toJSON() as Slot
+          }
+          useMapStore.getState()._patchSlots(patches)
+          return
+        }
+      } else {
+        // Same txn already fast-patched in a prior subtree firing — done.
+        return
+      }
+    } catch {
+      // Fall through to the safe full snapshot on any parsing surprise.
+    }
     scheduled = true
     queueMicrotask(flush)
   }

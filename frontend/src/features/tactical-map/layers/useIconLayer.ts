@@ -7,7 +7,8 @@ import { useMemo } from 'react'
 import { IconLayer } from '@deck.gl/layers'
 import { COORDINATE_SYSTEM } from '@deck.gl/core'
 import { useMapStore } from '../state/useMapStore'
-import { selectSlotIcons, type SlotIcon } from '../state/selectors'
+import { getBaseIcons } from '../state/slotIconCache'
+import { selectDragOverlayIcons, type SlotIcon } from '../state/selectors'
 
 const ICON_SIZE = 64
 const PRIMARY: [number, number, number, number] = [173, 198, 255, 255] // Aegis primary
@@ -36,14 +37,28 @@ function getMarkerIcon(): string {
   return markerUrl
 }
 
+const ICON_MAPPING = {
+  marker: {
+    x: 0,
+    y: 0,
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    anchorX: ICON_SIZE / 2,
+    anchorY: ICON_SIZE / 2,
+    mask: true,
+  },
+}
+
+// Base map icons (T-061.0.1): the persistent slotIconCache is the source of truth. The cache
+// holds the dragged ids out (exclude) during a move — those render in useDragIconLayer — and
+// patches positions / selection flags in place, so the boundaries are O(k), never an O(n)
+// re-derive from slotsById. The layer subscribes only `iconCacheVersion`: it bumps at drag
+// pickup/release, selection change and snapshot replace — NOT per drag frame (motion) and NOT
+// on pan, so neither regresses. `getBaseIcons()` hands a fresh array identity per version so
+// Deck re-packs, while reusing the SlotIcon objects.
 export function useIconLayer(): IconLayer<SlotIcon> {
-  const slotsById = useMapStore((s) => s.slotsById)
-  const selection = useMapStore((s) => s.selection)
-  const drag = useMapStore((s) => s.drag)
-  const icons = selectSlotIcons(slotsById, selection, drag)
-  // Stable keys so size/colour/position refresh on selection or live drag changes.
-  const selectionKey = selection.ids.join(',')
-  const dragKey = drag ? `${drag.ids.join(',')}:${drag.dx},${drag.dy}` : ''
+  const iconCacheVersion = useMapStore((s) => s.iconCacheVersion)
+  const icons = getBaseIcons()
 
   return useMemo(
     () =>
@@ -53,28 +68,50 @@ export function useIconLayer(): IconLayer<SlotIcon> {
         data: icons,
         getIcon: () => 'marker',
         iconAtlas: getMarkerIcon(),
-        iconMapping: {
-          marker: {
-            x: 0,
-            y: 0,
-            width: ICON_SIZE,
-            height: ICON_SIZE,
-            anchorX: ICON_SIZE / 2,
-            anchorY: ICON_SIZE / 2,
-            mask: true,
-          },
-        },
+        iconMapping: ICON_MAPPING,
         getPosition: (d) => [d.x, d.y],
         getSize: (d) => (d.selected ? 28 : 20),
         getColor: (d) => (d.selected ? SELECTED : PRIMARY),
         sizeUnits: 'pixels',
         pickable: true,
         updateTriggers: {
-          getPosition: dragKey,
-          getSize: selectionKey,
-          getColor: selectionKey,
+          getPosition: iconCacheVersion,
+          getSize: iconCacheVersion,
+          getColor: iconCacheVersion,
         },
       }),
-    [icons, selectionKey, dragKey],
+    [icons, iconCacheVersion],
   )
+}
+
+// Drag-preview overlay (T-061): only the dragged ids, offset by the live world delta.
+// Typically 1–500 icons, so rebuilding its positions every frame is cheap. Not pickable —
+// the gesture is already captured; click/marquee picking still targets 'slot-icons'.
+// Returns null when no drag is active.
+export function useDragIconLayer(): IconLayer<SlotIcon> | null {
+  const slotsById = useMapStore((s) => s.slotsById)
+  const dragPreviewIds = useMapStore((s) => s.dragPreviewIds)
+  const dragPreviewDelta = useMapStore((s) => s.dragPreviewDelta)
+  const icons = selectDragOverlayIcons(slotsById, dragPreviewIds, dragPreviewDelta)
+  const posKey = dragPreviewDelta ? `${dragPreviewDelta.dx},${dragPreviewDelta.dy}` : ''
+
+  return useMemo(() => {
+    if (!icons.length) return null
+    return new IconLayer<SlotIcon>({
+      id: 'slot-icons-drag',
+      coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+      data: icons,
+      getIcon: () => 'marker',
+      iconAtlas: getMarkerIcon(),
+      iconMapping: ICON_MAPPING,
+      getPosition: (d) => [d.x, d.y],
+      getSize: 28,
+      getColor: SELECTED,
+      sizeUnits: 'pixels',
+      pickable: false,
+      updateTriggers: {
+        getPosition: posKey,
+      },
+    })
+  }, [icons, posKey])
 }

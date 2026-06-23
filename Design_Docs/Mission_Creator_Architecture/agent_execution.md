@@ -1,6 +1,6 @@
 ---
 name: Mission Creator — Agent Execution Plan
-overview: "Self-contained agent handoff for Mission Creator. T-057–T-060 shipped (commit b1fd25a). Active: T-061..T-067 scale program. Eden T-068+."
+overview: "Self-contained agent handoff for Mission Creator. T-057–T-061 shipped (T-061 good enough @ 360k drag). Active: T-062..T-067. Eden T-068+."
 todos:
   - id: step-0-publish
     content: "STEP 0: Plan published to Design_Docs/Mission_Creator_Architecture/agent_execution.md"
@@ -24,7 +24,7 @@ todos:
     content: "PHASE 9: Compiler + Export + useMissionEditor autosave (only after 3.5, 7b, 7a complete)"
     status: completed
   - id: eden-backlog
-    content: "T-057–T-060 SHIPPED (b1fd25a). Active: T-061..T-067 scale program. Eden T-068+."
+    content: "T-057–T-061 SHIPPED (T-061 drag-move good enough @ 360k). Active: T-062..T-067. Eden T-068+."
     status: in_progress
   - id: phase-blocked
     content: "DEFERRED until after Eden P0-P2: Phase 2 DEM/tiles, full registry/Arsenal (Phases 5-6), Phase 8 tools — do not start without user approval"
@@ -35,7 +35,7 @@ isProject: false
 # AGENT EXECUTION CONTRACT
 
 > **Phase completion log (T-033–T-040):** PRE-3.5 ✅ DOC-0 ✅ 3.5 ✅ 7b ✅ 7a ✅ 9 ✅.
-> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-060 shipped** (2026-06-23, `b1fd25a`) — load partial pass @ ~360k; **Save @ ~367k / ~142 MB → 201** (browser semver 0.1.3/0.1.4 + curl 140 MB). Mid-upload fix: hardened `isMissionVersionPOST` skip + production-like IT; root cause was stale `go run` API + 1 MB global wrap. **Active: T-061..T-067.** Eden **T-068+** after scale milestones.
+> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-060 shipped** (`b1fd25a`). **T-061 shipped (good enough)** — drag @ ~360k: motion ~60 fps; pickup/release via `slotIconCache` + slot fast path. **Active: T-062..T-067.** Mega optimizations deferred ([ROADMAP.md](ROADMAP.md) §Deferred mega optimizations). Eden **T-068+**.
 
 > **For the human:** Open a new Cursor Agent / CLI session and paste the prompt below. The agent reads this file; execute **open** phases only.
 
@@ -46,7 +46,7 @@ Read CLAUDE.md first. Mission Creator is Eden-first (locked 2026-06): the shell 
 PRE-3.5–9 are DONE (T-033–T-040). Open work = the Eden parity backlog in
 eden/gap_analysis.md — P0 remaining + P1 + P2 — shipped as T-053+ slices BEFORE Track A
 Phase 2 (map tiles A-01, DEM A-03/A-04) and DEM-dependent Phase 8 tools. Authority:
-ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **T-060 shipped.** **Active: T-061..T-067** scale program → Eden **T-068+**.
+ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **T-060–T-061 shipped.** **Active: T-062..T-067** → Eden **T-068+**.
 A thin Track B registry (B-01) for Eden P0 (P0-01..03) is in scope; full registry/Arsenal and
 tiles/DEM are deferred. After each slice: `cd frontend && npm run build && npm run lint`. Do not
 commit unless I ask.
@@ -55,7 +55,7 @@ commit unless I ask.
 Shorter variant:
 
 ```
-ROADMAP.md §Current strategy → @agent_execution.md §ACTIVE SLICE. **T-060 shipped.** **Active: T-061..T-067** → Eden **T-068+**. Spec: MC [`ROADMAP.md`](ROADMAP.md) §Map performance.
+ROADMAP.md §Current strategy → @agent_execution.md §ACTIVE SLICE. **T-061 shipped.** **Active: T-062..T-067** → Eden **T-068+**.
 ```
 
 ## Agent roles — Cursor vs Claude Code (locked 2026-06)
@@ -193,7 +193,7 @@ flowchart LR
     Shell["Eden docked shell"]
     Save["Compiler + Save Version"]
   end
-  subgraph active [Active T-061 to T-067]
+  subgraph active [Active T-062 to T-067]
     Scale["Scale program"]
   end
   subgraph later [After scale milestones]
@@ -323,9 +323,11 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Save mid-upload @ 135 MB** (T-060.1.4) | **Proven root cause:** stale `go run` API let 1 MB `GlobalBodyLimit` wrap the version POST. **Fix shipped:** `isMissionVersionPOST`, `setupITProd`, `bodylimit_test.go`, `phaseAtFailure`, `scripts/mission-version-upload-repro.sh`. **Ops:** restart `make api` after middleware changes. |
 | **Dual-layer scale model** (2026-06) | **Mission layer** (ORBAT slots, markers — Y.Doc, **T-061..T-062**) = authored entities. **Terrain layer** (millions of map props) → **T-070+** binary base + sparse deltas; **not** a Y.Doc rewrite. External Base+Delta adopted for terrain only. Spec: [`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md). |
 | **Bulk paste at scale** (T-059) | `pasteSlots` batch O(n) append (`Map<squadId, ID[]>` + layer accumulator); post-paste selection cap (`BULK_SELECT_CAP = 500` → `none`); outliner leaf cap (`OUTLINER_LEAF_CAP = 500`) in **both** `EditorLayersSection.buildTree` and `OrbatSection.buildOrbat`. Chunked paste not needed. **Validated:** 6k paste loops smooth; **360k @ 100+ fps** pan. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md). |
-| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-060 shipped**; **active T-061..T-067**). Eden **T-068+**; **T-070+** terrain base after that. … |
+| **Drag-move @ 360k** (T-061 — **shipped, good enough**) | **T-061.0:** dual IconLayer + split drag state + rAF delta → ~60 fps sustained. **T-061.0.1:** `slotIconCache` O(k) + bindings slot fast path → pickup/release materially improved (minor release frame possible — deferred). Mega opts → [ROADMAP.md](ROADMAP.md) §Deferred mega optimizations. Spec: [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md). |
+| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-061 shipped**; **active T-062..T-067**). Eden **T-068+**; **T-070+** terrain base after that. … |
 | **Mission title hydrate** (T-049) | On editor load the **PostgreSQL mission row** (`title`, `terrain`, time/weather) hydrates `meta` via `applyMissionRowMeta` (INIT_ORIGIN) — including new missions whose `json_payload` is `{}`. **No PATCH-back** in T-049; Save Version still compiles payload only. |
-| **Phase order** | … **T-057–T-060 shipped.** **Active: T-061..T-067** → Eden **T-068+** → **T-070+** terrain base (optional). … |
+| **Phase order** | … **T-057–T-061 shipped.** **Active: T-062..T-067** → Eden **T-068+** → **T-070+** terrain base (optional). … |
+| **Drag perf — good enough** (2026-06) | T-061 closed Eden-blocking drag @ ~360k. Do **not** pursue T-061.1 / release repack collapse until T-062..T-067 + Eden milestones unless regression. See ROADMAP §Deferred mega optimizations. |
 | **Eden completeness** | Eden parity checklist = `eden/interactions.md`, `eden/ui_anatomy.md`, `eden/attributes.md`, `eden/gap_analysis.md` + scrape artifacts. Read `eden/ui_anatomy.md` / `eden/attributes.md` before implementing UI/attrs. Implement the P0 backlog from `eden/gap_analysis.md`. Feature status lives in `feature_inventory.md` + `reference/feds_schema.md`; new TBD features → FEDS row in `feature_inventory.md`. Wiki cache = `eden/wiki_manifest.yaml` + `artifacts/eden-wiki/`; regenerate via `node scripts/tools/scrape-eden-wiki.mjs` when the wiki updates. |
 
 ---
@@ -333,7 +335,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 ## Agent rules (mandatory)
 
 1. **Read first:** `CLAUDE.md` (conventions), then this file, then `engineering_plan.md` §0–§2.
-2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-060 shipped.** **Active: T-061..T-067.** Eden **T-068+**.
+2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-061 shipped (good enough).** **Active: T-062** incremental bindings. Eden **T-068+** after scale milestones.
 3. **Verify gate** after every phase:
    ```bash
    cd frontend && npm run build && npm run lint
@@ -350,13 +352,13 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 
 ---
 
-## ACTIVE SLICE — T-061..T-067 scale program (after T-060 shipped `b1fd25a`)
+## ACTIVE SLICE — T-062 incremental bindings (then T-063..T-067)
 
-**T-060 + T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4 shipped** in commit `b1fd25a` (2026-06-23). Spec archive: [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md).
+**T-060 + T-060.1.* shipped** in commit `b1fd25a` (2026-06-23). **T-061 shipped (good enough)** — T-061.0 motion (~60 fps @ 360k) + T-061.0.1 boundaries (`slotIconCache`, bindings slot fast path). Spec: [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md).
 
-**T-060 acceptance (verified):** load partial pass @ ~360k; **Save @ ~367k / ~142 MB → 201** (browser semver **0.1.3** / **0.1.4**, `direct → :8080`; curl 140 MB → 201).
+**T-061 acceptance (good enough):** motion ~60 fps sustained; pickup/release materially improved vs pre-T-061 (~10 fps release collapse gone); build + lint clean. Known residual: possible single dropped frame at release (two cache version bumps) — **deferred** per [ROADMAP.md](ROADMAP.md) §Deferred mega optimizations.
 
-**Next:** **T-061** typed-array IconLayer (optional headroom @ 50k–500k) — see [`ROADMAP.md`](ROADMAP.md) §Map performance scale table. Then T-062 incremental bindings → … → T-067 spatial chunks. **Eden T-068+** after T-067 (or interleaved per ROADMAP §Eden execution order).
+**Next:** **T-062** full incremental `bindings.ts` (all entity maps, load 0→300k jump, asset-drop lag, delete cascades) → T-063..T-067. **Eden T-068+** after scale milestones.
 
 ---
 

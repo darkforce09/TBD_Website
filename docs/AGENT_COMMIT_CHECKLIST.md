@@ -50,11 +50,11 @@ If a spec exists for the task (e.g. [`t048_library_create_dialog.md`](../Design_
 | Eden UI parity | `eden/gap_analysis.md` + maybe `eden/ui_anatomy.md` |
 | Shipped git milestone | [`CLAUDE.md`](../CLAUDE.md) §Status + rows above (MC ROADMAP, frontend ROADMAP, TAGS, mission-editor, gap_analysis, feature_inventory, agent_execution as applicable) |
 
-Shell phases PRE-3.5–9 are **done**. **T-057–T-060 shipped** (`b1fd25a`, 2026-06-23) — load partial pass @ ~360k; Save @ ~367k/~142 MB → **201** (browser + curl). **Active: T-061..T-067** → Eden **T-068+** → **T-070+** terrain base (see [`t070_terrain_base_mission_layers.md`](../Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md)).
+Shell phases PRE-3.5–9 are **done**. **T-057–T-061 shipped** (T-061 drag-move good enough @ 360k). **Active: T-062..T-067** ([`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance; mega opts §Deferred mega optimizations) → Eden **T-068+** → **T-070+** terrain base.
 
 ### Mission Creator slice workflow
 
-Eden slices ship as **T-053+** following the **spec → code → same-commit docs** pattern proven by T-048..T-056. **Perf/scale slices** (T-057+) follow the same pattern — see [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md), [`t059_bulk_paste_operations.md`](../Design_Docs/Mission_Creator_Architecture/t059_bulk_paste_operations.md), [`t060_fast_initial_load.md`](../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md), [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md). **T-060 shipped**; **active T-061..T-067**. Spec: MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance.
+Eden slices ship as **T-053+** following the **spec → code → same-commit docs** pattern proven by T-048..T-056. **Perf/scale slices** (T-057+) follow the same pattern — see [`t057`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) … [`t061`](../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md). **T-061 shipped (good enough)**; **active T-062..T-067**.
 
 1. **Spec** — **Cursor** writes or updates the `t0xx_*.md` spec under `Design_Docs/Mission_Creator_Architecture/` (Claude Code reads it; does not author specs).
 2. **Code** — **Claude Code** (or Cursor) implements; `cd frontend && npm run build && npm run lint`; `make test-it` when backend touched.

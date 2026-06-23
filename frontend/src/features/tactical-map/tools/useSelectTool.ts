@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import type { OrthographicView } from '@deck.gl/core'
 import type { DeckGLRef } from '@deck.gl/react'
 import { useMapStore } from '../state/useMapStore'
+import * as slotIconCache from '../state/slotIconCache'
 import type { ID } from '../state/schema'
 import type { MapViewState } from '../types'
 
@@ -72,6 +73,26 @@ export function useSelectTool({
       panRaf.current = 0
     }
     pendingPan.current = null
+  }, [])
+
+  // Drag-move is rAF-coalesced the same way (T-061): at 360k slots, pushing a fresh delta
+  // to the store on every pointermove re-rendered the drag overlay several times per frame.
+  // We stash the latest world delta and flush at most once per animation frame; the ref is
+  // kept (not nulled on flush) so pointer-up can read the final delta to commit the move.
+  const dragRaf = useRef(0)
+  const lastDragDelta = useRef<{ dx: number; dy: number } | null>(null)
+  const flushDragDelta = useCallback(() => {
+    dragRaf.current = 0
+    if (lastDragDelta.current) {
+      useMapStore.getState().setDragPreviewDelta(lastDragDelta.current)
+    }
+  }, [])
+  const cancelDrag = useCallback(() => {
+    if (dragRaf.current) {
+      cancelAnimationFrame(dragRaf.current)
+      dragRaf.current = 0
+    }
+    lastDragDelta.current = null
   }, [])
 
   const localPt = useCallback(
@@ -161,6 +182,15 @@ export function useSelectTool({
           if (!(sel.kind === 'slot' && sel.ids.includes(g.iconId))) {
             useMapStore.getState().setSelection({ kind: 'slot', ids })
           }
+          // Promote the dragged ids to the overlay layer once; the live offset is fed
+          // rAF-coalesced below so the base layer (all other icons) never rebuilds (T-061).
+          // Lift the dragged ids out of the base icon cache O(k) (T-061.0.1) so the pickup
+          // doesn't re-derive ~360k icons — they render in the drag overlay instead.
+          slotIconCache.exclude(ids)
+          lastDragDelta.current = { dx: 0, dy: 0 }
+          useMapStore.getState().setDragPreview(ids)
+          useMapStore.getState().setDragPreviewDelta({ dx: 0, dy: 0 })
+          useMapStore.getState()._syncIconCache()
           gesture.current = { type: 'move', ids, startWorld, vp }
         } else {
           gesture.current = { type: 'marquee', startPx: g.startPx, startWorld, vp }
@@ -170,9 +200,8 @@ export function useSelectTool({
       const cur = gesture.current
       if (cur?.type === 'move') {
         const w1 = cur.vp.unproject(px)
-        useMapStore
-          .getState()
-          .setDrag({ ids: cur.ids, dx: w1[0] - cur.startWorld[0], dy: w1[1] - cur.startWorld[1] })
+        lastDragDelta.current = { dx: w1[0] - cur.startWorld[0], dy: w1[1] - cur.startWorld[1] }
+        if (!dragRaf.current) dragRaf.current = requestAnimationFrame(flushDragDelta)
       } else if (cur?.type === 'marquee') {
         const w1 = cur.vp.unproject(px)
         useMapStore
@@ -180,7 +209,7 @@ export function useSelectTool({
           .setMarquee({ x0: cur.startWorld[0], y0: cur.startWorld[1], x1: w1[0], y1: w1[1] })
       }
     },
-    [localPt, makeViewport, viewState, containerRef, flushPan],
+    [localPt, makeViewport, viewState, containerRef, flushPan, flushDragDelta],
   )
 
   const onPointerUp = useCallback(
@@ -206,11 +235,25 @@ export function useSelectTool({
       const store = useMapStore.getState()
 
       if (g.type === 'move') {
-        const drag = store.drag
-        if (drag && (drag.dx !== 0 || drag.dy !== 0)) {
-          onEntitiesMove(g.ids, { x: drag.dx, y: drag.dy })
+        // Read the final delta from the ref (a pending rAF may not have flushed it yet),
+        // commit one move transaction if it actually moved, then clear the preview.
+        if (dragRaf.current) {
+          cancelAnimationFrame(dragRaf.current)
+          dragRaf.current = 0
         }
-        store.setDrag(null)
+        // Optimistically patch the cached icons O(k) (relative), commit the Y.Doc move,
+        // then restore the dragged ids into the base cache at their new spot — so the base
+        // layer shows the move with no flicker before the async bindings flush lands (which
+        // re-sets the same positions absolutely, idempotently) (T-061.0.1).
+        const delta = lastDragDelta.current
+        if (delta && (delta.dx !== 0 || delta.dy !== 0)) {
+          slotIconCache.patchPositions(g.ids, delta)
+          onEntitiesMove(g.ids, { x: delta.dx, y: delta.dy })
+        }
+        slotIconCache.restore(g.ids)
+        lastDragDelta.current = null
+        store.clearDragPreview()
+        store._syncIconCache()
         return
       }
 
@@ -235,8 +278,14 @@ export function useSelectTool({
     [containerRef, deckRef, localPt, onEntitiesMove, flushPan],
   )
 
-  // Drop any in-flight pan frame if the tool unmounts mid-gesture.
-  useEffect(() => cancelPan, [cancelPan])
+  // Drop any in-flight pan/drag frame if the tool unmounts mid-gesture.
+  useEffect(
+    () => () => {
+      cancelPan()
+      cancelDrag()
+    },
+    [cancelPan, cancelDrag],
+  )
 
   const onContextMenu = useCallback((e: React.MouseEvent) => e.preventDefault(), [])
 

@@ -72,7 +72,8 @@ flowchart TB
 ### Mission layer (T-061..T-062 — current program)
 
 - Keep **Y.Doc** normalized model ([`schema.ts`](../../frontend/src/features/tactical-map/state/schema.ts)).
-- **T-062:** Incremental `bindings.ts` — patch Zustand instead of full `docToSnapshot(n)`.
+- **T-061.0.1 ✅ shipped:** Slot-position fast path in `bindings.ts` + `slotIconCache` (drag @ 360k — good enough).
+- **T-062:** Full incremental `bindings.ts` — patch Zustand for all entity maps instead of full `docToSnapshot(n)` on every transaction.
 - **T-066:** Worker `compileMission` for export/save assembly.
 - **Save payload:** `orbat[]` (backend contract) + compact `editor` patch or full block for missions under ~50k; avoid duplicating orbat in editor block long-term.
 
@@ -110,7 +111,7 @@ flowchart TB
 - Replacing ORBAT / Event Hub `parseOrbatTemplate` contract
 - Storing 10M full JSON objects in Postgres `json_payload`
 - Second undo system parallel to Y.UndoManager without a source-of-truth decision
-- Implementing before **T-060.1.2** Save @ 360k passes
+- Implementing before **T-062..T-067** scale milestones + Eden **T-068+**
 
 ---
 

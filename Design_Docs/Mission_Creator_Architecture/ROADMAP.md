@@ -27,7 +27,7 @@
 
 Work [`eden/gap_analysis.md`](eden/gap_analysis.md) **numbered backlog** in priority tier, interleaving small **P1** slices between heavier **P0** blocks:
 
-1. **P1 quick (code-only)** — … → ~~**T-060.1.3 Save observability**~~ ✅ → ~~**T-060.1.4 mid-upload fix**~~ ✅ → ~~**T-060**~~ ✅ → **T-061..T-067 scale** → …
+1. **P1 quick (code-only)** — … → ~~**T-060**~~ ✅ → ~~**T-061**~~ ✅ drag-move @ 360k (good enough) → **T-062..T-067 scale** → …
 2. **P0 ship-blocking** — P0-01 registry (+ thin B-01) → P0-02 markers → P0-03 vehicles → P0-05 ORBAT authoring UI
 3. **P1 remainder** — P1-05..P1-11 (multi-place, rotate, Space conflict, vehicle crew, …)
 4. **P2 power-user** — P2-01..P2-07
@@ -48,7 +48,7 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | Pan | `useOrthographicView` `setViewState` every pan frame re-renders `TacticalMap` + children | ✅ `useSelectTool` rAF-coalesces pan to one `setViewState`/frame (layers already memoized) |
 | Gestures | `pickObject` on pointerdown + hover during pan | ✅ Hover picking removed entirely; pointerdown pick (icon vs empty) unchanged; pan never picks |
 
-**1M–10M editable entities** is the **north star** (Arma 3 reference ~8M map objects); reach it **step-by-step** (not one commit). **Validated (2026-06):** pan/zoom **100+ fps @ 360k** (T-057 + T-059); repeat **6k paste** loops smooth. **Bulk paste freeze — fixed (T-059).** **T-060 shipped** (`b1fd25a`, 2026-06-23): load partial pass @ ~360k; Save @ ~367k/~142 MB → **201** (browser + curl). **Active: T-061..T-067.** Remaining bottlenecks (→ **T-062+**): full `docToSnapshot` cost @ scale (incremental bindings), linear picking, sidebar virtualization. Phased track:
+**1M–10M editable entities** is the **north star** (Arma 3 reference ~8M map objects); reach it **step-by-step** (not one commit). **Validated (2026-06):** pan/zoom **100+ fps @ 360k** (T-057 + T-059); repeat **6k paste** loops smooth. **Bulk paste — fixed (T-059).** **T-060 shipped** (`b1fd25a`): load partial pass @ ~360k; Save @ ~367k/~142 MB → **201**. **T-061 shipped (good enough):** drag motion ~60 fps @ 360k; pickup/release materially improved via `slotIconCache` + slot fast path. **Active: T-062..T-067.** Remaining bottlenecks: full `docToSnapshot` on bulk paths, linear picking, sidebar virtualization. Phased track:
 
 | Tag | Phase | Entity target | FPS / UX target |
 |-----|-------|---------------|-----------------|
@@ -60,8 +60,11 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | **T-060.1.2** ✅ | Save upload fixes | 300k+ | E1/E2/E3b — **shipped**. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.2 |
 | **T-060.1.3** ✅ | Save observability | 300k+ | **Shipped** — measured size, debug panel, failure diagnosed @ 367k. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.3 |
 | **T-060.1.4** ✅ | Fix mid-upload | 300k+ | **Shipped** — hardened skip + production-like IT; browser ~142 MB + curl 140 MB → 201. Spec: [`t060_1`](t060_1_scale_load_save_completion.md) §T-060.1.4 |
-| **T-061** | Scale-A | 50k–500k | Typed-array IconLayer (optional headroom) |
-| **T-062** | Scale-B | 50k+ | Incremental `bindings.ts` (patch vs full snapshot) |
+| **T-061** | Scale-A hotfix | 360k drag-move | **Shipped (good enough)** — dual IconLayer + `slotIconCache` + slot fast path. Spec: [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md) |
+| **T-061.0** | (sub) Motion | 360k drag sustained | **Shipped** — ~60 fps sustained @ 360k |
+| **T-061.0.1** | (sub) Boundaries | 360k pickup/release | **Shipped** — O(k) cache + incremental slot observer |
+| **T-061.1** | Scale-A optional | 50k–500k+ | **Deferred** — typed-array IconLayer; see §Deferred mega optimizations |
+| **T-062** | Scale-B | 50k+ | Full incremental `bindings.ts` (all maps, load UX, delete cascades — T-061.0.1 covers slot-position fast path only) |
 | **T-063** | Scale-C | 50k+ pick | Spatial index (rbush) for pick/marquee |
 | **T-064** | Scale-D | 50k+ UI | Virtualized outliner |
 | **T-065** | Scale-E | 100k–1M | Cluster/LOD zoomed out |
@@ -80,7 +83,7 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 
 | 1M–10M props | T-061–T-067 + **T-070+** | ✅ T-059 | Terrain base + deltas; mission patch save |
 
-**T-057–T-060 shipped** (`b1fd25a`). **Active: T-061..T-067** → Eden **T-068+** → **T-070+** terrain base (optional).
+**T-057–T-061 shipped.** **Active: T-062..T-067** → Eden **T-068+** → **T-070+** terrain base (optional).
 
 Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shipped T-057).
 
@@ -109,6 +112,7 @@ Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shippe
 | **[`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md)** | **T-059** — Bulk paste/delete at scale (shipped) |
 | **[`t060_fast_initial_load.md`](t060_fast_initial_load.md)** | **T-060** — Fast load + save (**shipped** `b1fd25a`) |
 | **[`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md)** | **T-060.1 + T-060.1.1 + T-060.1.2 + T-060.1.3 + T-060.1.4** — Load/save @ 360k (**shipped**) |
+| **[`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md)** | **T-061** — Drag-move @ 360k (**shipped — good enough**) |
 | **[`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md)** | **T-057** — Map perf hotfix: ≥55 fps pan/zoom @ 200+ slots (shipped) |
 | **[`t056_eden_p1_copy_paste.md`](t056_eden_p1_copy_paste.md)** | **T-056** — Eden P1-02: Ctrl+C/V copy-paste at cursor (slots) (shipped) |
 | **[`t055_asset_browser_search.md`](t055_asset_browser_search.md)** | **T-055** — Eden P1-04: Asset browser search (filters Factions tree) (shipped) |
@@ -122,7 +126,7 @@ Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shippe
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Surface spec for `/missions/:id/edit` |
 | [`frontend/docs/pages/mission-creator.md`](../../frontend/docs/pages/mission-creator.md) | Archived — wizard moved into library (T-048) |
 | **[`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md)** | **T-070+** — Terrain base + mission layers (future; Base + Delta for props only) |
-| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-060 shipped; active T-061..T-067 |
+| [`CLAUDE.md`](../../CLAUDE.md) §Status | T-061 shipped (good enough); active T-062..T-067 |
 
 ---
 
@@ -239,7 +243,15 @@ Tracks A and B can progress in parallel **during the Eden push** (registry serve
 |------|------|-------------|
 | **Ctrl/Cmd+Z/Y undo-redo** | [`t052_eden_p1_undo_shortcuts.md`](t052_eden_p1_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **P1-03** / KEY-UNDO-001. |
 
-**Next (see §Current strategy):** ~~T-057~~ ✅ … ~~T-060~~ ✅ shipped `b1fd25a`. **Active: T-061..T-067**. **Eden P1-07+** at **T-068+**.
+**Next (see §Current strategy):** ~~T-057~~ ✅ … ~~T-060~~ ✅ … ~~**T-061**~~ ✅ drag-move @ 360k (good enough). **Active: T-062..T-067**. **Eden P1-07+** at **T-068+**.
+
+---
+
+## DONE — T-061 (drag-move @ 360k)
+
+| Item | Spec | Deliverable |
+|------|------|-------------|
+| **Drag-move perf** | [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md) | ✅ T-061.0: dual IconLayer + split drag state + rAF delta (~60 fps sustained @ 360k). ✅ T-061.0.1: `slotIconCache` O(k) boundaries + bindings slot fast path. **Good enough** for Eden-blocking work; mega optimizations deferred (§Deferred mega optimizations). |
 
 ---
 
@@ -418,6 +430,27 @@ Local IndexedDB + manual save  Autosave + semver versions
 | **9** | C | Full item matrix + compiler loadouts | Phase 8 |
 
 Phases **1b** = **Eden parity on flat grid.** Phases 2–4 = **map + accurate positions (heightmap).** Phases 5–7 = **real objects at scale.** Phases 8–9 = **kits.**
+
+---
+
+## Deferred mega optimizations (not current work)
+
+**Product decision (2026-06):** T-061 drag-move @ ~360k is **good enough** for now. Do **not** pursue further render/bindings micro-optimizations until **T-062..T-067**, **Eden T-068+**, and core feature gaps are closed. Revisit only if profiling shows Eden-blocking regressions or scale targets (1M+) demand it.
+
+| Item | Tag / area | What | When |
+|------|------------|------|------|
+| Typed-array / binary IconLayer buffers | **T-061.1** | GPU-stable buffers instead of JS `SlotIcon[]` rebuilds | After T-062+ if profiling warrants |
+| Collapse drag-release to one cache bump | T-061 follow-up | Merge restore + `_patchSlots` into single `iconCacheVersion` tick | Optional polish; known residual |
+| Full incremental bindings (all maps) | **T-062** | Patch Zustand on every Y txn — not just slot position moves | **Active scale program** |
+| Spatial index for pick/marquee | **T-063** | rbush instead of linear `pickObjects` | T-062..T-067 |
+| Virtualized outliner | **T-064** | Sidebar @ 100k+ leaves | T-062..T-067 |
+| Cluster / LOD zoomed out | **T-065** | Icon clustering when zoomed out | T-062..T-067 |
+| Worker offload compile/export | **T-066** | `compileMission` off main thread @ 1M+ | T-062..T-067 |
+| Spatial chunks / lazy regions | **T-067+** | 1M–10M mission entity path | After T-066 |
+| Terrain base + sparse deltas | **T-070+** | Millions of map props (separate from mission layer) | After Eden T-068+ |
+| ≤10 s load @ 1M | T-062 + T-066 | Incremental IDB + worker — not drag perf | Stretch north star |
+
+**Do not block Eden or T-062 on the items above.** T-061 closed the Eden-blocking drag path @ 360k.
 
 ---
 

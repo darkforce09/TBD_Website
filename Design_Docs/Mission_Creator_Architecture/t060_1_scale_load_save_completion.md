@@ -20,7 +20,7 @@ Manual verify @ **~300k objects** (2026-06):
 | **Save** | ~~Upload ~4% → ERR_NETWORK~~ | 360k → 201 | **FIXED T-060.1.4** (stale API + 1 MB global wrap; curl 140 MB → 201; browser verify pending) |
 | **Hydrate bulk window** | — | “hydrate in bulk coalesce” | `endBulkSync()` runs **before** server hydrate completes |
 
-T-060 was the **foundation** (gate, coalesce, API cap, compile progress). **T-060.1 completes acceptance** — not a new scale milestone; **T-061 typed-array IconLayer** stays next after T-060 tags.
+T-060 was the **foundation** (gate, coalesce, API cap, compile progress). **T-060.1 completes acceptance.** **T-061** drag-move shipped (good enough). **Active: T-062..T-067.** Optional **T-061.1** typed-array → deferred mega optimizations backlog.
 
 **North-star reminder:** Linear load time @ 300k → ~10 min @ 10M without **T-062 incremental bindings**. T-060.1 targets **360k acceptance** (determinate UX + save works); **≤10 s @ 1M** remains T-062/T-066 stretch.
 
@@ -232,7 +232,7 @@ proxy: {
 |-----|--------|
 | [t060_fast_initial_load.md](t060_fast_initial_load.md) | Status + §Shipped timings; blockers table |
 | [t060_1_scale_load_save_completion.md](t060_1_scale_load_save_completion.md) | §Manual verify; §T-060.1.3 + §T-060.1.4 |
-| [agent_execution.md](agent_execution.md) | ACTIVE SLICE → **T-061..T-067** scale program |
+| [agent_execution.md](agent_execution.md) | ACTIVE SLICE → **T-062..T-067** scale program |
 | [CLAUDE.md](../../CLAUDE.md) §Status | T-060 bullet + 360k acceptance |
 | [docs/TAGS.md](../../docs/TAGS.md) | T-060.1 note |
 | [feature_inventory.md](feature_inventory.md) | PERF-LOAD-001 / PERF-SAVE-001 acceptance |
@@ -302,7 +302,7 @@ proxy: {
 
 ---
 
-## Implemented (T-060.1.2 code — manual ~360k Save verify pending)
+## Implemented (T-060.1.2 — shipped in T-060 `b1fd25a`)
 
 - **E1/E2 — `preparing` phase + Blob POST:** `SaveProgress.phase` gains `'preparing'`;
   `buildVersionBlob(semver, payload, notes, onProgress)` (`compiler/compile.ts`) streams the
@@ -838,7 +838,7 @@ PART 3 — OVERLAY UX (MissionCreatorPage.tsx)
 2. When done+total known: "N / M objects" determinate bar
 
 PART 4 — DOCS (same pass, no separate commit)
-Sync §Documentation sync table + agent_execution ACTIVE SLICE → T-061 after ship; flip acceptance checkboxes when code lands.
+Sync §Documentation sync table + agent_execution ACTIVE SLICE → T-062 after T-061 ship; flip acceptance checkboxes when code lands.
 
 VERIFY
 - make test-it; npm run build && npm run lint

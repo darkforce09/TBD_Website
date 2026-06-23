@@ -37,7 +37,11 @@ Supporting docs use **descriptive snake_case** filenames (no numeric prefixes): 
 | **T-060.1.2** | Save upload fixes — E1/E2/E3b (shipped in T-060) | [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.2 |
 | **T-060.1.3** | Save observability — measured size + debug (shipped; failure diagnosed @ 367k) | [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.3 |
 | **T-060.1.4** | Fix mid-upload socket reset @ ~135 MB (shipped; hardened `GlobalBodyLimit` skip + production-like IT) | [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.4 |
-| **T-061..T-067** | Scale program → 1M–10M authored mission entities (**active**) | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
+| **T-061** | Drag-move @ 360k — dual IconLayer + `slotIconCache` + slot fast path (**shipped — good enough**) | [`t061_drag_move_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) |
+| **T-061.0** | (sub) Motion hotfix — dual IconLayer + split drag state (**shipped**) | [`t061_drag_move_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) §T-061.0 |
+| **T-061.0.1** | (sub) Boundary hotfix — `slotIconCache` + bindings fast path (**shipped**) | [`t061_drag_move_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) §T-061.0.1 |
+| **T-061.1** | Typed-array IconLayer (**deferred** — mega optimizations backlog) | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations |
+| **T-062..T-067** | Scale program → 1M–10M (**active — after T-061**) | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
 | **T-070+** | Terrain base + sparse deltas (future — millions of map props) | [`t070_terrain_base_mission_layers.md`](../Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md) |
 | **T-051** | Title PATCH sync (**deferred**, not started) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) amendment |
 | **FD-0xx** | Frontend deferred work | [`frontend/docs/TRACKING.md`](../frontend/docs/TRACKING.md) |

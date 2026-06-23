@@ -160,4 +160,4 @@ items d/e (design preserved above).
 
 ## After T-059
 
-**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ shipped (`b1fd25a`). **Active: T-061..T-067:** typed-array IconLayer, incremental bindings, spatial index, virtualized outliner, LOD, worker, spatial chunks. **Eden T-068+.**
+**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅ drag-move good enough. **Active: T-062..T-067.** Spec: [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md). **Eden T-068+.**

@@ -131,4 +131,4 @@ Re-export: `selectSlotCount` alongside `selectSlotIcons`.
 
 **T-059 (bulk paste/delete):** fix O(n²) spreads, cap selection/outliner after bulk paste, optional chunked paste — **10k paste without hard freeze**. Use **OBJ** to confirm totals. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md).
 
-**T-060.1.4** Fix mid-upload @ ~135 MB — ✅ shipped (`b1fd25a`). **Active: T-061..T-067:** mission-layer scale. **T-070+:** terrain base + sparse deltas ([`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md)). **Eden T-068+.**
+**T-060.1.4** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **Active: T-062..T-067.** **Eden T-068+.**
