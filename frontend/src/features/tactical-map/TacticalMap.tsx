@@ -7,7 +7,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import DeckGL from '@deck.gl/react'
 import type { DeckGLRef } from '@deck.gl/react'
-import type { PickingInfo } from '@deck.gl/core'
 import { getTerrain } from './coords/terrains'
 import { useOrthographicView } from './view/useOrthographicView'
 import { useBaseMapLayer } from './layers/useBaseMapLayer'
@@ -15,8 +14,7 @@ import { useIconLayer, useDragIconLayer } from './layers/useIconLayer'
 import { useSelectionLayer } from './layers/useSelectionLayer'
 import { useSelectTool } from './tools/useSelectTool'
 import { MapContextProvider, createMapContextValue } from './context/MapContext'
-import { useMapStore } from './state/useMapStore'
-import type { ID } from './state/schema'
+import * as slotSpatialIndex from './state/slotSpatialIndex'
 import { ASSET_DND_MIME, type AssetDropPayload, type MapViewState, type TacticalMapProps } from './types'
 
 function TacticalMapInner({
@@ -36,7 +34,6 @@ function TacticalMapInner({
   const iconLayer = useIconLayer()
   const dragIconLayer = useDragIconLayer()
   const selectionLayer = useSelectionLayer()
-  const setSelection = useMapStore((s) => s.setSelection)
   // Drop zone + pointer-gesture host: Deck's controller ignores HTML5 drag/drop and
   // (with dragPan off) our custom drags, so both bubble to this container.
   const containerRef = useRef<HTMLDivElement>(null)
@@ -50,7 +47,6 @@ function TacticalMapInner({
 
   const noopMove = useCallback(() => {}, [])
   const selectTool = useSelectTool({
-    deckRef,
     containerRef,
     view,
     viewState,
@@ -58,52 +54,28 @@ function TacticalMapInner({
     onEntitiesMove: onEntitiesMove ?? noopMove,
   })
 
-  const onClick = useCallback(
-    // Deck passes the gesture event as the 2nd arg; its srcEvent carries the modifiers.
-    (info: PickingInfo, event?: { srcEvent?: { ctrlKey?: boolean; metaKey?: boolean } }) => {
-      const src = event?.srcEvent
-      const additive = !!(src && (src.ctrlKey || src.metaKey)) // Ctrl/Cmd toggle (P1-01)
-      if (info.layer?.id === 'slot-icons' && info.object) {
-        const id = (info.object as { id: ID }).id
-        if (additive) {
-          // Ctrl/Cmd-click toggles this slot in/out of the current selection.
-          const sel = useMapStore.getState().selection
-          const cur = sel.kind === 'slot' ? sel.ids : []
-          const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]
-          setSelection(next.length ? { kind: 'slot', ids: next } : { kind: 'none', ids: [] })
-          return
-        }
-        setSelection({ kind: 'slot', ids: [id] })
-        return
-      }
-      // Ctrl/Cmd + empty click preserves the selection; a plain empty click deselects
-      // (no teleport — Phase 7b removed it).
-      if (additive) return
-      setSelection({ kind: 'none', ids: [] })
-    },
-    [setSelection],
-  )
+  // Click-select (select / Ctrl-toggle / deselect) lives in useSelectTool's pending-left
+  // pointerUp now — Deck's `slot-icons` layer is no longer pickable (T-063), so there is no
+  // Deck onClick handler.
 
   // Double-click a slot icon → activate it (host opens the Attributes modal). Deck has no
   // onDblClick, so we listen for the container's native dblclick and pick the slot under the
-  // cursor — the same pick useSelectTool.onPointerDown does. Matches the outliner trees,
-  // which open Attributes via TreeView's native onDoubleClick.
+  // cursor via the spatial index (T-063) — same query useSelectTool uses. Matches the outliner
+  // trees, which open Attributes via TreeView's native onDoubleClick.
   const onDoubleClick = useCallback(
     (e: React.MouseEvent) => {
       const el = containerRef.current
-      const deck = deckRef.current
-      if (!el || !deck) return
+      if (!el) return
       const r = el.getBoundingClientRect()
-      const info = deck.pickObject({
-        x: e.clientX - r.left,
-        y: e.clientY - r.top,
-        radius: 4,
-        layerIds: ['slot-icons'],
-      })
-      const id = (info?.object as { id: ID } | undefined)?.id
+      const viewport = view.makeViewport({ width: r.width, height: r.height, viewState })
+      if (!viewport) return
+      const id = slotSpatialIndex.pickNearest(
+        [e.clientX - r.left, e.clientY - r.top],
+        viewport,
+      )
       if (id) onEntityActivate?.(id)
     },
-    [onEntityActivate],
+    [view, viewState, onEntityActivate],
   )
 
   // Cursor read-out (toolbelt X/Y/Z) — computed by unprojecting the mouse ourselves and
@@ -233,10 +205,9 @@ function TacticalMapInner({
           // dragPan off: left-drag is select/move, middle/right-drag pans (useSelectTool).
           controller={{ dragPan: false, doubleClickZoom: false }}
           layers={[...(showGrid ? [baseMap] : []), iconLayer, dragIconLayer, selectionLayer]}
-          onClick={onClick}
-          // No onHover: cursor coords come from our own rAF unproject (emitCursor) so Deck
-          // doesn't run a per-move pick pass. getCursor is constant for the same reason
-          // (isHovering would force hover picking). Picking still runs on click/drag/marquee.
+          // No onClick / onHover: click-select and picking moved to the slotSpatialIndex R-tree
+          // (T-063), cursor coords come from our own rAF unproject (emitCursor). getCursor is
+          // constant so Deck never computes isHovering (which would force GPU hover picking).
           getCursor={() => 'crosshair'}
           style={{ position: 'absolute', width: '100%', height: '100%' }}
         />

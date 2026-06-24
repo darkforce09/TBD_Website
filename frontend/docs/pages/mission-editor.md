@@ -88,7 +88,8 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.18 — [x] T-062.2 editor session / alt-tab resilience (Vite reload guard + warm session — spec: [t062_2_editor_session_persistence.md](../../../Design_Docs/Mission_Creator_Architecture/t062_2_editor_session_persistence.md))
 ### M3.19 — [x] T-062.1 chunked IDB slot restore (v2 `tbd-mission-persist`; determinate restoring @ ~360k — spec: [t062_1_idb_streaming_load.md](../../../Design_Docs/Mission_Creator_Architecture/t062_1_idb_streaming_load.md))
 ### M3.20 — [x] T-062.1.1 Save orbat dedup (editor-only POST; Go derives ORBAT — spec: [t062_1_1_batch_save.md](../../../Design_Docs/Mission_Creator_Architecture/t062_1_1_batch_save.md))
-### M4 — [ ] T-063 spatial index + T-064..T-067 scale program (see MC ROADMAP §Map performance)
+### M4.21 — [x] T-063 spatial index (rbush pick/marquee @ ~367k — spec: [t063_spatial_index.md](../../../Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md))
+### M5 — [ ] T-064 virtualized outliner + T-065..T-067 scale program (see MC ROADMAP §Map performance)
 
 ## Test Plan
 

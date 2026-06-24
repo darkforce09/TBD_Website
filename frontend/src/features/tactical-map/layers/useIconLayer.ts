@@ -1,7 +1,8 @@
 // Entity icons (Ultra Plan §4.3 layer #5). Deck's IconLayer renders every slot as a
-// pixel-sized, pickable marker — Deck (not the DOM) draws them all, which is the
-// answer to the "200 Slot Problem". Phase 4 renders test slots; vehicles/waypoints
-// join later. Positions are RAW world meters (same convention as the grid).
+// pixel-sized marker — Deck (not the DOM) draws them all, which is the answer to the
+// "200 Slot Problem". Picking is off (T-063): clicks/marquees query the slotSpatialIndex
+// R-tree instead. Phase 4 renders test slots; vehicles/waypoints join later. Positions are
+// RAW world meters (same convention as the grid).
 
 import { useMemo } from 'react'
 import { IconLayer } from '@deck.gl/layers'
@@ -73,7 +74,9 @@ export function useIconLayer(): IconLayer<SlotIcon> {
         getSize: (d) => (d.selected ? 28 : 20),
         getColor: (d) => (d.selected ? SELECTED : PRIMARY),
         sizeUnits: 'pixels',
-        pickable: true,
+        // Not pickable (T-063): click/marquee/dbl-click pick via the slotSpatialIndex R-tree,
+        // not Deck's GPU pick over all ~360k icons.
+        pickable: false,
         updateTriggers: {
           getPosition: iconCacheVersion,
           getSize: iconCacheVersion,
@@ -86,7 +89,7 @@ export function useIconLayer(): IconLayer<SlotIcon> {
 
 // Drag-preview overlay (T-061): only the dragged ids, offset by the live world delta.
 // Typically 1–500 icons, so rebuilding its positions every frame is cheap. Not pickable —
-// the gesture is already captured; click/marquee picking still targets 'slot-icons'.
+// the gesture is already captured (and base picking is the spatial index, not Deck; T-063).
 // Returns null when no drag is active.
 export function useDragIconLayer(): IconLayer<SlotIcon> | null {
   const slotsById = useMapStore((s) => s.slotsById)

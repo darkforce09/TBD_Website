@@ -19,6 +19,7 @@
 
 import type { ID, Selection, Slot } from './schema'
 import type { SlotIcon } from './selectors'
+import * as spatialIndex from './slotSpatialIndex'
 
 let dense: SlotIcon[] = []
 const index = new Map<ID, number>() // id -> position in `dense`
@@ -52,6 +53,7 @@ export function rebuildFromSlots(slotsById: Record<ID, Slot>, selection: Selecti
       selected: selected?.has(s.id) ?? false,
     })
   }
+  spatialIndex.rebuild(dense)
   bump()
 }
 
@@ -60,16 +62,20 @@ export function rebuildFromSlots(slotsById: Record<ID, Slot>, selection: Selecti
  *  the `excluded` map, so an in-flight drag is unaffected. */
 export function append(slots: Slot[], selection: Selection): void {
   const selected = selectedSet(selection)
+  const added: SlotIcon[] = []
   for (const s of slots) {
     if (index.has(s.id)) continue // defensive: already present
     index.set(s.id, dense.length)
-    dense.push({
+    const icon = {
       id: s.id,
       x: s.position.x,
       y: s.position.y,
       selected: selected?.has(s.id) ?? false,
-    })
+    }
+    dense.push(icon)
+    added.push(icon)
   }
+  spatialIndex.insert(added)
   bump()
 }
 
@@ -89,6 +95,7 @@ export function remove(ids: ID[]): void {
     dense.pop()
     index.delete(id)
   }
+  spatialIndex.remove(ids)
   bump()
 }
 
@@ -126,12 +133,15 @@ export function restore(ids: ID[]): void {
 
 /** O(k) relative move — optimistic pointer-up patch before the Y.Doc flush lands. */
 export function patchPositions(ids: ID[], delta: { dx: number; dy: number }): void {
+  const patches: Record<ID, { x: number; y: number }> = {}
   for (const id of ids) {
     const icon = excluded.get(id) ?? denseIcon(id)
     if (!icon) continue
     icon.x += delta.dx
     icon.y += delta.dy
+    patches[id] = { x: icon.x, y: icon.y }
   }
+  spatialIndex.updatePositions(patches)
   bump()
 }
 
@@ -143,6 +153,7 @@ export function setPositions(patches: Record<ID, { x: number; y: number }>): voi
     icon.x = patches[id].x
     icon.y = patches[id].y
   }
+  spatialIndex.updatePositions(patches)
   bump()
 }
 
@@ -180,5 +191,6 @@ export function clearSlotIconCache(): void {
   excluded.clear()
   view = []
   viewVersion = -1
+  spatialIndex.clear()
   bump()
 }

@@ -1,6 +1,6 @@
 ---
 name: Mission Creator — Agent Execution Plan
-overview: "Self-contained agent handoff for Mission Creator. T-057–T-062.1.1 shipped. Active: T-063..T-067. Eden T-068+."
+overview: "Self-contained agent handoff for Mission Creator. T-057–T-063 shipped. Active: T-064..T-067. Eden T-068+."
 todos:
   - id: step-0-publish
     content: "STEP 0: Plan published to Design_Docs/Mission_Creator_Architecture/agent_execution.md"
@@ -24,7 +24,7 @@ todos:
     content: "PHASE 9: Compiler + Export + useMissionEditor autosave (only after 3.5, 7b, 7a complete)"
     status: completed
   - id: eden-backlog
-    content: "T-057–T-062.1.1 SHIPPED. Active: T-063..T-067. Eden T-068+."
+    content: "T-057–T-063 SHIPPED. Active: T-064..T-067. Eden T-068+."
     status: in_progress
   - id: phase-blocked
     content: "DEFERRED until after Eden P0-P2: Phase 2 DEM/tiles, full registry/Arsenal (Phases 5-6), Phase 8 tools — do not start without user approval"
@@ -35,7 +35,7 @@ isProject: false
 # AGENT EXECUTION CONTRACT
 
 > **Phase completion log (T-033–T-040):** PRE-3.5 ✅ DOC-0 ✅ 3.5 ✅ 7b ✅ 7a ✅ 9 ✅.
-> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-060 shipped** (`b1fd25a`). **T-061 shipped (good enough)** — drag @ ~360k. **T-062 shipped** — incremental bindings @ 360k. **T-062.2 shipped** — editor session / alt-tab. **T-062.1 shipped** — chunked IDB slot restore. **T-062.1.1 shipped** — Save orbat dedup (editor-only POST; Go derives ORBAT for events). **Active: T-063..T-067.** Mega optimizations deferred ([ROADMAP.md](ROADMAP.md) §Deferred mega optimizations). Eden **T-068+**.
+> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-060 shipped** (`b1fd25a`). **T-061 shipped (good enough)** — drag @ ~360k. **T-062 shipped** — incremental bindings @ 360k. **T-062.2 shipped** — editor session / alt-tab. **T-062.1 shipped** — chunked IDB slot restore. **T-062.1.1 shipped** — Save orbat dedup. **T-063 shipped** — rbush spatial index for click/marquee pick @ ~367k. **Active: T-064..T-067.** Mega optimizations deferred ([ROADMAP.md](ROADMAP.md) §Deferred mega optimizations). Eden **T-068+**.
 
 > **For the human:** Open a new Cursor Agent / CLI session and paste the prompt below. The agent reads this file; execute **open** phases only.
 
@@ -46,7 +46,7 @@ Read CLAUDE.md first. Mission Creator is Eden-first (locked 2026-06): the shell 
 PRE-3.5–9 are DONE (T-033–T-040). Open work = the Eden parity backlog in
 eden/gap_analysis.md — P0 remaining + P1 + P2 — shipped as T-053+ slices BEFORE Track A
 Phase 2 (map tiles A-01, DEM A-03/A-04) and DEM-dependent Phase 8 tools. Authority:
-ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **T-060–T-062.1.1 shipped.** **Active: T-063..T-067** → Eden **T-068+**.
+ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **T-060–T-063 shipped.** **Active: T-064..T-067** → Eden **T-068+**.
 A thin Track B registry (B-01) for Eden P0 (P0-01..03) is in scope; full registry/Arsenal and
 tiles/DEM are deferred. After each slice: `cd frontend && npm run build && npm run lint`. Do not
 commit unless I ask.
@@ -55,7 +55,7 @@ commit unless I ask.
 Shorter variant:
 
 ```
-ROADMAP.md §Current strategy → @agent_execution.md §ACTIVE SLICE. **T-062.1.1 shipped.** **Active: T-063..T-067** → Eden **T-068+**.
+ROADMAP.md §Current strategy → @agent_execution.md §ACTIVE SLICE. **T-063 shipped.** **Active: T-064..T-067** → Eden **T-068+**.
 ```
 
 ## Agent roles — Cursor vs Claude Code (locked 2026-06)
@@ -193,7 +193,7 @@ flowchart LR
     Shell["Eden docked shell"]
     Save["Compiler + Save Version"]
   end
-  subgraph active [Active T-063 to T-067]
+  subgraph active [Active T-064 to T-067]
     Scale["Scale program"]
   end
   subgraph later [After scale milestones]
@@ -315,7 +315,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Additive select** (T-053) | **Ctrl/Cmd-only** modifier multi-select lives in `TacticalMap`'s Deck `onClick` (reads `event.srcEvent.ctrlKey/metaKey`). Click a slot with the modifier → **toggle** it in/out of `selection.ids` (removing the last id → `none`); Ctrl/Cmd + empty-click **preserves** the selection (only a plain empty click deselects). **Shift stays unbound** (reserved for a future range-select); marquee still **replaces**. One-file change — no store/schema or `useSelectTool` change; a Ctrl-built multi (>1) keeps dbl-click attributes suppressed. |
 | **Copy/paste at cursor** (T-056) | **Ctrl/Cmd+C** snapshots the slot selection to an in-editor clipboard (`ClipboardSlot[]` ref on `MissionCreatorPage`); **Ctrl/Cmd+V** pastes via new batched `pasteSlots(md, clip, { anchorAt, layerId })` in `state/ydoc.ts` — one transact (one undo step) that translates the clip so its **centroid lands at the map cursor** (mouse off-map → fixed **+20m/+20m** nudge), re-attaches each copy to its **source squad** (or `ensureDefaultSquad`), files into the **active layer** (or `ensureDefaultLayer`), clamps x/y to terrain bounds, and returns the new ids → selection. Two keydown branches behind the existing INPUT/SELECT/TEXTAREA/contentEditable guard (native text copy/paste preserved); cursor read via `cursorRef` (no keydown re-bind on mouse move). **Scope locked:** copy+paste, slots only — Cut (Ctrl+X) and paste-at-original (Ctrl+Shift+V) deferred. Four files; no backend/`useSelectTool`/compiler change. Closes gap_analysis **P1-02** / ACTION-COPY-001 / ACTION-PASTE-001. |
 | **Asset browser search** (T-055) | The **Asset Browser** (Factions tab in the right palette) gets a search field over a recursive `filterCatalog(ASSET_CATALOG, q)` — **case-insensitive label substring**; a folder is kept on a self-match (→ full subtree, so "nato" shows all NATO) or on any descendant match (→ filtered children); retained folders force-`defaultExpanded`. The `TreeView` is **keyed on the query** so its mount-time `collectExpanded` re-runs and reveals matches; empty result → "No assets match"; X/Esc clears; filtered leaves still drag-to-place. Search is **scoped to AssetBrowser** (only live catalog) — stub tabs unchanged; no `class:` prefix (P2). One real file; no `TreeView`/`ASSET_CATALOG`/store change. Closes gap_analysis **P1-04** / RIGHT-SEARCH-001. |
-| **Attributes entry points** (T-054) | One double-click contract for opening **Attributes**. **Map:** native `onDoubleClick` on the gesture-host container + `deckRef.pickObject('slot-icons')` → `onEntityActivate` — replaced the hand-rolled 350ms `lastClick` timer in `onClick`. **ORBAT tree:** `OrbatSection` gains `onActivateSlot` (threaded from `LeftSidebar`, same as `EditorLayersSection`) and passes `onActivate` to its `TreeView`, which fires on a slot row's native `onDoubleClick`. Multi-select suppression (`onEntityActivate` `ids.length <= 1`) and T-053 Ctrl/Cmd toggle unchanged; no TreeView/store change. Closes gap_analysis **P1-09** / SEL-ORBAT-DBL-001 (hardens SEL-MAP-004). |
+| **Attributes entry points** (T-054, pick path **T-063**) | **Map:** native `onDoubleClick` + `slotSpatialIndex.pickNearest` → `onEntityActivate` (was `deckRef.pickObject`). **ORBAT tree:** slot row dbl-click via `TreeView.onActivate`. Multi-select suppression unchanged. |
 | **Map performance** (T-057) | The toolbelt cursor read-out is **transient `useMapStore.cursor`** (set rAF-throttled), not page state — so a pointer move re-renders only `BottomToolbelt`, never the Outliner trees. Cursor coords come from **unprojecting the mouse ourselves** (`view.makeViewport(...).unproject` on the container `onPointerMove`), **not** Deck's `onHover` — `onHover` is removed and `getCursor` is constant `'crosshair'`, so Deck does **no per-move hover pick**. Picking is kept only for click / dbl-click / marquee / drag-start. Pan is **rAF-coalesced** in `useSelectTool` (one `setViewState`/frame, flushed on pointer-up). `React.memo` on `TacticalMap`, `LeftSidebar`, `AssetPalette`, `TopCommandStrip`, `BottomToolbelt`, `AttributesModal`. **Accepted UX trade:** the pointer no longer changes to a "pointer" glyph over an icon (no hover pick). No schema/compiler/backend change; all interactions unchanged. Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md). |
 | **Entity count readout** (T-058) | Bottom toolbelt shows **OBJ** = `slotCount` from store (T-062; was memoized `selectSlotCount`) + **SEL** = `selection.ids.length` when `kind==='slot'` else 0, in a mono `tabular-nums` block right of the X/Y/Z coords. Both subscribe **inside the already-memoized `BottomToolbelt`** so they track add/remove/paste/delete/selection but **never** a cursor move (T-057 channel untouched). Slots only — vehicles/markers join in a later P0 slice; plain integers (no commas) so 100000+ doesn't break layout. Closes `BOTTOM-OBJCOUNT-001`. |
 | **Mission version API body limit** (T-060 — **code shipped**) | **Was:** global 1 MB rejected 360k payloads. **Fix (T-060 code):** `internal/middleware/bodylimit.go` — `GlobalBodyLimit` skips versions POST; route `BodyLimit(256 MB)`; **413** in `CreateVersion`. **Upload @ scale (T-060.1):** version POST `timeout: 600_000` + `maxBody/maxContentLength: Infinity`; Vite `/api` proxy `timeout`/`proxyTimeout: 600_000`; chunked `editor.slots` assembly; `!resp` catch surfaces axios `code`/`message`. |
@@ -326,12 +326,13 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Drag-move @ 360k** (T-061 — **shipped, good enough**) | **T-061.0:** dual IconLayer + split drag state + rAF delta → ~60 fps sustained. **T-061.0.1:** `slotIconCache` O(k) + bindings slot fast path → pickup/release materially improved (minor release frame possible — deferred). Mega opts → [ROADMAP.md](ROADMAP.md) §Deferred mega optimizations. Spec: [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md). |
 | **Incremental bindings @ 360k** (T-062 — **shipped**) | **T-062.0:** `classifyTransaction` → O(k) Zustand patches (drop, delete, meta, editor-layers). **T-062.0.1:** batched `removeEntities`, `slotCount`/`slotsRevision`, `REMOVE_PATCH_CAP` 10k. Verified delete 4k + undo 6k @ ~360k. Spec: [`t062_incremental_bindings.md`](t062_incremental_bindings.md). |
 | **Chunked IDB slot restore** (T-062.1 — **shipped**) | v2 `idb` persistence; determinate restoring @ ~360k. Spec: [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md). |
-| **Save orbat dedup** (T-062.1.1 — **shipped**) | Save omits duplicate `orbat[]`; `services.ParseOrbatTemplate` derives from `editor` for Event attach. Export keeps full orbat. Spec: [`t062_1_1_batch_save.md`](t062_1_1_batch_save.md). **Next:** T-063 spatial index. |
+| **Save orbat dedup** (T-062.1.1 — **shipped**) | Save omits duplicate `orbat[]`; `services.ParseOrbatTemplate` derives from `editor` for Event attach. Export keeps full orbat. Spec: [`t062_1_1_batch_save.md`](t062_1_1_batch_save.md). |
+| **Spatial index** (T-063 — **shipped**) | rbush R-tree for click/marquee pick @ ~367k; replaces Deck GPU `pickObject`/`pickObjects`; `slot-icons` `pickable: false`. Spec: [`t063_spatial_index.md`](t063_spatial_index.md). **Next:** T-064 virtualized outliner. |
 | **Editor session / alt-tab** (T-062.2 — **shipped**) | Dev: `viteReloadGuard` blocks Vite HMR full reload on editor route. Warm session: `editorSession.ts` → skip multi-MB GET on same-tab return when IDB has content. Background-safe yields. **Tradeoff:** warm path trusts local IDB. Spec: [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md). |
-| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-062.1.1 shipped**; **active T-063..T-067**). Eden **T-068+**; **T-070+** terrain base after that. … |
+| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-063 shipped**; **active T-064..T-067**). Eden **T-068+**; **T-070+** terrain base after that. … |
 | **Mission title hydrate** (T-049) | On editor load the **PostgreSQL mission row** (`title`, `terrain`, time/weather) hydrates `meta` via `applyMissionRowMeta` (INIT_ORIGIN) — including new missions whose `json_payload` is `{}`. **No PATCH-back** in T-049; Save Version still compiles payload only. |
-| **Phase order** | … **T-057–T-062.1.1 shipped.** **Active: T-063..T-067** → Eden **T-068+** → **T-070+** terrain base (optional). … |
-| **Drag perf — good enough** (2026-06) | T-061 closed Eden-blocking drag @ ~360k. T-062 closed everyday edit bindings @ ~360k. Do **not** pursue T-061.1 / release repack collapse until T-063..T-067 + Eden milestones unless regression. See ROADMAP §Deferred mega optimizations. |
+| **Phase order** | … **T-057–T-063 shipped.** **Active: T-064..T-067** → Eden **T-068+** → **T-070+** terrain base (optional). … |
+| **Drag perf — good enough** (2026-06) | T-061 closed Eden-blocking drag @ ~360k. T-062 closed everyday edit bindings @ ~360k. T-063 closed pick/marquee @ ~367k. Do **not** pursue T-061.1 / release repack collapse until T-064..T-067 + Eden milestones unless regression. See ROADMAP §Deferred mega optimizations. |
 | **Eden completeness** | Eden parity checklist = `eden/interactions.md`, `eden/ui_anatomy.md`, `eden/attributes.md`, `eden/gap_analysis.md` + scrape artifacts. Read `eden/ui_anatomy.md` / `eden/attributes.md` before implementing UI/attrs. Implement the P0 backlog from `eden/gap_analysis.md`. Feature status lives in `feature_inventory.md` + `reference/feds_schema.md`; new TBD features → FEDS row in `feature_inventory.md`. Wiki cache = `eden/wiki_manifest.yaml` + `artifacts/eden-wiki/`; regenerate via `node scripts/tools/scrape-eden-wiki.mjs` when the wiki updates. |
 
 ---
@@ -339,7 +340,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 ## Agent rules (mandatory)
 
 1. **Read first:** `CLAUDE.md` (conventions), then this file, then `engineering_plan.md` §0–§2.
-2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-062.1.1 shipped.** **Active: T-063** spatial index → T-064..T-067. Eden **T-068+** after scale milestones.
+2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-063 shipped.** **Active: T-064** virtualized outliner → T-065..T-067. Eden **T-068+** after scale milestones.
 3. **Verify gate** after every phase:
    ```bash
    cd frontend && npm run build && npm run lint
@@ -356,13 +357,13 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 
 ---
 
-## ACTIVE SLICE — T-063 spatial index (then T-064..T-067)
+## ACTIVE SLICE — T-064 virtualized outliner (then T-065..T-067)
 
-**T-060 + T-060.1.* shipped** in commit `b1fd25a`. **T-061 shipped (good enough)** — spec: [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md). **T-062 shipped** — spec: [`t062_incremental_bindings.md`](t062_incremental_bindings.md). **T-062.2 shipped** — spec: [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md). **T-062.1 shipped** — spec: [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md). **T-062.1.1 shipped** — Save orbat dedup; spec: [`t062_1_1_batch_save.md`](t062_1_1_batch_save.md).
+**T-063 shipped** — rbush spatial index for click/marquee pick @ ~367k; spec: [`t063_spatial_index.md`](t063_spatial_index.md). Manual verify: significantly faster click/marquee vs Deck GPU pick.
 
-**T-062.1.1 acceptance (shipped + verified):** `make test-it` + services unit tests + FE build/lint clean; IT editor-only → event attach → ORBAT derived; manual @ 367,529 objects → **~94.8 MB estimated** (~33% smaller vs ~141 MB pre-dedup).
+**T-062.1.1 acceptance (shipped + verified):** manual @ 367,529 objects → **~94.8 MB estimated** Save (~33% smaller vs ~141 MB pre-dedup).
 
-**Next:** **T-063** rbush spatial index → T-064..T-067. **Eden T-068+** after scale milestones.
+**Next:** **T-064** virtualized outliner → T-065..T-067. **Eden T-068+** after scale milestones.
 
 ---
 

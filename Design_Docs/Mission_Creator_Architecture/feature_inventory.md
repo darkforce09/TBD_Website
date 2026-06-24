@@ -232,15 +232,15 @@
 | **Goal** | Primary single selection |
 | **Trigger** | LMB up on slot icon (click, not drag) |
 | **Preconditions** | Select tool effective (always) |
-| **Procedure** | Deck `onClick` on pickable icon → `setSelection({ kind:'slot', ids:[id] })` |
+| **Procedure** | `useSelectTool` pending-left pointerUp → `slotSpatialIndex.pickNearest` → `setSelection({ kind:'slot', ids:[id] })` (T-063; was Deck `onClick`) |
 | **Postconditions** | One id selected; icon highlight |
 | **Inputs** | LMB |
 | **Outputs** | `selection`; IconLayer yellow/larger |
-| **Edge cases** | Replaces prior selection; no Shift/Ctrl additive |
-| **Acceptance** | `- [ ] Click unit selects` `- [ ] Highlight visible` |
+| **Edge cases** | Replaces prior selection; Ctrl/Cmd additive via T-053 |
+| **Acceptance** | `- [x] Click unit selects` `- [x] Highlight visible` |
 | **Eden parity** | Eden:SEL-001 |
 | **Status** | working |
-| **Evidence** | `TacticalMap.tsx`, `useMapStore.ts`, `useIconLayer.ts` |
+| **Evidence** | `useSelectTool.ts`, `slotSpatialIndex.ts`, `useMapStore.ts`, `useIconLayer.ts` |
 
 #### SEL-MAP-002 — Click empty map deselect
 
@@ -250,15 +250,15 @@
 | **Goal** | Clear selection |
 | **Trigger** | LMB click on non-icon |
 | **Preconditions** | Any selection |
-| **Procedure** | `onClick` no object → `{ kind:'none', ids:[] }` |
+| **Procedure** | `useSelectTool` pending-left pointerUp, no hit → `{ kind:'none', ids:[] }` (T-063) |
 | **Postconditions** | Selection cleared |
 | **Inputs** | LMB on empty |
 | **Outputs** | `selection` cleared |
 | **Edge cases** | Plain LMB only; **Ctrl/Cmd+empty preserves** selection (T-053). No camera teleport (removed Phase 7b) |
-| **Acceptance** | `- [ ] Plain click empty clears selection` `- [ ] Ctrl/Cmd+empty preserves` |
+| **Acceptance** | `- [x] Plain click empty clears selection` `- [x] Ctrl/Cmd+empty preserves` |
 | **Eden parity** | Eden:SEL-002 |
 | **Status** | working |
-| **Evidence** | `TacticalMap.tsx` (T-053/T-054) |
+| **Evidence** | `useSelectTool.ts` (T-053/T-063) |
 
 #### SEL-MAP-003 — Marquee box-select
 
@@ -268,15 +268,15 @@
 | **Goal** | Primary multi-select (Eden box select) |
 | **Trigger** | LMB drag on empty map >4px threshold, release |
 | **Preconditions** | Start on non-icon |
-| **Procedure** | 1. `useSelectTool` marquee mode. 2. `useSelectionLayer` draws rect. 3. On release `deck.pickObjects` on `slot-icons`. 4. Set `ids` from picks. |
+| **Procedure** | 1. `useSelectTool` marquee mode. 2. `useSelectionLayer` draws rect. 3. On release `slotSpatialIndex.pickRect` (world bbox). 4. Set `ids` from picks. |
 | **Postconditions** | Multi or single selection; zero picks → deselect |
 | **Inputs** | LMB drag |
 | **Outputs** | `selection.ids[]`; outliner multi-highlight |
 | **Edge cases** | Box ≥1×1 px; sub-threshold = click only |
-| **Acceptance** | `- [ ] Drag box selects multiple units` `- [ ] Empty box clears` |
+| **Acceptance** | `- [x] Drag box selects multiple units` `- [x] Empty box clears` |
 | **Eden parity** | Eden:SEL-003 |
 | **Status** | working |
-| **Evidence** | `useSelectTool.ts`, `useSelectionLayer.ts`, `TacticalMap.tsx` |
+| **Evidence** | `useSelectTool.ts`, `useSelectionLayer.ts`, `slotSpatialIndex.ts` |
 
 #### SEL-MAP-004 — Double-click open attributes
 
@@ -286,7 +286,8 @@
 | **Goal** | Eden attributes entry via dbl-click |
 | **Trigger** | Native `dblclick` on map container over a slot icon |
 | **Preconditions** | `selection.ids.length <= 1` at activate |
-| **Procedure** | Native `dblclick` on the map container → `deckRef.pickObject('slot-icons')` → `onEntityActivate` → `setAttributesId` (T-054; replaced the 350ms `lastClick` timer) |
+| **Procedure** | Native `dblclick` on the map container → `slotSpatialIndex.pickNearest` → `onEntityActivate` → `setAttributesId` (T-054/T-063) |
+| **Evidence** | `TacticalMap.tsx` (`onDoubleClick`), `slotSpatialIndex.ts`, `MissionCreatorPage.tsx`, `AttributesModal.tsx` |
 | **Postconditions** | `AttributesModal` open |
 | **Inputs** | LMB ×2 |
 | **Outputs** | `attributesId` |
@@ -1192,6 +1193,25 @@
 | **Eden parity** | Eden:XFORM-MOVE-001 |
 | **Status** | **shipped (good enough)** — spec [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md) |
 | **Evidence** | `slotIconCache.ts`, `useMapStore.ts`, `bindings.ts`, `useIconLayer.ts`, `useSelectTool.ts`, `selectors.ts`, `TacticalMap.tsx` |
+
+---
+
+#### PERF-PICK-001 — Spatial index for pick/marquee @ 360k (T-063)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | **Click, dbl-click, drag-start, marquee** pick without scanning all ~367k icons |
+| **Trigger** | LMB click, dbl-click, drag-start, marquee release on map |
+| **Preconditions** | Mission loaded with many slots; pan/drag paths already fast (T-057, T-061) |
+| **Procedure** | rbush R-tree in `slotSpatialIndex.ts`; maintained alongside `slotIconCache`; `pickNearest` / `pickRect` replace `deck.pickObject` / `pickObjects`; `slot-icons` `pickable: false` |
+| **Postconditions** | Selection unchanged vs Eden contract; no GPU pick pass on IconLayer |
+| **Inputs** | Screen px + viewport (point picks); world bbox (marquee) |
+| **Outputs** | `selection.ids[]`; Attributes via dbl-click |
+| **Edge cases** | Overlapping icons → nearest to click; Ctrl/Cmd toggle (T-053); drag exclude no tree change |
+| **Acceptance** | `- [x] Click @ 367k instant` `- [x] Marquee no multi-s freeze` `- [x] Dbl-click Attributes` `- [x] Pan/drag unchanged` `- [x] build + lint clean` |
+| **Status** | **shipped** — spec [`t063_spatial_index.md`](t063_spatial_index.md) |
+| **Evidence** | `slotSpatialIndex.ts`, `slotIconCache.ts`, `useSelectTool.ts`, `TacticalMap.tsx`, `useIconLayer.ts` |
 
 ---
 

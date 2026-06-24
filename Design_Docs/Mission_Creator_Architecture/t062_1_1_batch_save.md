@@ -84,14 +84,13 @@ Real missions (~128 ORBAT slots) are tiny; this slice targets **future object-he
 
 - Multipart/chunked upload (Option B)
 - schemaVersion 2 compact `editor.slots`
-- T-063 spatial index
+- T-063 spatial index → **shipped** [`t063_spatial_index.md`](t063_spatial_index.md)
 
 ---
 
 ## After T-062.1.1
 
-- **Active:** **T-063** spatial index → T-064..T-067
-- Spec: [`.cursor/plans/t-063_spatial_index_16d858f3.plan.md`](../../.cursor/plans/t-063_spatial_index_16d858f3.plan.md)
+- **Active:** **T-064** virtualized outliner → T-065..T-067
 
 ---
 

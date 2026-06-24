@@ -79,10 +79,11 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest: **T-062.1.1 shipped** — 2026-06; Save orbat dedup)
+## Status (latest: **T-063 shipped** — 2026-06; rbush spatial index for pick/marquee)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-063 **Mission Creator — spatial index for click/marquee pick @ ~367k**. rbush R-tree (`slotSpatialIndex.ts`) kept in sync via `slotIconCache` mutators; `pickNearest` / `pickRect` replace Deck GPU pick; `slot-icons` `pickable: false`; click-select moved to `useSelectTool` pending-left pointerUp. FE build/lint clean; manual @ ~367k: significantly faster click/marquee. Spec: [`t063_spatial_index.md`](Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md).
 - T-062.1.1 **Mission Creator — Save orbat payload dedup**. Save Version omits duplicate `orbat[]`
   (editor-only POST); Go `services.ParseOrbatTemplate` derives ORBAT from `editor` for Event attach.
   Export keeps full superset. `make test-it` + FE build/lint clean. Spec:
@@ -455,7 +456,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   - **T-036 Phase 7b — map drag + multi-select:** `Selection` is now `{ kind, ids[] }`. New
     `tools/useSelectTool.ts` pointer state machine (Deck `dragPan` off): left-drag icon = move
     (transient preview → one `moveEntities` transact on release), left-drag empty = marquee
-    (`layers/useSelectionLayer.ts` + GPU `pickObjects`), middle/right-drag = pan. `ydoc`
+    (`layers/useSelectionLayer.ts` + `slotSpatialIndex.pickRect`), middle/right-drag = pan. `ydoc`
     `moveEntities`/`removeEntities` (atomic group ops). Removed click-to-teleport; Delete/Backspace
     removes selection; Spacebar centers on the selection centroid.
   - **T-037 Phase 7a — outliner tree ops:** `ydoc` `renameEditorLayer`/`reparentEditorLayer`
@@ -474,7 +475,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-062.1.1 shipped.** **Active: T-063..T-067** scale program (spatial index → virtualized outliner → LOD → worker → spatial chunks).
+**Not yet built / next (Mission Creator):** **T-063 shipped.** **Active: T-064..T-067** scale program (virtualized outliner → LOD → worker → spatial chunks).
 Mega render/bindings optimizations **deferred**
 — MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations.
 **T-070+** (after Eden T-068+): optional **terrain base + sparse deltas** for millions of map props — dual-layer model; do **not** replace Y.Doc/ORBAT. See [t070_terrain_base_mission_layers.md](Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md). **Eden P1-07+** resumes at **T-068+**.

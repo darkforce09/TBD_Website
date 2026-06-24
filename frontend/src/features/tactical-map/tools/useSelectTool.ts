@@ -1,16 +1,17 @@
-// Pointer gesture state machine for the Select tool (Phase 7b). Deck keeps picking,
-// click/dblclick, hover and wheel-zoom; we own every DRAG here so the Eden interaction
-// contract holds: left-drag an icon = move, left-drag empty = marquee box-select,
-// middle/right-drag = pan. A small movement threshold lets a plain click fall through to
-// Deck's onClick (select / deselect). Mutations are reported to the host via onEntitiesMove
-// (one Y.Doc transaction = one undo step); selection + transient drag/marquee live in the
-// store. The map never pans on left-drag (Deck's dragPan is disabled in TacticalMap).
+// Pointer gesture state machine for the Select tool (Phase 7b). We own every pointer gesture
+// here so the Eden interaction contract holds: left-drag an icon = move, left-drag empty =
+// marquee box-select, middle/right-drag = pan, and a sub-threshold left release = click
+// (select / toggle / deselect). All picking goes through the slotSpatialIndex R-tree (T-063) —
+// Deck's `slot-icons` layer is no longer pickable, so click-select moved out of Deck's onClick
+// into the pending-left pointerUp branch below. Mutations are reported to the host via
+// onEntitiesMove (one Y.Doc transaction = one undo step); selection + transient drag/marquee
+// live in the store. The map never pans on left-drag (Deck's dragPan is disabled in TacticalMap).
 
 import { useCallback, useEffect, useRef } from 'react'
 import type { OrthographicView } from '@deck.gl/core'
-import type { DeckGLRef } from '@deck.gl/react'
 import { useMapStore } from '../state/useMapStore'
 import * as slotIconCache from '../state/slotIconCache'
+import * as slotSpatialIndex from '../state/slotSpatialIndex'
 import type { ID } from '../state/schema'
 import type { MapViewState } from '../types'
 
@@ -31,7 +32,6 @@ type Gesture =
   | null
 
 interface UseSelectToolArgs {
-  deckRef: React.RefObject<DeckGLRef | null>
   containerRef: React.RefObject<HTMLDivElement | null>
   view: OrthographicView
   viewState: MapViewState
@@ -48,7 +48,6 @@ export interface SelectToolHandlers {
 }
 
 export function useSelectTool({
-  deckRef,
   containerRef,
   view,
   viewState,
@@ -134,18 +133,14 @@ export function useSelectTool({
       }
 
       if (e.button !== 0) return
-      // Left button: defer the decision (click vs move vs marquee) to the threshold. Do
-      // NOT capture yet — a plain click must reach Deck's canvas (onClick → select).
-      const info = deckRef.current?.pickObject({
-        x: px[0],
-        y: px[1],
-        radius: 4,
-        layerIds: ['slot-icons'],
-      })
-      const iconId = (info?.object as { id: ID } | undefined)?.id ?? null
+      // Left button: defer the decision (click vs move vs marquee) to the threshold. Do NOT
+      // capture yet — a sub-threshold release is a click, handled in onPointerUp. Pick via the
+      // spatial index (T-063) instead of Deck — the layer is no longer pickable.
+      const vp = makeViewport()
+      const iconId = vp ? slotSpatialIndex.pickNearest(px, vp) : null
       gesture.current = { type: 'pending-left', startPx: px, iconId }
     },
-    [localPt, makeViewport, containerRef, deckRef, viewState],
+    [localPt, makeViewport, containerRef, viewState],
   )
 
   const onPointerMove = useCallback(
@@ -260,22 +255,43 @@ export function useSelectTool({
       if (g.type === 'marquee') {
         const px = localPt(e)
         if (px) {
-          const x = Math.min(g.startPx[0], px[0])
-          const y = Math.min(g.startPx[1], px[1])
           const width = Math.abs(px[0] - g.startPx[0])
           const height = Math.abs(px[1] - g.startPx[1])
           if (width >= 1 && height >= 1) {
-            const infos =
-              deckRef.current?.pickObjects({ x, y, width, height, layerIds: ['slot-icons'] }) ?? []
-            const ids = [...new Set(infos.map((i) => (i.object as { id: ID }).id))]
+            // Query the spatial index in WORLD meters (T-063) — start corner + release point,
+            // both already unprojected through the gesture's frozen viewport.
+            const w1 = g.vp.unproject(px)
+            const ids = slotSpatialIndex.pickRect(g.startWorld[0], g.startWorld[1], w1[0], w1[1])
             store.setSelection(ids.length ? { kind: 'slot', ids } : { kind: 'none', ids: [] })
           }
         }
         store.setMarquee(null)
+        return
       }
-      // 'pending-left' (sub-threshold) needs no commit — Deck's onClick handles clicks.
+
+      // 'pending-left' (sub-threshold) = a click. Deck no longer picks on click (T-063), so
+      // selection lives here: pick the slot under the release point and apply T-053 rules.
+      if (g.type === 'pending-left') {
+        const px = localPt(e)
+        const vp = px ? makeViewport() : null
+        const id = px && vp ? slotSpatialIndex.pickNearest(px, vp) : null
+        const additive = e.ctrlKey || e.metaKey
+        if (id) {
+          if (additive) {
+            // Ctrl/Cmd-click toggles this slot in/out of the current selection.
+            const cur = store.selection.kind === 'slot' ? store.selection.ids : []
+            const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]
+            store.setSelection(next.length ? { kind: 'slot', ids: next } : { kind: 'none', ids: [] })
+          } else {
+            store.setSelection({ kind: 'slot', ids: [id] })
+          }
+        } else if (!additive) {
+          // Plain empty click deselects; Ctrl/Cmd + empty preserves the selection (T-053).
+          store.setSelection({ kind: 'none', ids: [] })
+        }
+      }
     },
-    [containerRef, deckRef, localPt, onEntitiesMove, flushPan],
+    [containerRef, localPt, makeViewport, onEntitiesMove, flushPan],
   )
 
   // Drop any in-flight pan/drag frame if the tool unmounts mid-gesture.
