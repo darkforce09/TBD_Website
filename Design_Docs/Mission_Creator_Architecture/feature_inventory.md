@@ -26,7 +26,7 @@
 
 | Status | Count |
 |--------|-------|
-| working | 58 |
+| working | 59 |
 | partial | 12 |
 | stub | 8 |
 | disabled | 3 |
@@ -1125,15 +1125,35 @@
 | **Goal** | Paste **10k** slots without browser hard-freeze; one undo step; pan ≥55 fps after |
 | **Trigger** | Ctrl/Cmd+V with large clipboard; bulk delete |
 | **Preconditions** | T-056 copy/paste working; T-058 OBJ readout for verification |
-| **Procedure** | Batch `slotIds`/`entityIds` append in `pasteSlots`; cap selection ids >500; cap outliner leaves; optional chunked paste + progress |
+| **Procedure** | Batch `slotIds`/`entityIds` append in `pasteSlots`; cap selection ids >500; outliner virtualization (T-064 supersedes T-059 leaf cap) |
 | **Postconditions** | OBJ correct; tab responsive; undo reverts entire paste |
 | **Inputs** | `ClipboardSlot[]`, cursor anchor, active layer |
 | **Outputs** | New slot ids (selection capped when bulk) |
-| **Edge cases** | Paste 10k → selection cleared not 10k ids; layer folder shows count not 10k leaves |
+| **Edge cases** | Paste 10k → selection cleared not 10k ids; large folders scroll via virtual outliner (T-064) |
 | **Acceptance** | `- [x] Paste 10k no hard freeze` `- [x] OBJ correct` `- [x] Pan ≥55 fps after` `- [x] Undo one step` `- [x] 360k @ 100+ fps pan validated` |
 | **Eden parity** | Eden:ACTION-PASTE-001 (bulk scale) |
 | **Status** | working |
-| **Evidence** | `state/ydoc.ts` (`pasteSlots`), `MissionCreatorPage.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx` |
+| **Evidence** | `state/ydoc.ts` (`pasteSlots`), `MissionCreatorPage.tsx`, `VirtualOutliner.tsx`, `flattenOutliner.ts` |
+
+---
+
+#### PERF-OUTLINER-001 — Virtualized outliner @ scale (T-064)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | Scroll through **100k–360k+** slot rows in ORBAT + Editor Layers without DOM explosion or tab freeze |
+| **Trigger** | Expand a large squad/layer folder; scroll the left sidebar |
+| **Preconditions** | T-060 deferred sidebar until `docStatus === 'ready'`; trees populated on first mount |
+| **Procedure** | `@tanstack/react-virtual` in `VirtualOutliner.tsx`; segment-index flatten (`flattenOutliner.ts`); `virtualSlotIds` on folders with ≥50 slots (`VIRTUAL_SLOT_THRESHOLD`); callback-ref `scrollEl` (T-064.1) |
+| **Postconditions** | Only ~viewport rows mounted; DnD/rename/select/dbl-click preserved |
+| **Inputs** | ORBAT + Editor Layers tree models from Zustand |
+| **Outputs** | Virtual row list in single `LeftSidebar` scroll container |
+| **Edge cases** | Blank first frame if scroll element null — fixed T-064.1 via `scrollElement` state not RefObject |
+| **Acceptance** | `- [x] Outliner visible on first paint @ ~367k` `- [x] Scroll 367k virtual rows` `- [x] No tab freeze` `- [x] DnD/reparent/root-drop/rename/delete` `- [x] Map pan/pick unchanged` |
+| **Eden parity** | Eden outliner scroll (scale) |
+| **Status** | working |
+| **Evidence** | `VirtualOutliner.tsx`, `flattenOutliner.ts`, `TreeRow.tsx`, `LeftSidebar.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx` |
 
 ---
 
@@ -1458,7 +1478,7 @@
 | KEY-SPACE-001 | working | `Space` → flyTo selection | `MissionCreatorPage.tsx` |
 | KEY-DEL-001 | working | Delete/Backspace → remove slots | `MissionCreatorPage.tsx` |
 | KEY-UNDO-001 | working | Buttons + Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
-| KEY-COPY-001 | working | Ctrl/Cmd+C copy slot selection + Ctrl/Cmd+V paste at cursor (relative layout; off-map +20m nudge) (T-056). **Bulk scale (T-059):** `pasteSlots` batch O(n) append (no O(n²) spreads); paste auto-selects only when ≤500 (`BULK_SELECT_CAP`), else clears to `none`; outliner caps slot leaves at 500/folder+squad (`OUTLINER_LEAF_CAP`) → 10k paste without hard freeze | `MissionCreatorPage.tsx`, `state/ydoc.ts` (`pasteSlots`), `state/schema.ts` (`ClipboardSlot`), `LeftOutliner/EditorLayersSection.tsx`, `LeftOutliner/OrbatSection.tsx` |
+| KEY-COPY-001 | working | Ctrl/Cmd+C copy slot selection + Ctrl/Cmd+V paste at cursor (relative layout; off-map +20m nudge) (T-056). **Bulk scale (T-059):** `pasteSlots` batch O(n) append (no O(n²) spreads); paste auto-selects only when ≤500 (`BULK_SELECT_CAP`), else clears to `none`. **Outliner (T-064):** virtualized scroll replaces T-059 `OUTLINER_LEAF_CAP` → 10k+ paste without hard freeze | `MissionCreatorPage.tsx`, `state/ydoc.ts` (`pasteSlots`), `state/schema.ts` (`ClipboardSlot`), `VirtualOutliner.tsx`, `LeftOutliner/EditorLayersSection.tsx`, `LeftOutliner/OrbatSection.tsx` |
 | KEY-SELALL-001 | not_built | Ctrl+A | — |
 
 ---

@@ -8,9 +8,9 @@
 // these get the original read-only behaviour.
 
 import { useState } from 'react'
-import { ChevronRight, FolderOpen } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import type { ID } from '@/features/tactical-map'
+import { TreeRow } from './TreeRow'
 
 export interface TreeNodeData {
   id: string
@@ -22,6 +22,10 @@ export interface TreeNodeData {
   /** Force folder semantics (drop target, folder chrome) even with no children — an
    *  empty Editor-Layers folder. Defaults to "has children" when unset. */
   isFolder?: boolean
+  /** When set and the folder is expanded, its slot leaves are virtualized from this id list
+   *  rather than materialized as `children` — avoids building 360k TreeNodeData objects
+   *  (T-064). Consumed by VirtualOutliner; ignored by this recursive renderer. */
+  virtualSlotIds?: ID[]
 }
 
 interface TreeViewProps {
@@ -150,16 +154,29 @@ function TreeNode({
   const hasChildren = !!node.children?.length
   const isOpen = expanded.has(node.id)
   const selected = selectedId === node.id || (selectedIds?.has(node.id) ?? false)
-  // Folders show an "open" glyph when expanded; leaves keep their own icon.
-  const Icon = isFolder && isOpen && hasChildren ? FolderOpen : node.icon
   const draggable = !!onNodeDragStart && (allowFolderDrag || !isFolder)
   const isDropTarget = !!onNodeDrop && isFolder
   const renaming = renamingId === node.id
 
   return (
     <li>
-      <div
+      <TreeRow
+        label={node.label}
+        icon={node.icon}
+        badge={node.badge}
+        isFolder={isFolder}
+        hasChildren={hasChildren}
+        isOpen={isOpen}
+        selected={selected}
         draggable={draggable}
+        isDropTarget={isDropTarget}
+        dragOver={dragOverId === node.id}
+        renaming={renaming}
+        onRowClick={() => {
+          onSelect?.(node.id)
+          if (hasChildren) toggle(node.id)
+        }}
+        onRowDoubleClick={() => !isFolder && onActivate?.(node.id)}
         onDragStart={draggable ? (e) => onNodeDragStart!(node, e) : undefined}
         onDragOver={
           isDropTarget
@@ -183,58 +200,11 @@ function TreeNode({
               }
             : undefined
         }
-        onClick={() => {
-          onSelect?.(node.id)
-          if (hasChildren) toggle(node.id)
-        }}
-        onDoubleClick={() => !isFolder && onActivate?.(node.id)}
-        className={cn(
-          'group flex items-center gap-1.5 rounded-md border-l-2 py-1 pr-2 pl-1.5 text-label-md transition-colors',
-          draggable ? 'cursor-grab' : 'cursor-pointer',
-          selected
-            ? 'border-primary bg-primary/15 text-on-surface'
-            : 'border-transparent text-on-surface-variant hover:bg-white/5 hover:text-on-surface',
-          dragOverId === node.id && 'ring-1 ring-inset ring-primary',
-        )}
-      >
-        <ChevronRight
-          className={cn(
-            'size-3.5 shrink-0 transition-transform',
-            hasChildren ? 'text-outline' : 'invisible',
-            isOpen && 'rotate-90',
-          )}
-        />
-        {Icon && (
-          <Icon className={cn('size-3.5 shrink-0', isFolder ? 'text-tertiary' : 'text-primary')} />
-        )}
-
-        {renaming ? (
-          <input
-            autoFocus
-            defaultValue={node.label}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') onRenameCommit?.(node.id, (e.target as HTMLInputElement).value)
-              else if (e.key === 'Escape') onRenameCancel?.()
-            }}
-            onBlur={(e) => onRenameCommit?.(node.id, e.target.value)}
-            className="min-w-0 flex-1 rounded bg-surface-container-lowest/60 px-1 text-on-surface outline-none ring-1 ring-primary/60"
-          />
-        ) : (
-          <span className={cn('min-w-0 flex-1 truncate', isFolder && 'font-medium')}>{node.label}</span>
-        )}
-
-        {!renaming && node.badge && (
-          <span className="shrink-0 rounded bg-surface-variant/60 px-1.5 text-label-sm text-outline">
-            {node.badge}
-          </span>
-        )}
-        {!renaming && renderNodeActions && (
-          <span className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-            {renderNodeActions(node)}
-          </span>
-        )}
-      </div>
+        actions={renderNodeActions ? renderNodeActions(node) : undefined}
+        renameDefaultValue={node.label}
+        onRenameCommit={(value) => onRenameCommit?.(node.id, value)}
+        onRenameCancel={onRenameCancel}
+      />
 
       {hasChildren && isOpen && (
         <ul className="ml-[1.1rem] flex flex-col border-l border-white/5 pl-0">

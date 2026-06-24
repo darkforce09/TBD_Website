@@ -81,7 +81,7 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.11 — [x] T-056 Ctrl+C/V copy-paste at cursor (slots; relative layout, off-map +20m nudge; one undo step)
 ### M3.12 — [x] T-057 Map perf hotfix (≥55 fps pan/zoom @ 200+ slots: cursor→store rAF, no Deck `onHover` pick, pan rAF-coalesce, `React.memo` panels)
 ### M3.13 — [x] T-058 Toolbelt OBJ/SEL entity counts (total placed slots + selected count; scale telemetry)
-### M3.14 — [x] T-059 Bulk paste/delete at scale (batch O(n) append; selection cap 500; outliner leaf cap 500 both trees; validated **360k @ 100+ fps** pan)
+### M3.14 — [x] T-059 Bulk paste/delete at scale (batch O(n) append; selection cap 500; outliner virtualization via T-064; validated **360k @ 100+ fps** pan)
 ### M3.15 — [x] T-060 scale load/save (shipped `b1fd25a` — load partial pass @ ~360k; Save ~142 MB → 201)
 ### M3.16 — [x] T-061 drag-move @ 360k (good enough — motion ~60 fps; boundaries via `slotIconCache` — spec: [t061_drag_move_hotfix.md](../../../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md))
 ### M3.17 — [x] T-062 incremental bindings @ 360k (classifier + bulk delete ≤10k — spec: [t062_incremental_bindings.md](../../../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md))
@@ -89,7 +89,8 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.19 — [x] T-062.1 chunked IDB slot restore (v2 `tbd-mission-persist`; determinate restoring @ ~360k — spec: [t062_1_idb_streaming_load.md](../../../Design_Docs/Mission_Creator_Architecture/t062_1_idb_streaming_load.md))
 ### M3.20 — [x] T-062.1.1 Save orbat dedup (editor-only POST; Go derives ORBAT — spec: [t062_1_1_batch_save.md](../../../Design_Docs/Mission_Creator_Architecture/t062_1_1_batch_save.md))
 ### M4.21 — [x] T-063 spatial index (rbush pick/marquee @ ~367k — spec: [t063_spatial_index.md](../../../Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md))
-### M5 — [ ] T-064 virtualized outliner + T-065..T-067 scale program (see MC ROADMAP §Map performance)
+### M4.22 — [x] T-064 virtualized outliner @ ~367k (incl. T-064.1 scroll-ref hotfix — spec: [t064_virtualized_outliner.md](../../../Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md))
+### M5 — [ ] T-065..T-067 scale program (cluster/LOD, worker, chunks — see MC ROADMAP §Map performance)
 
 ## Test Plan
 
@@ -108,4 +109,5 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 - **[PERF-005] Drag-move @ 360k** — **Resolved T-061 (good enough).** Motion ~60 fps sustained; pickup/release materially improved via `slotIconCache` + bindings slot fast path. Mega optimizations deferred ([MC ROADMAP §Deferred mega optimizations](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md)). Spec: [t061_drag_move_hotfix.md](../../../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md).
 - **[PERF-006] Incremental bindings @ 360k** — **Resolved T-062.** Spec: [t062_incremental_bindings.md](../../../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md).
 - **[PERF-007] Alt-tab / session reload @ 360k** — **Resolved T-062.2.** Extended alt-tab (Firefox dev) no longer re-triggers full load overlay; warm session skips server GET on same-tab return. Spec: [t062_2_editor_session_persistence.md](../../../Design_Docs/Mission_Creator_Architecture/t062_2_editor_session_persistence.md).
+- **[PERF-008] Outliner @ 360k** — **Resolved T-064.** Virtualized ORBAT + Editor Layers; outliner visible on first paint @ ~367k; scrollable 367k rows; T-064.1 scroll-ref hotfix. Spec: [t064_virtualized_outliner.md](../../../Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md).
 - [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).

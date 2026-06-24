@@ -79,10 +79,11 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest: **T-063 shipped** — 2026-06; rbush spatial index for pick/marquee)
+## Status (latest: **T-064 shipped** — 2026-06; virtualized outliner @ ~367k)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-064 **Mission Creator — virtualized outliner @ ~367k**. `@tanstack/react-virtual` + segment-index flatten (`flattenOutliner.ts`, `VirtualOutliner.tsx`, `TreeRow.tsx`); `virtualSlotIds` + `VIRTUAL_SLOT_THRESHOLD=50`; replaces T-059 `OUTLINER_LEAF_CAP`. **T-064.1:** callback-ref `scrollEl` fixes blank outliner until first map selection. Manual @ ~367k: outliner on first paint; scrollable 367k virtual rows; no tab freeze. Spec: [`t064_virtualized_outliner.md`](Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md).
 - T-063 **Mission Creator — spatial index for click/marquee pick @ ~367k**. rbush R-tree (`slotSpatialIndex.ts`) kept in sync via `slotIconCache` mutators; `pickNearest` / `pickRect` replace Deck GPU pick; `slot-icons` `pickable: false`; click-select moved to `useSelectTool` pending-left pointerUp. FE build/lint clean; manual @ ~367k: significantly faster click/marquee. Spec: [`t063_spatial_index.md`](Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md).
 - T-062.1.1 **Mission Creator — Save orbat payload dedup**. Save Version omits duplicate `orbat[]`
   (editor-only POST); Go `services.ParseOrbatTemplate` derives ORBAT from `editor` for Event attach.
@@ -158,10 +159,9 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   length). **(b)** post-paste **selection cap** in `MissionCreatorPage` Ctrl+V branch
   (`BULK_SELECT_CAP = 500`): ≤500 selects the paste (T-056 behavior), above it clears to `none`
   so `selection.ids` never holds 10k ids — OBJ still updates from `slotsById`. **(c)** **outliner
-  leaf cap** (`OUTLINER_LEAF_CAP = 500`, exported from `EditorLayersSection`): a layer
-  (`buildTree`) or ORBAT squad (`OrbatSection.buildOrbat`) over the cap renders a
-  `"(N units/slots)"` count label with **no** per-slot leaf rows — rendering 10k+ DOM rows was
-  the dominant freeze (real virtualization is **T-064**). The conditional **chunked paste + progress**
+  leaf cap** (`OUTLINER_LEAF_CAP = 500`, T-059 band-aid) rendered count-only labels with no slot
+  rows — **superseded by T-064** virtualization (`@tanstack/react-virtual`, `virtualSlotIds`,
+  `VIRTUAL_SLOT_THRESHOLD=50`). The conditional **chunked paste + progress**
   and `bindings._bulkMode` (spec items d/e) were **not** needed after the batch fix — the single
   transact + existing one-flush-per-transaction coalescing meets the no-freeze bar; revisit only if
   a manual 10k paste still stalls. Slots only; no schema/compiler/backend change. Four real files
@@ -475,7 +475,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-063 shipped.** **Active: T-064..T-067** scale program (virtualized outliner → LOD → worker → spatial chunks).
+**Not yet built / next (Mission Creator):** **T-064 shipped.** **Active: T-065..T-067** scale program (cluster/LOD → worker → spatial chunks).
 Mega render/bindings optimizations **deferred**
 — MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations.
 **T-070+** (after Eden T-068+): optional **terrain base + sparse deltas** for millions of map props — dual-layer model; do **not** replace Y.Doc/ORBAT. See [t070_terrain_base_mission_layers.md](Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md). **Eden P1-07+** resumes at **T-068+**.

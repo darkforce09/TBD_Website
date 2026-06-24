@@ -90,7 +90,7 @@ Real missions (~128 ORBAT slots) are tiny; this slice targets **future object-he
 
 ## After T-062.1.1
 
-- **Active:** **T-064** virtualized outliner → T-065..T-067
+- **T-064** ✅ virtualized outliner. **Active: T-065..T-067**
 
 ---
 

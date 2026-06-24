@@ -116,7 +116,7 @@ Single DB **`tbd-mission-persist`**, two object stores:
 
 - ~~T-062.1.1 Save orbat dedup~~ → **shipped** ([`t062_1_1_batch_save.md`](t062_1_1_batch_save.md))
 - ~~T-063 spatial index~~ ✅ — spec [`t063_spatial_index.md`](t063_spatial_index.md)
-- **Active:** **T-064** virtualized outliner → T-065..T-067
+- **T-064** ✅ virtualized outliner. **Active: T-065..T-067**
 - ≤10s @ 1M (T-066 worker stretch)
 - Post-hydrate v2 write without user edit
 
@@ -126,7 +126,7 @@ Single DB **`tbd-mission-persist`**, two object stores:
 
 - ~~**T-062.1.1** Save orbat dedup~~ ✅ — spec [`t062_1_1_batch_save.md`](t062_1_1_batch_save.md)
 - ~~**T-063** spatial index~~ ✅ — spec [`t063_spatial_index.md`](t063_spatial_index.md)
-- **Active:** **T-064** virtualized outliner → T-065..T-067
+- **T-064** ✅ virtualized outliner. **Active: T-065..T-067**
 
 ---
 

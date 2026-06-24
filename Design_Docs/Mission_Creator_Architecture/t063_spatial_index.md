@@ -88,7 +88,7 @@ Replace Deck GPU picking with an **rbush** R-tree in world meters, kept in sync 
 
 ## After T-063
 
-- **Active:** **T-064** virtualized outliner → T-065..T-067
+- **T-064** ✅ virtualized outliner. **Active: T-065..T-067**
 - Eden **T-068+** after scale milestones
 
 ---

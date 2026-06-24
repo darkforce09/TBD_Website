@@ -87,4 +87,4 @@ After alt-tabbing away from `/missions/:id/edit` for an extended period (Firefox
 - ~~**T-062.1** chunked IDB load~~ ✅ — spec [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md)
 - ~~**T-062.1.1** Save orbat dedup~~ ✅
 - ~~**T-063** spatial index~~ ✅ — spec [`t063_spatial_index.md`](t063_spatial_index.md)
-- **Active:** **T-064** virtualized outliner → T-065..T-067
+- **T-064** ✅ virtualized outliner. **Active: T-065..T-067**

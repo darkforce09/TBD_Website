@@ -75,7 +75,7 @@ Stop everyday Y.Doc edits from flushing the entire Zustand mirror via `docToSnap
 - ~~Backend orbat dedup on Save~~ → **shipped T-062.1.1** ([`t062_1_1_batch_save.md`](t062_1_1_batch_save.md))
 - Incremental **undo multi-add** (slot-add cap stays k=1)
 - `_patchSlots` / drag-release O(n) spread elimination (T-061.1 / mega opts)
-- ~~T-063 spatial index~~ ✅ — [`t063_spatial_index.md`](t063_spatial_index.md); T-064 virtualized outliner
+- ~~T-063 spatial index~~ ✅ — [`t063_spatial_index.md`](t063_spatial_index.md); ~~T-064 virtualized outliner~~ ✅ — [`t064_virtualized_outliner.md`](t064_virtualized_outliner.md)
 
 ---
 
@@ -98,7 +98,7 @@ Stop everyday Y.Doc edits from flushing the entire Zustand mirror via `docToSnap
 - ~~**T-062.1** chunked IDB load~~ ✅ — spec [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md)
 - ~~**T-062.1.1** Save orbat dedup~~ ✅ — spec [`t062_1_1_batch_save.md`](t062_1_1_batch_save.md)
 - ~~**T-063** spatial index~~ ✅ — spec [`t063_spatial_index.md`](t063_spatial_index.md)
-- **Active:** **T-064** virtualized outliner → T-065..T-067
+- **T-064** ✅ virtualized outliner. **Active: T-065..T-067**
 - **Eden T-068+** after scale milestones
 
 ---

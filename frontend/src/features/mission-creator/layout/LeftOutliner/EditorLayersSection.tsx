@@ -1,12 +1,12 @@
-// "Editor Layers" section of the left sidebar — the Eden workflow-folder tree (Ultra
-// Plan §5.1), bound to the live Y.Doc `editorLayers` map. Renders the folder hierarchy
-// with the real slots filed inside each folder: selecting a slot selects it in global
-// state (no auto camera move — Spacebar centers, Phase 3.5 Task 7); selecting a folder
-// makes it the active drop target; the "+" creates a new folder; double-clicking a slot
-// opens its Attributes modal. Reparent drag-and-drop is Phase 7a.
+// "Editor Layers" outliner data + handlers (the Eden workflow-folder tree, Ultra Plan §5.1),
+// bound to the live Y.Doc `editorLayers` map. As of T-064 the rendering is owned by the
+// virtualized VirtualOutliner (in LeftSidebar); this module exposes `useEditorLayersOutliner`
+// — the folder tree (`buildTree`) plus reparent DnD, row actions (rename/delete) and the
+// "new folder" action. Selecting a folder makes it the active drop target; selecting a slot
+// selects it globally (no auto camera move); double-clicking a slot opens its Attributes modal.
 
 import { useMemo, useState } from 'react'
-import { Folder, FolderPlus, Pencil, Trash2, User } from 'lucide-react'
+import { Folder, Pencil, Trash2, User } from 'lucide-react'
 import {
   addEditorLayer,
   moveSlotToLayer,
@@ -18,29 +18,25 @@ import {
 } from '@/features/tactical-map'
 import type { EditorLayer, ID, MissionDoc, Slot } from '@/features/tactical-map'
 import { cn } from '@/lib/utils'
-import { TreeView, type TreeNodeData } from '../tree/TreeView'
-
-interface EditorLayersSectionProps {
-  md: MissionDoc
-  onActivateSlot?: (id: ID) => void
-}
+import type { TreeNodeData } from '../tree/TreeView'
 
 /** dataTransfer MIME for internal outliner reparent drags (distinct from the asset-onto-map
  *  drag, ASSET_DND_MIME). Payload: which kind of node and its id. */
-const TREE_MIME = 'application/x-tbd-tree-node'
+export const TREE_MIME = 'application/x-tbd-tree-node'
 interface TreeDragPayload {
   kind: 'layer' | 'slot'
   id: ID
 }
 
-/** Above this many entities a folder renders as a count label with NO per-slot leaves —
- *  rendering 10k+ DOM rows froze the tab on a bulk paste (T-059). Real virtualization is T-063;
- *  until then a large folder just shows its count. The same cap is applied per-squad in the
- *  ORBAT tree (OrbatSection). */
-export const OUTLINER_LEAF_CAP = 500
+/** Above this many slots a folder/squad virtualizes its leaves (`virtualSlotIds`) instead of
+ *  materializing per-slot `TreeNodeData` children — building 360k node objects (and rendering
+ *  the rows) froze the tab (T-059 cap → T-064 virtualization). The same threshold is applied
+ *  per-squad in the ORBAT tree (OrbatSection). */
+export const VIRTUAL_SLOT_THRESHOLD = 50
 
-/** Build the recursive tree: each EditorLayer → a folder node containing its child
- *  folders then its placed slots. Layers nest via parentId; null = root. */
+/** Build the recursive tree: each EditorLayer → a folder node containing its child folders
+ *  then its placed slots. Layers nest via parentId; null = root. Past the threshold the slot
+ *  leaves are virtualized (`virtualSlotIds`) rather than mapped into `children`. */
 function buildTree(
   layersById: Record<ID, EditorLayer>,
   slotsById: Record<ID, Slot>,
@@ -48,9 +44,8 @@ function buildTree(
   const all = Object.values(layersById)
   const build = (layer: EditorLayer): TreeNodeData => {
     const childFolders = all.filter((l) => l.parentId === layer.id).map(build)
-    // Past the cap, drop the slot leaves but keep child folders + a count in the label.
-    const overCap = layer.entityIds.length > OUTLINER_LEAF_CAP
-    const entityNodes: TreeNodeData[] = overCap
+    const useVirtual = layer.entityIds.length > VIRTUAL_SLOT_THRESHOLD
+    const entityNodes: TreeNodeData[] = useVirtual
       ? []
       : layer.entityIds
           .map((eid) => slotsById[eid])
@@ -63,27 +58,27 @@ function buildTree(
           }))
     return {
       id: layer.id,
-      label: overCap ? `${layer.name} (${layer.entityIds.length} units)` : layer.name,
+      label: layer.name,
       icon: Folder,
       isFolder: true,
       defaultExpanded: true,
       children: [...childFolders, ...entityNodes],
+      ...(useVirtual ? { virtualSlotIds: layer.entityIds } : {}),
     }
   }
   return all.filter((l) => l.parentId === null).map(build)
 }
 
-export function EditorLayersSection({ md, onActivateSlot }: EditorLayersSectionProps) {
+/** Hook: the Editor Layers tree nodes + every editor-only interaction the VirtualOutliner
+ *  needs (reparent DnD, row hover actions, inline rename, "new folder"). */
+export function useEditorLayersOutliner(md: MissionDoc) {
   const layersById = useMapStore((s) => s.editorLayersById)
   const slotsById = useMapStore((s) => s.slotsById)
   // Rebuild signal for in-place slot add/remove, where slotsById's ref doesn't change (T-062.0.1).
   const slotsRevision = useMapStore((s) => s.slotsRevision)
-  const selection = useMapStore((s) => s.selection)
-  const activeLayerId = useMapStore((s) => s.activeLayerId)
   const setSelection = useMapStore((s) => s.setSelection)
   const setActiveLayer = useMapStore((s) => s.setActiveLayer)
   const [renamingId, setRenamingId] = useState<string | null>(null)
-  const [rootOver, setRootOver] = useState(false)
 
   // slotsRevision: rebuild when slotsById is mutated in place (add/remove) without a ref change.
   const nodes = useMemo(
@@ -92,30 +87,9 @@ export function EditorLayersSection({ md, onActivateSlot }: EditorLayersSectionP
     [layersById, slotsById, slotsRevision],
   )
 
-  // Highlight selected slots (multi-select) plus the active folder.
-  const selectedIds = useMemo(
-    () => (selection.kind === 'slot' ? new Set(selection.ids) : undefined),
-    [selection],
-  )
-
-  const onSelect = (id: string) => {
-    if (layersById[id]) {
-      setActiveLayer(id)
-      return
-    }
-    if (slotsById[id]) setSelection({ kind: 'slot', ids: [id] })
-  }
-
-  const onActivate = (id: string) => {
-    if (slotsById[id]) onActivateSlot?.(id)
-  }
-
   // ── Reparent drag-and-drop ────────────────────────────────────────────────
-  const onNodeDragStart = (node: TreeNodeData, e: React.DragEvent) => {
-    const payload: TreeDragPayload = {
-      kind: layersById[node.id] ? 'layer' : 'slot',
-      id: node.id,
-    }
+  const onNodeDragStart = (id: ID, e: React.DragEvent) => {
+    const payload: TreeDragPayload = { kind: layersById[id] ? 'layer' : 'slot', id }
     e.dataTransfer.setData(TREE_MIME, JSON.stringify(payload))
     e.dataTransfer.effectAllowed = 'move'
   }
@@ -131,12 +105,12 @@ export function EditorLayersSection({ md, onActivateSlot }: EditorLayersSectionP
   }
 
   // Drop onto a folder → reparent a folder / refile a slot under it.
-  const onNodeDrop = (target: TreeNodeData, e: React.DragEvent) => {
-    if (!layersById[target.id]) return
+  const onNodeDrop = (targetId: ID, e: React.DragEvent) => {
+    if (!layersById[targetId]) return
     const p = readPayload(e)
     if (!p) return
-    if (p.kind === 'layer') reparentEditorLayer(md, p.id, target.id)
-    else moveSlotToLayer(md, p.id, target.id)
+    if (p.kind === 'layer') reparentEditorLayer(md, p.id, targetId)
+    else moveSlotToLayer(md, p.id, targetId)
   }
 
   // Drop on empty tree space → a folder returns to root (slots always live in a folder).
@@ -162,27 +136,27 @@ export function EditorLayersSection({ md, onActivateSlot }: EditorLayersSectionP
     if (useMapStore.getState().selection.kind !== 'none') setSelection({ kind: 'none', ids: [] })
   }
 
-  const renderNodeActions = (node: TreeNodeData) => {
+  const renderRowActions = (id: ID): React.ReactNode => {
     const stop = (fn: () => void) => (e: React.MouseEvent) => {
       e.stopPropagation()
       fn()
     }
     const btn = 'rounded p-0.5 text-on-surface-variant transition-colors hover:bg-white/10 hover:text-on-surface'
-    if (layersById[node.id]) {
+    if (layersById[id]) {
       return (
         <>
-          <button type="button" aria-label="Rename folder" title="Rename" className={btn} onClick={stop(() => setRenamingId(node.id))}>
+          <button type="button" aria-label="Rename folder" title="Rename" className={btn} onClick={stop(() => setRenamingId(id))}>
             <Pencil className="size-3" />
           </button>
-          <button type="button" aria-label="Delete folder" title="Delete folder" className={cn(btn, 'hover:text-error')} onClick={stop(() => deleteFolder(node.id))}>
+          <button type="button" aria-label="Delete folder" title="Delete folder" className={cn(btn, 'hover:text-error')} onClick={stop(() => deleteFolder(id))}>
             <Trash2 className="size-3" />
           </button>
         </>
       )
     }
-    if (slotsById[node.id]) {
+    if (slotsById[id]) {
       return (
-        <button type="button" aria-label="Delete unit" title="Delete unit" className={cn(btn, 'hover:text-error')} onClick={stop(() => deleteSlot(node.id))}>
+        <button type="button" aria-label="Delete unit" title="Delete unit" className={cn(btn, 'hover:text-error')} onClick={stop(() => deleteSlot(id))}>
           <Trash2 className="size-3" />
         </button>
       )
@@ -196,86 +170,17 @@ export function EditorLayersSection({ md, onActivateSlot }: EditorLayersSectionP
     setRenamingId(null)
   }
 
-  return (
-    <Section
-      title="Editor Layers"
-      action={
-        <button
-          type="button"
-          aria-label="New folder"
-          title="New folder"
-          onClick={() => setActiveLayer(addEditorLayer(md))}
-          className="rounded p-0.5 text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
-        >
-          <FolderPlus className="size-3.5" />
-        </button>
-      }
-    >
-      {nodes.length === 0 ? (
-        <p className="px-2 py-3 text-center text-label-sm normal-case text-outline">
-          No entities yet. Drag an asset from the right panel onto the map.
-        </p>
-      ) : (
-        <>
-          <TreeView
-            nodes={nodes}
-            selectedId={activeLayerId}
-            selectedIds={selectedIds}
-            onSelect={onSelect}
-            onActivate={onActivate}
-            allowFolderDrag
-            onNodeDragStart={onNodeDragStart}
-            onNodeDrop={onNodeDrop}
-            renderNodeActions={renderNodeActions}
-            renamingId={renamingId}
-            onRenameCommit={onRenameCommit}
-            onRenameCancel={() => setRenamingId(null)}
-          />
-          <div
-            onDragOver={(e) => {
-              if (!e.dataTransfer.types.includes(TREE_MIME)) return
-              e.preventDefault()
-              e.dataTransfer.dropEffect = 'move'
-              setRootOver(true)
-            }}
-            onDragLeave={() => setRootOver(false)}
-            onDrop={(e) => {
-              e.preventDefault()
-              onRootDrop(e)
-              setRootOver(false)
-            }}
-            className={cn(
-              'mt-1 rounded border border-dashed px-2 py-1.5 text-center text-label-sm normal-case transition-colors',
-              rootOver
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-outline-variant/30 text-outline',
-            )}
-          >
-            Move folder to root
-          </div>
-        </>
-      )}
-    </Section>
-  )
-}
+  const newFolder = () => setActiveLayer(addEditorLayer(md))
 
-/** Shared sub-section frame for the left sidebar (header row + body). */
-export function Section({
-  title,
-  action,
-  children,
-}: {
-  title: string
-  action?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <section className="flex flex-col">
-      <div className="flex items-center justify-between px-2 py-1.5">
-        <h3 className="text-label-sm uppercase tracking-wider text-outline">{title}</h3>
-        {action}
-      </div>
-      <div className="px-1">{children}</div>
-    </section>
-  )
+  return {
+    nodes,
+    onNodeDragStart,
+    onNodeDrop,
+    onRootDrop,
+    renderRowActions,
+    renamingId,
+    onRenameCommit,
+    onRenameCancel: () => setRenamingId(null),
+    newFolder,
+  }
 }
