@@ -1,7 +1,7 @@
 # T-062.1.1 — ORBAT payload dedup on Save Version (Option A)
 
 **Status:** **shipped** — `make test-it` + `go test ./internal/services/...` + FE build/lint clean; IT: editor-only version → event attach → ORBAT materialized (roles/tags/order). Manual @ ~360k Save size reduction: pending human verify.  
-**Git tag on ship:** **T-062.1.1** (`8e0a184`)  
+**Git tag on ship:** **T-062.1.1** (`4baf5fa`)  
 **Authority:** [MC ROADMAP](ROADMAP.md) §Map performance · [agent_execution.md](agent_execution.md) §ACTIVE SLICE · [t062_1_idb_streaming_load.md](t062_1_idb_streaming_load.md) · [t060_1_scale_load_save_completion.md](t060_1_scale_load_save_completion.md) §Payload dedup
 
 **Prerequisites:** T-062.1 shipped (`4ad27fe`).
