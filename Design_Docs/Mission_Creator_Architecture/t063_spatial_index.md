@@ -1,7 +1,7 @@
 # T-063 — Spatial index for click / marquee pick @ 360k
 
 **Status:** **shipped + verified** — FE build/lint clean; manual @ ~367k: click/marquee significantly faster vs Deck GPU pick (2026-06-24).  
-**Git tag on ship:** **T-063** (`c2d3e79`)  
+**Git tag on ship:** **T-063** (`078960e`)  
 **Authority:** [MC ROADMAP](ROADMAP.md) §Map performance · [agent_execution.md](agent_execution.md) §ACTIVE SLICE · [t061_drag_move_hotfix.md](t061_drag_move_hotfix.md) · [t057_map_performance_hotfix.md](t057_map_performance_hotfix.md)
 
 **Prerequisites:** T-062.1.1 shipped (`4baf5fa`). Repro mission: `70a36667-612f-40c5-ad56-3fb8e0613a17` (~367k slots).
