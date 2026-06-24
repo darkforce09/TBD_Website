@@ -360,7 +360,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 
 **T-060 + T-060.1.* shipped** in commit `b1fd25a`. **T-061 shipped (good enough)** — spec: [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md). **T-062 shipped** — spec: [`t062_incremental_bindings.md`](t062_incremental_bindings.md). **T-062.2 shipped** — spec: [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md). **T-062.1 shipped** — spec: [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md). **T-062.1.1 shipped** — Save orbat dedup; spec: [`t062_1_1_batch_save.md`](t062_1_1_batch_save.md).
 
-**T-062.1.1 acceptance (shipped):** `make test-it` + services unit tests + FE build/lint clean; IT editor-only version → event attach → ORBAT derived (roles/tags/order). Manual Save @ ~360k size reduction: pending.
+**T-062.1.1 acceptance (shipped + verified):** `make test-it` + services unit tests + FE build/lint clean; IT editor-only → event attach → ORBAT derived; manual @ 367,529 objects → **~94.8 MB estimated** (~33% smaller vs ~141 MB pre-dedup).
 
 **Next:** **T-063** rbush spatial index → T-064..T-067. **Eden T-068+** after scale milestones.
 

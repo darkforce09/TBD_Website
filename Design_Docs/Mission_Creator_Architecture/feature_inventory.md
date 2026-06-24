@@ -1169,7 +1169,7 @@
 | **Inputs** | `useMapStore` snapshot |
 | **Outputs** | POST body; progress UI |
 | **Edge cases** | Mid-upload `ERR_NETWORK` @ ~4% / ~135 MB → **FIXED T-060.1.4**; payload >256 MB → pre-gate 413; **T-062.1.1:** Save omits duplicate `orbat[]` (editor-only POST); Go derives ORBAT for events |
-| **Acceptance** | `- [x] E1/E2/E3b` `- [x] SZ + Save dialog (T-060.1.3)` `- [x] browser Save @ ~367k → 201` `- [x] T-062.1.1 IT: editor-only → event ORBAT` `- [ ] Manual Save @ ~360k smaller body (pending)` |
+| **Acceptance** | `- [x] E1/E2/E3b` `- [x] SZ + Save dialog (T-060.1.3)` `- [x] browser Save @ ~367k → 201` `- [x] T-062.1.1 IT: editor-only → event ORBAT` `- [x] Manual Save @ ~367k: ~94.8 MB estimated (~33% smaller vs ~141 MB)` |
 | **Status** | **shipped** — T-060..T-060.1.4 + **T-062.1.1** orbat dedup |
 | **Evidence** | `useMissionEditor.ts`, `compiler/compile.ts`, `lib/missionSize.ts`, `internal/services/mission_payload.go`, `internal/handlers/missions_orbat_integration_test.go`, `t062_1_1_batch_save.md` |
 

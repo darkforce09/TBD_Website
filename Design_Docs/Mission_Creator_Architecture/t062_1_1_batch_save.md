@@ -1,6 +1,6 @@
 # T-062.1.1 — ORBAT payload dedup on Save Version (Option A)
 
-**Status:** **shipped** — `make test-it` + `go test ./internal/services/...` + FE build/lint clean; IT: editor-only version → event attach → ORBAT materialized (roles/tags/order). Manual @ ~360k Save size reduction: pending human verify.  
+**Status:** **shipped + verified** — automated gates + manual @ 367,529 objects: **~94.8 MB estimated** compiled (was ~141 MB pre-dedup, **~33% smaller**); Save dialog + size readout confirmed 2026-06-24.  
 **Git tag on ship:** **T-062.1.1** (`4baf5fa`)  
 **Authority:** [MC ROADMAP](ROADMAP.md) §Map performance · [agent_execution.md](agent_execution.md) §ACTIVE SLICE · [t062_1_idb_streaming_load.md](t062_1_idb_streaming_load.md) · [t060_1_scale_load_save_completion.md](t060_1_scale_load_save_completion.md) §Payload dedup
 
@@ -76,7 +76,7 @@ Real missions (~128 ORBAT slots) are tiny; this slice targets **future object-he
 | FE build + lint | **Clean** |
 | Legacy explicit-orbat event attach | **Pass** (unchanged) |
 | Editor-only → event ORBAT | **Pass** — 2 squads / 4 slots, index order, MED tag |
-| Manual Save @ ~360k | **Pending** — expect ~25–30% smaller body, 201 |
+| Manual Save @ ~360k | **Pass** — 367,529 objects; **~94.8 MB estimated** (was ~141 MB; **~33% smaller**) |
 
 ---
 
