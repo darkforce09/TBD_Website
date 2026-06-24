@@ -19,6 +19,14 @@ import {
   type MissionDoc,
   type UndoController,
 } from '@/features/tactical-map'
+import {
+  detectLegacyV1,
+  hasV2Persist,
+  legacyDbName,
+} from '../persistence/missionPersistSchema'
+import { loadSlotsWithProgress } from '../persistence/slotChunkStore'
+import { loadMissionMetaIntoDoc } from '../persistence/missionMetaStore'
+import { migrateLegacyToV2 } from '../persistence/migrateLegacyToV2'
 
 /** loading → IndexedDB snapshot + (when applicable) server hydrate still in flight. */
 export type DocStatus = 'loading' | 'ready'
@@ -38,14 +46,16 @@ export interface LoadProgress {
 // Weighted, monotonic, in execution order (a skipped phase just fast-forwards its band):
 // restoring 0–0.15, download 0.15–0.35, apply 0.35–0.55, local (final snapshot) 0.55–1.0.
 const frac = (done: number, total: number) => (total > 0 ? Math.min(done / total, 1) : 1)
-// The IndexedDB replay has no known total (y-indexeddb gives no per-entity signal), so the
-// restoring band is a count-only soft curve that asymptotes to its top without ever claiming
-// completion — real motion without a fake %.
-export const restoringPhase = (done: number): LoadProgress => ({
+// Restoring band (0–0.15). The v2 chunked store knows its total → a determinate fraction
+// (T-062.1). The legacy y-indexeddb replay has no per-entity signal (no `total`) → a
+// count-only soft curve that asymptotes to the band top without claiming completion — real
+// motion without a fake %; MissionCreatorPage shows the indeterminate sweep for that case.
+export const restoringPhase = (done: number, total?: number): LoadProgress => ({
   phase: 'restoring',
-  value: 0.15 * (done / (done + 50_000)),
+  value: total != null && total > 0 ? 0.15 * Math.min(done / total, 1) : 0.15 * (done / (done + 50_000)),
   label: 'Reading local save…',
   done,
+  total,
 })
 export const downloadPhase = (loaded: number, total?: number): LoadProgress => ({
   phase: 'downloading',
@@ -140,26 +150,28 @@ export function useMissionDoc(
 
   useEffect(() => {
     let mountedHere = true
+    // Set the instant the effect tears down so the async boot IIFE below stops applying
+    // chunks / seeding into a doc that's about to be destroyed (StrictMode setup→cleanup→setup).
+    let cancelled = false
     if (import.meta.env.DEV) console.debug('[mission-doc] mount', { missionKey, instanceKey })
-    // Open a bulk-sync window BEFORE binding + before IndexedDB replay, so the async
-    // replay (which lands between here and 'synced') and the prime coalesce into one
-    // store flush at endBulkSync instead of flushing per-transaction (T-060 load).
+    // Open a bulk-sync window BEFORE binding + before any replay, so the local restore and the
+    // prime coalesce into one store flush at endBulkSync instead of flushing per-transaction
+    // (T-060 load).
     let bulkOpen = true
     beginBulkSync()
     const unbind = bindStoreToDoc(md)
-    const persistence = new IndexeddbPersistence(dbName, md.doc)
+    // Created only on the legacy branch; tracked so cleanup can destroy it if we tear down
+    // mid-migration (v2 + fresh missions never touch y-indexeddb — T-062.1).
+    let legacyPersistence: IndexeddbPersistence | null = null
 
-    // Restoring phase (T-060.1.1): y-indexeddb replays the persisted slots into the Y.Doc
-    // BEFORE 'synced' fires, with no per-entity signal. Poll the slot count each animation
-    // frame so the overlay shows "Reading local save…" with a growing count within ~1–2s of
-    // open — fixing the stuck-at-0% dead zone. Cancelled on 'synced' or unmount.
-    // Visibility-aware (T-062.2): rAF is suspended in a backgrounded tab, so a load that
-    // starts (or continues) while hidden would stop reporting progress. When hidden, poll on
-    // a setInterval instead; switch back to rAF when the tab is visible. Only one timer is
-    // ever live at a time.
+    // Legacy-only restoring poll (T-060.1.1 / T-062.2): the y-indexeddb replay lands the whole
+    // doc in ONE synchronous Y.applyUpdate with no per-entity signal, so we poll slots.size to
+    // show "Reading local save…" with a growing (indeterminate) count. The v2 branch reports
+    // determinate per-chunk progress instead, so it never starts this poll. Visibility-aware:
+    // rAF is throttled in a hidden tab, so fall back to setInterval when hidden; one timer live.
     let restoreRaf: number | null = null
     let restoreInterval: ReturnType<typeof setInterval> | null = null
-    let polling = true
+    let polling = false
     const tick = () => reportLoad(restoringPhase(md.entities.slots.size))
     const clearTimers = () => {
       if (restoreRaf != null) cancelAnimationFrame(restoreRaf)
@@ -167,8 +179,7 @@ export function useMissionDoc(
       if (restoreInterval != null) clearInterval(restoreInterval)
       restoreInterval = null
     }
-    const startPoll = () => {
-      if (!polling) return
+    const schedule = () => {
       clearTimers()
       if (document.visibilityState === 'hidden') {
         restoreInterval = setInterval(tick, 500)
@@ -180,44 +191,97 @@ export function useMissionDoc(
         restoreRaf = requestAnimationFrame(rafPoll)
       }
     }
-    const onVisibilityChange = () => startPoll()
-    document.addEventListener('visibilitychange', onVisibilityChange)
-    startPoll()
+    const onVisibilityChange = () => {
+      if (polling) schedule()
+    }
+    const startPoll = () => {
+      if (polling) return
+      polling = true
+      document.addEventListener('visibilitychange', onVisibilityChange)
+      schedule()
+    }
     const stopRestorePoll = () => {
-      polling = false
       clearTimers()
+      if (!polling) return
+      polling = false
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
 
-    // Once the local snapshot has loaded, seed defaults if this is a fresh mission
-    // (non-tracked origin → not an undo step), then reconcile with the server.
-    persistence.once('synced', () => {
-      stopRestorePoll()
+    const seedDefaults = () => {
       seedMeta(md, { id: missionKey, title: 'Untitled Mission' })
       seedDefaultLayer(md)
-      // Reconcile with the server (download + hydrate) reports its own load phases. Keep the
-      // bulk window OPEN through it (T-060.1 fix) so the single coalesced snapshot lands AFTER
-      // hydrate — not before, which double-flushed the 300k snapshot.
+    }
+
+    // Reconcile with the server (download + hydrate reports its own phases), then close the
+    // bulk window with the single coalesced snapshot. Kept OPEN through reconcile (T-060.1 fix)
+    // so the final flush lands AFTER hydrate, not before (which double-flushed the 300k snapshot).
+    const finishReconcile = async () => {
       const reconcile = onSyncedRef.current?.(md, reportLoad)
-      Promise.resolve(reconcile).finally(async () => {
-        // One chunked snapshot flush (IDB replay + seed + server hydrate), reporting the
-        // final 'local' phase to the overlay.
-        await endBulkSync((done, total) => reportLoad(localPhase(done, total)))
-        bulkOpen = false
-        if (mountedHere) setDocStatus('ready')
-      })
-    })
+      await Promise.resolve(reconcile)
+      await endBulkSync((done, total) => reportLoad(localPhase(done, total)))
+      bulkOpen = false
+      if (!cancelled && mountedHere) setDocStatus('ready')
+    }
+
+    void (async () => {
+      try {
+        if (await hasV2Persist(missionKey)) {
+          // v2 — chunked restore, NO IndexeddbPersistence.
+          if (cancelled) return
+          await loadMissionMetaIntoDoc(missionKey, md)
+          if (cancelled) return
+          await loadSlotsWithProgress(
+            missionKey,
+            md,
+            (done, total) => reportLoad(restoringPhase(done, total)),
+            () => cancelled,
+          )
+          if (cancelled) return
+          seedDefaults()
+        } else if (await detectLegacyV1(missionKey)) {
+          // legacy — blocking y-indexeddb replay (poll for motion), then migrate once to v2.
+          if (cancelled) return
+          const persistence = new IndexeddbPersistence(dbName, md.doc)
+          legacyPersistence = persistence
+          startPoll()
+          await new Promise<void>((resolve) => persistence.once('synced', () => resolve()))
+          stopRestorePoll()
+          if (cancelled) return
+          seedDefaults()
+          await migrateLegacyToV2(missionKey, md, reportLoad, () => cancelled)
+          if (cancelled) return
+          // Stop observing y-indexeddb then delete its DB so future edits don't re-bloat it
+          // (v2 debounced writes own durability now). Null the ref first so cleanup's
+          // destroy() won't double-fire.
+          legacyPersistence = null
+          await persistence.destroy()
+          try {
+            indexedDB.deleteDatabase(legacyDbName(missionKey))
+          } catch {
+            /* best-effort; a stale legacy DB is harmless (hasV2Persist gates the path) */
+          }
+        } else {
+          // fresh mission — no persistence yet; v2 debounced writes engage on the first edit.
+          seedDefaults()
+        }
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('[mission-doc] boot failed', e)
+      }
+      if (cancelled) return
+      await finishReconcile()
+    })()
 
     return () => {
       mountedHere = false
+      cancelled = true
       if (import.meta.env.DEV) console.debug('[mission-doc] unmount', { missionKey, instanceKey })
       stopRestorePoll()
       unbind()
-      // Balance the bulk window if we unmounted before 'synced' fired. After unbind,
+      // Balance the bulk window if we unmounted before reconcile closed it. After unbind,
       // activeFlush is cleared, so this end is a no-op (won't push into a torn-down store).
       if (bulkOpen) void endBulkSync()
       undo.destroy()
-      persistence.destroy()
+      legacyPersistence?.destroy()
       md.doc.destroy()
       useMapStore.getState().reset()
       // React 19 StrictMode (dev) double-invokes this effect setup→cleanup→setup WITHOUT

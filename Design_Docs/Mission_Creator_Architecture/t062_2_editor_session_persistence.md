@@ -1,7 +1,7 @@
 # T-062.2 — Editor session / background-tab resilience
 
 **Status:** **shipped** — manual verify @ ~360k (Firefox dev): alt-tab extended period → no automatic load overlay; edits preserved  
-**Git tag on ship:** **T-062.2** (with uncommitted T-062.2 code stack)  
+**Git tag on ship:** **T-062.2** (`693e227`)  
 **Authority:** [MC ROADMAP](ROADMAP.md) §Map performance · [agent_execution.md](agent_execution.md) §ACTIVE SLICE · [t062_incremental_bindings.md](t062_incremental_bindings.md)
 
 **Prerequisites:** T-062 shipped (`a5a651d`). Repro mission: `70a36667-612f-40c5-ad56-3fb8e0613a17` (~360k slots).
@@ -14,7 +14,7 @@ After alt-tabbing away from `/missions/:id/edit` for an extended period (Firefox
 
 **Root cause (dev):** Vite HMR WebSocket disconnect while the tab is backgrounded; on reconnect `@vite/client` triggers a **full page reload**, cold-booting `useMissionDoc`.
 
-**Amplifier:** Every boot always ran `GET /missions/:id` (full `json_payload`) even when y-indexeddb already held the working draft → conflict prompt when `hasLocalContent(md)`.
+**Amplifier:** Every **cold** boot always ran `GET /missions/:id` (full `json_payload`) even when local persistence already held the working draft → conflict prompt when `hasLocalContent(md)`. **T-062.2** warm path skips GET when session marker + local content.
 
 **Secondary:** `yieldToUi()` and the restore rAF poll blocked on `requestAnimationFrame`, which is suspended in background tabs — in-progress loads froze until refocus.
 
@@ -76,7 +76,7 @@ After alt-tabbing away from `/missions/:id/edit` for an extended period (Firefox
 ## Out of scope
 
 - Ref-counted module-level `MissionDocSession` (Fix D)
-- T-062.1+ IDB streaming / batch save API
+- T-062.1.1 batch save API
 - Backend lightweight metadata endpoint
 - Prod tab-discard prevention (memory / DeckGL)
 
@@ -84,4 +84,5 @@ After alt-tabbing away from `/missions/:id/edit` for an extended period (Firefox
 
 ## After T-062.2
 
-**Active:** **T-063** spatial index (rbush) → T-064..T-067. **Stretch:** T-062.1+ IDB streaming.
+- ~~**T-062.1** chunked IDB load~~ ✅ — spec [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md)
+- **Active:** **T-062.1.1** batch save → **T-063** spatial index → T-064..T-067

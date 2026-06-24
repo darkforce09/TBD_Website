@@ -31,15 +31,15 @@
 
 ### Primary flow
 1. Navigate from Mission Library **+ New Mission** dialog (T-048) or dossier **OPEN IN MISSION CREATOR** → `/missions/:id/edit`.
-2. `useMissionDoc` hydrates Y.Doc from y-indexeddb; `useMissionEditor` reconciles with the server on **cold** load (`GET /missions/:id` + conflict prompt when both IDB and server have content). **T-062.2:** warm same-tab return (`editorSession` + `sessionStorage`) skips the multi-MB GET when IndexedDB already holds the mission; dev `viteReloadGuard` blocks Vite HMR full reload on alt-tab. The mission **row** (`title`, `terrain`, time/weather) hydrates into `meta` on cold load — including new missions whose `json_payload` is `{}` (T-049). Terrain drives viewport bounds. **T-060:** bulk-sync window + `docStatus` loading overlay (restoring → download → apply → local on cold; restoring → local only on warm); LeftSidebar deferred until ready.
+2. `useMissionDoc` boot: **v2** chunked restore from `tbd-mission-persist` (`idb` meta + 5k slot chunks — T-062.1), or **legacy** one-time y-indexeddb replay → migrate; `useMissionEditor` reconciles with the server on **cold** load (`GET /missions/:id` + conflict prompt when both local and server have content). **T-062.2:** warm same-tab return (`editorSession` + `sessionStorage`) skips the multi-MB GET when local content exists; dev `viteReloadGuard` blocks Vite HMR full reload on alt-tab. The mission **row** (`title`, `terrain`, time/weather) hydrates into `meta` on cold load — including new missions whose `json_payload` is `{}` (T-049). Terrain drives viewport bounds. **T-060:** bulk-sync window + `docStatus` loading overlay (restoring → download → apply → local on cold; restoring → local only on warm); LeftSidebar deferred until ready.
 3. Author places entities via palette drop, moves selection on map, organizes layers in outliner.
 4. **Save Version** → `POST /missions/:id/versions` with compiled `json_payload`.
 5. **Export** downloads camelCase mod envelope without saving.
 
 ### States
 - **Chromeless:** No platform Sidebar/TopNav (`fullBleed` + `chromeless` route handles).
-- **Loading:** Four-phase overlay on **cold** load: **restoring** (T-060.1.1 ✅) → download → apply → local flush. **Warm return** (T-062.2): restoring → local flush only (no download/apply). Manual @ ~360k cold: ~30 s–1 min; 0→~300k jump. **Dev alt-tab:** overlay should not reappear after extended background (T-062.2). **Save:** T-060.1.4 FIXED.
-- **Dirty:** Local autosave to y-indexeddb; server save is manual semver POST.
+- **Loading:** Four-phase overlay on **cold** load: **restoring** (T-062.1 ✅ v2 chunked / legacy migrate once) → download → apply → local flush. **Warm return** (T-062.2): restoring → local flush only. **v2 @ ~360k:** determinate restoring `done/total` ticks smoothly (no 0→300k jump on 2nd+ load). **Dev alt-tab:** overlay should not reappear after extended background (T-062.2). **Save:** T-060.1.4 FIXED.
+- **Dirty:** Local autosave to v2 `idb` (`tbd-mission-persist`) on `LOCAL_ORIGIN` edits (debounced); server save is manual semver POST. Server-adopted content not cached to v2 until first user edit.
 - **Blocked phases:** DEM/Z-axis (Phase 2), asset registry (Phase 5/6), ruler/LoS viewshed (Phase 8).
 
 ### Keyboard (host — `/missions/:id/edit`)
@@ -56,7 +56,7 @@ Skipped when focus is in an input, select, textarea, or contentEditable field (T
 
 Double-click a slot on the **map**, in **ORBAT**, or in **Editor Layers** opens Attributes (T-054). Suppressed when multiple slots are selected.
 
-Undo/redo applies to **session edits only** (drop, drag, delete, title/env changes via `LOCAL_ORIGIN`). Entities loaded from IndexedDB or server hydrate are not on the undo stack.
+Undo/redo applies to **session edits only** (drop, drag, delete, title/env changes via `LOCAL_ORIGIN`). Boot restore and server hydrate use `INIT_ORIGIN` (not on the undo stack).
 
 ## API Dependencies
 
@@ -86,7 +86,8 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M3.16 — [x] T-061 drag-move @ 360k (good enough — motion ~60 fps; boundaries via `slotIconCache` — spec: [t061_drag_move_hotfix.md](../../../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md))
 ### M3.17 — [x] T-062 incremental bindings @ 360k (classifier + bulk delete ≤10k — spec: [t062_incremental_bindings.md](../../../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md))
 ### M3.18 — [x] T-062.2 editor session / alt-tab resilience (Vite reload guard + warm session — spec: [t062_2_editor_session_persistence.md](../../../Design_Docs/Mission_Creator_Architecture/t062_2_editor_session_persistence.md))
-### M4 — [ ] T-063+ scale program + DEM/registry (see MC ROADMAP §Map performance)
+### M3.19 — [x] T-062.1 chunked IDB slot restore (v2 `tbd-mission-persist`; determinate restoring @ ~360k — spec: [t062_1_idb_streaming_load.md](../../../Design_Docs/Mission_Creator_Architecture/t062_1_idb_streaming_load.md))
+### M4 — [ ] T-062.1.1 batch save + T-063+ scale program (see MC ROADMAP §Map performance)
 
 ## Test Plan
 
@@ -100,7 +101,7 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 
 - **[PERF-001] ~~Map pan/zoom FPS collapse~~** — **Resolved T-057** (100+ fps @ 10k validated); **T-058** OBJ/SEL entity-count telemetry shipped.
 - **[PERF-002] ~~Bulk paste 10k freeze~~** — **Resolved T-059** (validated **360k @ 100+ fps** pan; 6k paste loops smooth).
-- **[PERF-003] Initial load** — **Shipped T-060:** restoring label within 1–2 s; ~30 s–1 min @ 360k; 0→300k jump remains (**T-062.1+** IDB streaming). Pan **100+ fps** @ 360k when idle.
+- **[PERF-003] Initial load** — **Resolved T-062.1** (v2 chunked restore; legacy migrate once). Spec: [t062_1_idb_streaming_load.md](../../../Design_Docs/Mission_Creator_Architecture/t062_1_idb_streaming_load.md). Pan **100+ fps** @ 360k when idle.
 - **[PERF-004] Save Version** — **Resolved T-060.1.4 / shipped T-060.** Verified: curl 140 MB → 201; browser Save @ ~367k/~142 MB → 201 (2026-06-23).
 - **[PERF-005] Drag-move @ 360k** — **Resolved T-061 (good enough).** Motion ~60 fps sustained; pickup/release materially improved via `slotIconCache` + bindings slot fast path. Mega optimizations deferred ([MC ROADMAP §Deferred mega optimizations](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md)). Spec: [t061_drag_move_hotfix.md](../../../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md).
 - **[PERF-006] Incremental bindings @ 360k** — **Resolved T-062.** Spec: [t062_incremental_bindings.md](../../../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md).

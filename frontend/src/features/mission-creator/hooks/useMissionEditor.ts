@@ -27,6 +27,8 @@ import {
   markEditorSessionReady,
   readWarmEditorSession,
 } from './editorSession'
+import { flushSlots, saveSlotsFromDocDebounced } from '../persistence/slotChunkStore'
+import { flushMeta, saveMissionMetaFromDocDebounced } from '../persistence/missionMetaStore'
 import { buildVersionBlob, compileMission, compileMissionWithProgress } from '../compiler/compile'
 import { toMissionExport } from '../compiler/exportSchema'
 import {
@@ -220,6 +222,31 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
 
   const { md, undo, docStatus, loadProgress } = useMissionDoc(missionId, { onSynced })
 
+  // Read inside the (md-scoped) update listener without re-subscribing on every status flip:
+  // only persist edits once the editor is past boot (INIT/restore writes are filtered anyway).
+  const docReadyRef = useRef(false)
+  useEffect(() => {
+    docReadyRef.current = docStatus === 'ready'
+  }, [docStatus])
+
+  // Doc-liveness guard for v2 persistence (T-062.1): useMissionDoc destroys md.doc on teardown.
+  // A debounced/queued save that's mid-flight then must NOT read the destroyed doc and rewrite a
+  // truncated record. `docAlive` flips false the instant the doc is destroyed; it's passed to the
+  // savers as their isCancelled. useMissionDoc's effect is defined first, so its destroy fires
+  // before this hook's flush cleanup runs.
+  const docAlive = useRef(true)
+  useEffect(() => {
+    docAlive.current = true
+    const onDestroy = () => {
+      docAlive.current = false
+    }
+    md.doc.on('destroy', onDestroy)
+    return () => {
+      md.doc.off('destroy', onDestroy)
+    }
+  }, [md])
+  const isDocCancelled = useCallback(() => !docAlive.current, [])
+
   // Once the editor is ready, record a warm session marker (T-062.2) so a subsequent boot
   // of this mission in the same tab (e.g. an alt-tab HMR reload) can skip the server GET.
   // Reads slotCount straight off the store (no O(n) recompute) and carries currentSemver,
@@ -233,18 +260,49 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
     }
   }, [docStatus, missionId, currentSemver])
 
-  // Mark unsaved on any local (user) edit; INIT/persistence-origin updates don't count.
+  // Mark unsaved on any local (user) edit; INIT/persistence-origin (boot restore) updates don't
+  // count. The same gesture also persists to the v2 idb store (T-062.1): meta lightly debounced,
+  // slots debounced ~2s + serialized. Gated on `docReadyRef` so a stray pre-ready local edit
+  // doesn't write mid-boot.
   useEffect(() => {
     mounted.current = true
     const onUpdate = (_u: Uint8Array, origin: unknown) => {
-      if (origin === LOCAL_ORIGIN) setDirty(true)
+      if (origin !== LOCAL_ORIGIN) return
+      setDirty(true)
+      if (docReadyRef.current && missionId) {
+        saveMissionMetaFromDocDebounced(md, missionId, isDocCancelled)
+        saveSlotsFromDocDebounced(md, missionId, isDocCancelled)
+      }
     }
     md.doc.on('update', onUpdate)
     return () => {
       mounted.current = false
       md.doc.off('update', onUpdate)
     }
-  }, [md])
+  }, [md, missionId, isDocCancelled])
+
+  // Flush pending v2 writes when the tab is hidden / closed / reloaded (T-062.1). These fire
+  // while the doc is still alive, so the async chunked rewrite completes and an F5 restores the
+  // latest edits. On a plain SPA unmount the doc is already destroyed (useMissionDoc tears down
+  // first), so the queued saves' isDocCancelled aborts them — never corrupting the record; the
+  // ≤2s debounce window is the only edits not persisted in that case.
+  useEffect(() => {
+    if (!missionId) return
+    const flushAll = () => {
+      void flushMeta(missionId)
+      void flushSlots(missionId)
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flushAll()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pagehide', flushAll)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pagehide', flushAll)
+      flushAll()
+    }
+  }, [missionId])
 
   const invalidMissionId = !!missionId && !UUID_RE.test(missionId)
 

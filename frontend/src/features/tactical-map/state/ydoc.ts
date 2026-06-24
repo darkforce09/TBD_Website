@@ -56,8 +56,10 @@ export function transact(md: MissionDoc, fn: () => void): void {
   md.doc.transact(fn, LOCAL_ORIGIN)
 }
 
-/** Plain object -> nested Y.Map (complex fields stored as opaque JSON values). */
-function entityToYMap(entity: Record<string, unknown>): Y.Map<unknown> {
+/** Plain object -> nested Y.Map (complex fields stored as opaque JSON values).
+ *  Exported so the v2 persistence layer (mission-creator/persistence) restores chunked
+ *  slots with the exact same conversion the hydrate path uses (T-062.1). */
+export function entityToYMap(entity: Record<string, unknown>): Y.Map<unknown> {
   const ym = new Y.Map<unknown>()
   for (const [k, v] of Object.entries(entity)) ym.set(k, v)
   return ym

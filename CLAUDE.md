@@ -79,10 +79,15 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest: **T-062.2 shipped** — 2026-06; editor session / alt-tab resilience @ 360k)
+## Status (latest: **T-062.1 shipped** — 2026-06; chunked IDB slot restore @ 360k)
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
 **Done:**
+- T-062.1 **Mission Creator — chunked IDB slot restore @ 360k**. v2 persistence (`tbd-mission-persist`):
+  meta JSON + 5k slot chunks via `idb`; v2 boot skips y-indexeddb; one-time v1→v2 migration deletes
+  legacy `tbd-mission-${id}`. Determinate restoring progress (no 0→300k jump on 2nd+ load). Debounced
+  persist on `LOCAL_ORIGIN`; flush on tab hide/pagehide. Manual verify @ ~360k: good enough.
+  Spec: [`t062_1_idb_streaming_load.md`](Design_Docs/Mission_Creator_Architecture/t062_1_idb_streaming_load.md).
 - T-062.2 **Mission Creator — editor session / background-tab resilience**. Dev: `viteReloadGuard`
   blocks Vite HMR full reload on `/missions/:id/edit` (alt-tab WS reconnect). Warm session:
   `editorSession.ts` + `sessionStorage` marker → skip multi-MB `GET /missions/:id` on same-tab
@@ -93,7 +98,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   → O(k) Zustand patches (`slot-fields`, `slot-add`, `slot-remove`, `meta`, `editor-layers`) instead of full
   `docToSnapshot(n)` on everyday edits. T-062.0.1: batched `removeEntities('slots')` (pasteSlots-style detach),
   `slotCount`/`slotsRevision` (no O(n) `slotsById` spread on add/remove), `REMOVE_PATCH_CAP` 10_000. Manual verify
-  @ ~360k: delete 4k, undo 6k, asset drop, drag OK. IDB 0→300k + save batch API → **T-062.1+** stretch. Spec:
+  @ ~360k: delete 4k, undo 6k, asset drop, drag OK. Spec:
   [`t062_incremental_bindings.md`](Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md).
 - T-061 **Mission Creator — drag-move performance @ 360k (good enough)**. T-061.0: dual
   IconLayer + split `dragPreviewIds`/`dragPreviewDelta` + rAF-coalesced delta — sustained
@@ -119,7 +124,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   sequence (IndexedDB replay + seed) into **one** store snapshot; `useMissionDoc` opens it before
   binding/replay and exposes `docStatus: 'loading' | 'ready'`, holding `loading` until the local
   sync **and** the server hydrate settle (`onSynced` now returns its promise). `MissionCreatorPage`
-  shows a full-bleed loading overlay (indeterminate bar — y-indexeddb has no per-entity signal) and
+  shows a full-bleed loading overlay (v2: determinate restoring `done/total` T-062.1; legacy v1: indeterminate) and
   **defers the LeftSidebar mount** until ready so the outliner tree isn't built mid-boot.
   **(C) Save hang + hidden errors** — `compiler/compile.ts` gains async `compileMissionWithProgress`
   (chunked, yields every ~5k slots, reports compile %); `useMissionEditor.saveVersion` runs
@@ -411,8 +416,9 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   - **T-030 Phase 4 — state foundation:** `state/` is the Y.Doc-backed normalized store
     (source of truth) mirrored into Zustand (`useMapStore`) via `bindings.ts` `observeDeep`;
     `ydoc.ts` actions wrap `transact(...LOCAL_ORIGIN)`; `undo.ts` = `Y.UndoManager`;
-    `y-indexeddb` persistence (per-mission, keyed `tbd-mission-<id>`, via
-    `hooks/useMissionDoc.ts`). Entities render through a GPU `IconLayer` (the 200-slot
+    **T-062.1 v2 persistence** (`tbd-mission-persist` via `idb`: meta JSON + 5k slot chunks;
+    legacy v1 y-indexeddb migrate-once path only) in `hooks/useMissionDoc.ts` +
+    `persistence/*`. Entities render through a GPU `IconLayer` (the 200-slot
     answer). `schema.ts` = the §2 entity model.
   - **T-031 Phase 3 — Aegis-glass shell:** full-bleed map (`z-0`) under a
     `pointer-events-none` overlay of `pointer-events-auto` frosted panels (shared
@@ -458,15 +464,15 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     (backend-compatible `orbat[]` + an editor-only `editor` block for lossless reload);
     `compiler/exportSchema.ts` camelCase mod envelope; `ydoc.hydrateMissionDoc`; `useMissionEditor`
     (load current version, conflict prompt, dirty tracking, **manual Save Version** → POST, Export
-    download). Autosave stays **local** (y-indexeddb) — the versions API is immutable (unique
-    semver, no overwrite). Live-verified: POST 201, dup semver 409, ORBAT round-trips.
+    download). Autosave stays **local** (v2 `idb` chunk store + legacy migration — T-062.1; server
+    versions API is immutable (unique semver, no overwrite). Live-verified: POST 201, dup semver 409, ORBAT round-trips.
   - **T-039 / T-040 — wiring fixes:** Save Version surfaces the backend `response.data.error` +
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-062.2 shipped.** **Active: T-063..T-067**
-scale program toward **1M–10M** (spatial index → virtualized outliner → LOD → worker → spatial chunks).
-**T-062.1+** stretch: IDB streaming UX + save batch API. Mega render/bindings optimizations **deferred**
+**Not yet built / next (Mission Creator):** **T-062.1 shipped.** **Active: T-062.1.1** batch save
+(orbat dedup) → **T-063..T-067** scale program (spatial index → virtualized outliner → LOD → worker → spatial chunks).
+Mega render/bindings optimizations **deferred**
 — MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations.
 **T-070+** (after Eden T-068+): optional **terrain base + sparse deltas** for millions of map props — dual-layer model; do **not** replace Y.Doc/ORBAT. See [t070_terrain_base_mission_layers.md](Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md). **Eden P1-07+** resumes at **T-068+**.
 - **Deferred until after Eden P0–P2:** Phase 2 **DEM / Z-axis** + aligned map tiles (A-01/A-03; blocked on hosted assets).

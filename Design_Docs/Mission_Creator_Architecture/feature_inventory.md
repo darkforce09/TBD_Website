@@ -78,7 +78,7 @@
 |-------|-------|
 | **Domain** | SHELL |
 | **Goal** | Let user choose IndexedDB draft vs server `current_version` when both have content |
-| **Trigger** | `y-indexeddb` synced + `GET /missions/:id` returns `json_payload` + local doc has authored entities |
+| **Trigger** | Local v2 store (or legacy y-indexeddb) synced + cold `GET /missions/:id` returns `json_payload` + local doc has authored entities |
 | **Preconditions** | `hasLocalContent()` true; server version exists |
 | **Procedure** | 1. `useMissionDoc` `onSynced`. 2. Fetch mission. 3. `setConflict(payload)`. 4. User picks hydrate or keep local. |
 | **Postconditions** | Doc matches chosen source; dirty set if keep local |
@@ -1141,18 +1141,18 @@
 | Field | Value |
 |-------|-------|
 | **Domain** | PERF |
-| **Goal** | Open **10k–1M** missions with **determinate progress bar**; coalesce boot snapshots; **≤10 s ideal @ 1M** (stretch → **T-062.1+** / T-066) |
+| **Goal** | Open **10k–1M** missions with **determinate progress bar**; coalesce boot snapshots; **≤10 s ideal @ 1M** (stretch → **T-066** worker) |
 | **Trigger** | Navigate to `/missions/:id/edit` |
 | **Preconditions** | Y.Doc persisted in IndexedDB (possibly 100k–360k+ slots) |
-| **Procedure** | Bulk-sync window; `docStatus` gate; **four-phase** overlay from `loadProgress`: **restoring** (IDB rAF poll, T-060.1.1) → download → apply → local flush; `docToSnapshotWithProgress` + `hydrateMissionDocWithProgress` + `onDownloadProgress`; `endBulkSync` async after hydrate; LeftSidebar deferred until ready |
+| **Procedure** | Bulk-sync window; `docStatus` gate; **four-phase** overlay: **restoring** (v2 chunked `loadSlotsWithProgress` T-062.1, or legacy y-indexeddb poll T-060.1.1) → download → apply → local flush; `docToSnapshotWithProgress` + `hydrateMissionDocWithProgress` + `onDownloadProgress`; `endBulkSync` async after hydrate; LeftSidebar deferred until ready |
 | **Postconditions** | Map interactive; OBJ correct; pan ≥55 fps |
-| **Inputs** | IndexedDB snapshot, optional server `json_payload` |
-| **Outputs** | `docStatus: ready`; `loadProgress` with determinate % (or count-only during restoring) |
-| **Edge cases** | T-060.1.1: count **0→300k jump** (single `Y.applyUpdate`); ~30 s–1 min @ 360k. Incremental IDB → **T-062.1+** (T-062.0 shipped interactive bindings only) |
-| **Acceptance** | `- [x] Overlay + bulk-sync (T-060)` `- [x] Determinate % + chunked snapshot/hydrate (T-060.1)` `- [x] Hydrate inside bulk window (T-060.1)` `- [x] Restoring phase + label within 1–2 s @ ~360k (T-060.1.1)` `- [ ] Pan regression clean (manual)` |
+| **Inputs** | v2 `tbd-mission-persist` (`idb`) and/or legacy y-indexeddb; optional server `json_payload` |
+| **Outputs** | `docStatus: ready`; `loadProgress` with determinate % (v2 restoring has `done/total`) |
+| **Edge cases** | Legacy v1: one-time blocking replay + migrate. v2: smooth restoring @ ~360k. Server-adopted mission not cached to v2 until first `LOCAL_ORIGIN` edit. Warm return skips GET (T-062.2) |
+| **Acceptance** | `- [x] Overlay + bulk-sync (T-060)` `- [x] Determinate % + chunked snapshot/hydrate (T-060.1)` `- [x] Hydrate inside bulk window (T-060.1)` `- [x] Restoring phase (T-060.1.1 legacy)` `- [x] v2 chunked IDB restore (T-062.1)` `- [ ] Pan regression clean (manual)` |
 | **Eden parity** | — |
-| **Status** | **shipped (T-060)** — load partial pass @ ~360k; pan ≥55 fps @ 360k (T-057/T-059 validated) |
-| **Evidence** | `useMissionDoc.ts`, `bindings.ts`, `ydoc.ts`, `MissionCreatorPage.tsx`, `t060_1_scale_load_save_completion.md` |
+| **Status** | **shipped (T-060 + T-062.1)** — v2 determinate restore @ ~360k |
+| **Evidence** | `useMissionDoc.ts`, `persistence/*`, `bindings.ts`, `ydoc.ts`, `MissionCreatorPage.tsx`, `t062_1_idb_streaming_load.md` |
 
 ---
 
@@ -1168,7 +1168,7 @@
 | **Postconditions** | Version 201; dirty cleared |
 | **Inputs** | `useMapStore` snapshot |
 | **Outputs** | POST body; progress UI |
-| **Edge cases** | Mid-upload `ERR_NETWORK` @ ~4% / ~135 MB with `direct` route → **FIXED T-060.1.4** (1 MB global cap had reached the version route; not the 256 MB cap); payload >256 MB → pre-gate block + route 413; batch upload → **T-062.1+** only |
+| **Edge cases** | Mid-upload `ERR_NETWORK` @ ~4% / ~135 MB with `direct` route → **FIXED T-060.1.4** (1 MB global cap had reached the version route; not the 256 MB cap); payload >256 MB → pre-gate block + route 413; batch upload → **T-062.1.1** only |
 | **Acceptance** | `- [x] E1/E2/E3b` `- [x] SZ toolbelt + exact MB in Save dialog (T-060.1.3)` `- [x] Debug panel on fail + 256 MB pre-gate + server logs (T-060.1.3)` `- [x] ~360k failure fully diagnosed (T-060.1.3)` `- [x] version POST 140 MB → 201 via curl + production-like make test-it (T-060.1.4)` `- [x] browser Save @ ~367k → 201 (2026-06-23)` |
 | **Status** | **shipped** — T-060..T-060.1.4; browser + curl @ ~140 MB verified |
 | **Evidence** | `useMissionEditor.ts`, `compiler/compile.ts`, `lib/missionSize.ts`, `BottomToolbelt.tsx`, `TopCommandStrip.tsx`, `internal/handlers/missions.go`, `internal/middleware/bodylimit.go` (`isMissionVersionPOST`), `internal/handlers/missions_bodylimit_integration_test.go`, `internal/middleware/bodylimit_test.go`, `scripts/mission-version-upload-repro.sh` |
@@ -1207,21 +1207,39 @@
 | **Postconditions** | Store mirror updated without `e.slots.toJSON()` over all slots for classified txns |
 | **Inputs** | Y.Doc observer events |
 | **Outputs** | Incremental Zustand patches; `iconCacheVersion` bumps |
-| **Edge cases** | Bulk paste / `addEditorLayer` / empty-doc bootstrap / `removeEditorLayer` → full snapshot fallback. Undo large multi-delete → full snapshot (verified OK @ 6k undo). IDB 0→300k jump → **T-062.1+**. `_patchSlots` drag release still O(n) spread — deferred mega opt |
+| **Edge cases** | Bulk paste / `addEditorLayer` / empty-doc bootstrap / `removeEditorLayer` → full snapshot fallback. Undo large multi-delete → full snapshot (verified OK @ 6k undo). IDB 0→300k jump → **fixed T-062.1** (v2 chunked restore). `_patchSlots` drag release still O(n) spread — deferred mega opt |
+| **Acceptance** | `- [x] Asset drop instant @ 360k` `- [x] Delete 150/4000 no crash` `- [x] Drag not regressed` `- [x] Undo 6000 delete OK` `- [x] build + lint clean` |
+| **Eden parity** | Eden:XFORM-PLACE-001 (drop), Eden:DELETE-001 |
+| **Status** | **shipped** — spec [`t062_incremental_bindings.md`](t062_incremental_bindings.md) |
+| **Evidence** | `incPatchPlan.ts`, `bindings.ts`, `useMapStore.ts`, `slotIconCache.ts`, `ydoc.ts`, `BottomToolbelt.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx` |
 
 #### PERF-SESSION-001 — Editor session / alt-tab (T-062.2)
 
 | Field | Value |
 |-------|-------|
+| **Domain** | PERF |
 | **Goal** | Alt-tab back to editor without automatic full load overlay; warm same-tab return skips multi-MB server GET |
 | **Trigger** | Extended background tab (dev: Vite WS disconnect); same-tab reload with warm `sessionStorage` marker |
 | **Procedure** | Dev: `viteReloadGuard` blocks `vite:beforeFullReload` on `/missions/:id/edit`. `editorSession.ts` marks ready → on reboot, `onSynced` skips GET when warm + `hasLocalContent(md)`. `yieldToUi` + restore poll visibility-aware |
+| **Edge cases** | Warm path trusts local v2 store — remote server changes undetected until cold load. New tab = cold. `dirty` UI flag resets on reload (data in IDB). Undo stack session-only |
 | **Acceptance** | `- [x] Alt-tab 30+ min → no overlay (Firefox dev @ ~360k)` `- [x] Edits preserved` `- [x] Cold load unchanged` |
-| **Edge cases** | Warm path trusts local IDB — remote server changes undetected until cold load. New tab = cold. `dirty` UI flag resets on reload (data in IDB). Undo stack session-only |
-| **Acceptance** | `- [x] Asset drop instant @ 360k` `- [x] Delete 150/4000 no crash` `- [x] Drag not regressed` `- [x] Undo 6000 delete OK` `- [x] build + lint clean` |
-| **Eden parity** | Eden:XFORM-PLACE-001 (drop), Eden:DELETE-001 |
-| **Status** | **shipped** — spec [`t062_incremental_bindings.md`](t062_incremental_bindings.md) |
-| **Evidence** | `incPatchPlan.ts`, `bindings.ts`, `useMapStore.ts`, `slotIconCache.ts`, `ydoc.ts`, `BottomToolbelt.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx` |
+| **Status** | **shipped** — spec [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md) |
+| **Evidence** | `viteReloadGuard.ts`, `editorSession.ts`, `useMissionEditor.ts`, `useMissionDoc.ts`, `yieldToUi.ts` |
+
+#### PERF-IDB-001 — Chunked IDB slot restore (T-062.1)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | Restore ~360k slots from local persistence with **determinate** restoring progress (no 0→300k jump on 2nd+ load) |
+| **Trigger** | Navigate to `/missions/:id/edit` when v2 `tbd-mission-persist` exists (or legacy v1 → migrate once) |
+| **Preconditions** | T-062.2 warm path; T-060 bulk-sync window |
+| **Procedure** | v2: `loadMissionMetaIntoDoc` → `loadSlotsWithProgress` (5k/chunk, `INIT_ORIGIN`, `yieldToUi`) — **no** y-indexeddb. Legacy: y-indexeddb replay → `migrateLegacyToV2` → delete `tbd-mission-${id}`. Writes: debounced meta + slot save on `LOCAL_ORIGIN`; flush on tab hide/pagehide |
+| **Postconditions** | Y.Doc populated; overlay shows smooth `done/total` during v2 restoring |
+| **Edge cases** | Server-adopted mission not v2-cached until first edit. SPA navigate-away within ~2s debounce may drop last edits. `docAlive` / `isCancelled` guards prevent corrupt writes on teardown |
+| **Acceptance** | `- [x] Migration once` `- [x] 2nd+ load smooth progress @ ~360k` `- [x] Legacy DB deleted` `- [x] build/lint/tsc clean` |
+| **Status** | **shipped** — spec [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md) |
+| **Evidence** | `persistence/*`, `useMissionDoc.ts`, `useMissionEditor.ts`, `ydoc.ts` (`entityToYMap`) |
 
 ---
 
@@ -1321,23 +1339,23 @@
 
 ## DATA — Persistence & compile
 
-#### DATA-IDB-001 — IndexedDB autosave (Option 1)
+#### DATA-IDB-001 — Local persistence (v2 chunked IDB, T-062.1)
 
 | Field | Value |
 |-------|-------|
 | **Domain** | DATA |
-| **Goal** | Local crash-safe draft per mission |
-| **Trigger** | Any Y.Doc update |
-| **Preconditions** | Editor mounted |
-| **Procedure** | `y-indexeddb` key `tbd-mission-${id}`; destroy on unmount + `useMapStore.reset()` |
-| **Postconditions** | Local replica persisted |
-| **Inputs** | Edits |
-| **Outputs** | IndexedDB |
-| **Edge cases** | `missionId` undefined → `tbd-mission-draft` |
-| **Acceptance** | `- [ ] Reload page restores edits` |
+| **Goal** | Local crash-safe draft per mission with **incremental restore** @ scale |
+| **Trigger** | `LOCAL_ORIGIN` Y.Doc edits once `docStatus === 'ready'` (debounced ~2s) |
+| **Preconditions** | Editor mounted; v2 path uses `idb` `tbd-mission-persist` |
+| **Procedure** | **v2:** `saveMissionMetaFromDoc` + `saveSlotsFromDocDebounced` (5k chunks) → flush on tab hide/pagehide/unmount. **Boot:** v2 chunked restore, or legacy v1 y-indexeddb replay → one-time `migrateLegacyToV2` → delete `tbd-mission-${id}`. **Fresh:** no v2 write until first user edit |
+| **Postconditions** | Meta + slot chunks in `tbd-mission-persist`; legacy DB removed after migration |
+| **Inputs** | Y.Doc edits (`LOCAL_ORIGIN`) |
+| **Outputs** | IndexedDB (`meta` + `slots` stores) |
+| **Edge cases** | Server-adopted mission not cached until first edit. SPA navigate-away within debounce may drop last edits. `isCancelled` guard on teardown. `missionId` undefined → draft key |
+| **Acceptance** | `- [x] F5 restores edits (v2)` `- [x] 2nd+ load determinate progress @ ~360k` `- [x] Legacy migrate once` |
 | **Eden parity** | N/A |
-| **Status** | working |
-| **Evidence** | `useMissionDoc.ts` |
+| **Status** | **working (v2)** — legacy y-indexeddb only on first-return migrate path |
+| **Evidence** | `persistence/*`, `useMissionDoc.ts`, `useMissionEditor.ts`, `t062_1_idb_streaming_load.md` |
 
 #### DATA-SEED-001 — Default meta + layer seed
 

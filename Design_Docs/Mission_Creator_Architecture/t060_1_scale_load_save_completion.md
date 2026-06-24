@@ -15,14 +15,14 @@ Manual verify @ **~300k objects** (2026-06):
 
 | Issue | Observed | T-060 claimed | Gap |
 |-------|----------|---------------|-----|
-| **Load time** | **~30 s–1 min** (T-060.1.1 partial pass) | Overlay + one coalesced flush | Incremental IDB → **T-062.1+** |
-| **Load bar** | Indeterminate (T-060) → stuck 0% (T-060.1) → **restoring label, 0→300k jump** (T-060.1.1) | Real % throughout | Incremental IDB counts need **T-062.1+** (single `Y.applyUpdate`) |
+| **Load time** | **~30 s–1 min** (T-060.1.1 partial pass) | Overlay + one coalesced flush | **T-062.1** v2 chunked restore ✅ |
+| **Load bar** | Indeterminate (T-060) → stuck 0% (T-060.1) → **restoring label, 0→300k jump** (T-060.1.1 legacy v1) | Real % throughout | **T-062.1** v2 determinate `done/total` ✅ |
 | **Save** | ~~Upload ~4% → ERR_NETWORK~~ | 360k → 201 | **FIXED T-060.1.4** (stale API + 1 MB global wrap; curl 140 MB → 201; browser verify pending) |
 | **Hydrate bulk window** | — | “hydrate in bulk coalesce” | `endBulkSync()` runs **before** server hydrate completes |
 
-T-060 was the **foundation** (gate, coalesce, API cap, compile progress). **T-060.1 completes acceptance.** **T-061** drag-move shipped (good enough). **T-062** incremental bindings @ 360k. **T-062.2** editor session / alt-tab. **Active: T-063..T-067.** Optional **T-061.1** typed-array → deferred mega optimizations backlog.
+T-060 was the **foundation** (gate, coalesce, API cap, compile progress). **T-060.1 completes acceptance.** **T-061** drag-move shipped (good enough). **T-062** incremental bindings @ 360k. **T-062.2** editor session / alt-tab. **T-062.1** chunked IDB load. **Active: T-062.1.1 → T-063..T-067.** Optional **T-061.1** typed-array → deferred mega optimizations backlog.
 
-**North-star reminder:** Linear load time @ 300k → ~10 min @ 10M without incremental IDB + bindings at scale. T-060.1 targets **360k acceptance** (determinate UX + save works); **≤10 s @ 1M** remains **T-062.1+** / **T-066** stretch.
+**North-star reminder:** Linear load time @ 300k → ~10 min @ 10M without incremental IDB + bindings at scale. T-060.1 targets **360k acceptance** (determinate UX + save works); **≤10 s @ 1M** remains **T-066** stretch. **T-062.1** shipped v2 chunked IDB restore.
 
 ---
 
@@ -118,7 +118,7 @@ Likely contributors @ 300k compiled payload:
 | **Vite proxy** | `server.proxy['/api'].timeout = 600_000` |
 | **Save body serialization** | Chunked stringify or `transformRequest` that yields — minimum: extend timeout + surface real error; stretch: gzip request body (optional T-060.1 stretch) |
 | **assemblePayload** | Yield during `editor.slots` / large map copies (compile hits 100% before assembly finishes today) |
-| **≤10 s @ 1M** | Out of scope for T-060.1 — document dependency on **T-062.1+** incremental IDB + **T-066** |
+| **≤10 s @ 1M** | Out of scope for T-060.1 — document dependency on **T-062.1** ✅ (v2 IDB) + **T-066** |
 
 ---
 
@@ -254,7 +254,7 @@ proxy: {
 | Wall time | ~30 s–1 min |
 | Pan after load | User to confirm ≥55 fps |
 
-**Interpretation:** y-indexeddb applies persisted state as one synchronous `Y.applyUpdate` — `slots.size` cannot tick during the block. T-060.1.1 fixes the **UX symptom** (label + pulse, not frozen blank 0%). Incremental counts during IDB replay → **T-062.1+**.
+**Interpretation:** y-indexeddb applies persisted state as one synchronous `Y.applyUpdate` — `slots.size` cannot tick during the block. T-060.1.1 fixes the **UX symptom** on **legacy v1** (label + pulse, not frozen blank 0%). **T-062.1** v2 chunked restore fixes incremental counts (spec: [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md)).
 
 ### Save — manual verify (2026-06-23)
 
@@ -426,7 +426,7 @@ Requires root `.env` `ALLOWED_ORIGINS=http://localhost:5173` (already set). **Ve
 
 **Leading hypotheses (T-060.1.4 — RESOLVED 2026-06-23):** see §T-060.1.4 proven table — **stale `go run` binary** + 1 MB global wrap; not 256 MB cap, not OOM, not 5 MB CMS limit.
 
-**Not batch upload (this slice):** current API is one `POST /missions/:id/versions` with full `json_payload`. Chunked/batch upload needs a **new backend contract** → **T-062.1+** incremental save, not a frontend hack.
+**Not batch upload (this slice):** current API is one `POST /missions/:id/versions` with full `json_payload`. Chunked/batch upload needs a **new backend contract** → **T-062.1.1** batch save, not a frontend hack.
 
 ### Goal
 
@@ -644,7 +644,7 @@ curl dies mid-upload → server/middleware. curl **201** → browser/axios/memor
 ### DO NOT (this slice)
 
 - Re-implement E1/E2/E3b or T-060.1.3 observability
-- Add batch/chunk upload (needs new API → **T-062.1+**)
+- Add batch/chunk upload (needs new API → **T-062.1.1**)
 - Raise 256 MB cap (payload is 135 MB — already under)
 - **Edit documentation** — **Cursor (Composer 2.5)** owns all doc sync; Claude Code reads specs only
 - Commit until user says. Tag **T-060** = single commit T-060..**T-060.1.4** after Save → **201**
@@ -666,7 +666,7 @@ curl dies mid-upload → server/middleware. curl **201** → browser/axios/memor
 | **Production-like IT** | CI catches middleware regression |
 | **Server log correlation** | `CreateVersion` entry line splits handler vs network |
 | **curl repro** | Isolates browser from Go |
-| **Batch upload / dedup** | **T-062.1+** — not this slice |
+| **Batch upload / dedup** | **T-062.1.1** — not this slice |
 
 ---
 
@@ -696,7 +696,7 @@ Partner theory review: backend mid-stream reset is PLAUSIBLE. "5 MB MaxBytesRead
 
 ## DO NOT
 - Re-implement E1/E2/E3b or T-060.1.3 observability
-- Add batch/chunk upload (T-062.1+ only)
+- Add batch/chunk upload (T-062.1.1 only)
 - **Edit any documentation files** — Cursor (Composer 2.5) owns all doc sync; read docs only
 - Commit until I say. Tag T-060 = single commit T-060..T-060.1.4 after Save → 201
 
@@ -762,7 +762,7 @@ We do NOT know exact payload bytes yet. Implement measurement + debug BEFORE mor
 
 ## DO NOT
 - Re-implement E1/E2/E3b
-- Add batch/chunk upload (needs new API → T-062.1+)
+- Add batch/chunk upload (needs new API → T-062.1.1)
 - Commit until I say. Tag T-060 = T-060..T-060.1.3 single commit after Save → 201 OR fully diagnosed.
 
 ## PART 1 — missionSize.ts

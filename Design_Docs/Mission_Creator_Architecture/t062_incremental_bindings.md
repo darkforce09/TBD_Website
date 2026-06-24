@@ -69,10 +69,10 @@ Stop everyday Y.Doc edits from flushing the entire Zustand mirror via `docToSnap
 
 ---
 
-## Out of scope (T-062.1+ stretch — not this ship)
+## Out of scope (T-062.1 / T-062.1.1 — not T-062.0)
 
-- y-indexeddb **streaming** / fixing load **0→300k** IDB jump (still T-060.1.1 partial pass)
-- Backend **batch save** / patch upload API
+- ~~y-indexeddb **streaming** / fixing load **0→300k** IDB jump~~ → **shipped T-062.1** ([`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md))
+- Backend **batch save** / patch upload API → **T-062.1.1**
 - Incremental **undo multi-add** (slot-add cap stays k=1)
 - `_patchSlots` / drag-release O(n) spread elimination (T-061.1 / mega opts)
 - T-063 spatial index, T-064 virtualized outliner
@@ -94,9 +94,9 @@ Stop everyday Y.Doc edits from flushing the entire Zustand mirror via `docToSnap
 
 ## After T-062
 
-- **T-062.2 shipped** — editor session / alt-tab. Spec: [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md)
-- **Active:** **T-063** spatial index (rbush pick/marquee) → T-064..T-067
-- **Stretch:** **T-062.1+** IDB incremental load UX + save batch API
+- ~~**T-062.2** editor session~~ ✅ — spec [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md)
+- ~~**T-062.1** chunked IDB load~~ ✅ — spec [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md)
+- **Active:** **T-062.1.1** batch save → **T-063** spatial index → T-064..T-067
 - **Eden T-068+** after scale milestones
 
 ---

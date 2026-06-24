@@ -303,7 +303,8 @@ change back into the store.
 - `state/undo.ts` wraps `Y.UndoManager` over those maps → powers undo/redo **and** the
   Top Bar "Visual-Git" timeline scrubber.
 - `state/bindings.ts`: `ydoc` `observeDeep` → batched `useMapStore.setState`. Offline durability
-  via `y-indexeddb` so a refresh never loses local work.
+  via **v2 chunked IDB** (`tbd-mission-persist`, T-062.1) — meta JSON + 5k slot chunks; legacy
+  y-indexeddb replay + one-time migrate only. Debounced persist on `LOCAL_ORIGIN`; flush on tab hide.
 
 ---
 
@@ -449,7 +450,7 @@ JetBrains-Mono readout). Tools: Select, Ruler, Line-of-Sight. (Unit placement is
 |----------|----------|
 | **DEM heightmap fails to load** | Fall back to a flat plane (`z = 0`); raise a non-blocking `sonner` toast; disable elevation-dependent tools (viewshed, Z-snap) with an explanatory tooltip + a Retry button. The canvas **never crashes** — base map + 2D placement keep working. |
 | **Registry fetch fails** | Serve the last IndexedDB cache; if none, enter degraded mode (placement allowed, validation **warns** not blocks) with a persistent banner. |
-| **Autosave / persistence failure** | Local Y.Doc is optimistic and durable via `y-indexeddb`; the PATCH to save a mission version retries with backoff; an "unsaved changes" indicator shows until confirmed. Local work is never lost on a failed save. |
+| **Autosave / persistence failure** | Local Y.Doc is optimistic and durable via **v2 chunked IDB** (`tbd-mission-persist`, T-062.1); the POST to save a mission version retries with backoff; an "unsaved changes" indicator shows until confirmed. Local work is never lost on a failed save (flush on tab hide/pagehide). |
 | **WebSocket disconnect** *(deferred — ADR-3)* | v1 is offline-first on the local Y.Doc, so there is no live socket to drop. *Forward-looking:* once y-websocket lands, Yjs buffers offline edits and auto-merges on reconnect; a "reconnecting" presence chip appears; the offline queue persists in IndexedDB. |
 | **Conflicting multiplayer edits** *(deferred — ADR-3)* | Yjs CRDT guarantees convergence: disjoint-field edits merge; same-scalar edits resolve deterministically (Lamport ordering); ID-keyed `Y.Map`s make structural moves (reparent/insert/delete) commute. N/A for solo v1, but §2.3's schema is built for it — **no migration needed** to turn multiplayer on. |
 | **200-slot performance** | All entity rendering is GPU/Deck-driven (no per-entity DOM); selectors are memoized; edits are batched transactions. Target: 60 fps pan/zoom with 200+ entities. |
@@ -488,7 +489,7 @@ map and read true elevation; hillshade overlay toggles.
 
 **Phase 4 — State foundation** → `state/ydoc.ts`, `state/schema.ts`, `state/useMapStore.ts`,
 `state/bindings.ts`, `state/undo.ts`, `state/selectors.ts`, `layers/useIconLayer.ts`.
-**Deliverable:** add/move test icons that persist across reload (y-indexeddb) and undo/redo.
+**Deliverable:** add/move test icons that persist across reload (v2 IDB, T-062.1) and undo/redo.
 
 **Phase 5 — Registry worker** → `registry/registry.worker.ts`, `registry/registryClient.ts`,
 `registry/registryTypes.ts`. (Depends on backend `/api/v1/registry`.) **Deliverable:** off-thread
