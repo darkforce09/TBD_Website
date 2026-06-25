@@ -23,3 +23,4 @@ missions/
 # Redundant local backup of the Stitch design exports (canonical copy lives in
 # frontend/src/stitch-exports/).
 .stitch-backup-exports/
+__pycache__/

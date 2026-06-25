@@ -40,7 +40,7 @@
 
 ### M1 — [x] Admin route
 ### M2 — [x] Table layout (wide roster + slide-over dossier)
-### M3 — [x] `usePersonnel` live (~~FD-004~~)
+### M3 — [x] `usePersonnel` live (shipped)
 ### M4 — [ ] Edit/ban when API exists
 
 ## Test Plan
@@ -51,4 +51,4 @@
 
 ## Open Questions / Blockers
 
-- Edit/ban mutations not yet implemented. API read path resolved (~~FD-004~~).
+- Edit/ban mutations not yet implemented. API read path shipped (T-004 admin wiring).

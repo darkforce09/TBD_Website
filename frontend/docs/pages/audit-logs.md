@@ -39,7 +39,7 @@
 
 ### M1 — [x] Admin route
 ### M2 — [x] Terminal UI with log lines
-### M3 — [x] `useAuditLogs` live (~~FD-005~~)
+### M3 — [x] `useAuditLogs` live (shipped)
 ### M4 — [ ] Live SSE stream + CSV export wired
 
 ## Test Plan
@@ -50,4 +50,4 @@
 
 ## Open Questions / Blockers
 
-- SSE live stream deferred. List query resolved (~~FD-005~~).
+- SSE live stream deferred. List query shipped (T-004 admin wiring).

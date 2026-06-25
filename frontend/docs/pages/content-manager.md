@@ -24,7 +24,7 @@
 | 5 | Title input | input | Operation Thunderstrike Briefing | Title | Form |
 | 6 | Category select | select | Event / Modpack Update / Important | Tag | Form |
 | 7 | Cover upload | zone | Drag & drop JPG/PNG/WEBP max 5MB | Thumbnail | `POST /cms/uploads` |
-| 8 | Editor toolbar | buttons | bold, italic, link, lists, code | WYSIWYG | FD-007 |
+| 8 | Editor toolbar | buttons | bold, italic, link, lists, code | WYSIWYG | T-087 |
 | 9 | Editor body | textarea | Draft your briefing here... | Content | Form |
 | 10 | Discord toggle | switch | Push to Discord Webhook | Webhook | Form |
 | 11 | Save draft | button | Save Draft | Draft | Future |
@@ -45,7 +45,7 @@ Zod schema: `schemas/content.ts`
 ### M1 — [x] Admin route
 ### M2 — [ ] Form + textarea stub (no WYSIWYG)
 ### M3 — [ ] zod + announcement POST
-### M4 — [ ] WYSIWYG FD-007
+### M4 — [ ] WYSIWYG (T-087)
 
 ## Test Plan
 
@@ -55,4 +55,4 @@ Zod schema: `schemas/content.ts`
 
 ## Open Questions / Blockers
 
-- [FD-007](../TRACKING.md)
+- **T-087** ([ticket registry](../../../docs/TICKET_REGISTRY.md))

@@ -2,9 +2,9 @@
 
 React 19 + TypeScript + Vite SPA for the TBD Arma Reforger platform. Talks to the
 Go API (see [`CLAUDE.md`](../CLAUDE.md) and [`docs/backend/README.md`](../docs/backend/README.md)).
-Documentation: start at [`docs/frontend/ROADMAP.md`](../docs/frontend/ROADMAP.md).
+Documentation: start at [`docs/TICKET_LEAD.md`](../docs/TICKET_LEAD.md) (queue) and [`docs/frontend/ROADMAP.md`](../docs/frontend/ROADMAP.md) (surfaces).
 
-**Documentation:** per-route specs, tracking IDs, and theme tokens live in
+**Documentation:** per-route specs, T-0xx ticket IDs, and theme tokens live in
 [docs/frontend/README.md](../docs/frontend/README.md) (hub) →
 [frontend/docs/INDEX.md](docs/INDEX.md).
 

@@ -20,7 +20,7 @@ Show **how many slot entities are on the map** and **how many are selected** in 
 - Marquee multi-select, Ctrl-toggle, copy-paste, delete — SEL count tracks correctly.
 - `cd frontend && npm run build && npm run lint` clean.
 
-**Scope:** slots only (`slotsById`). Vehicles/markers join the count in later P0 slices — do not invent a multi-entity aggregator yet.
+**Scope:** slots only (`slotsById`). Vehicles/markers join the count in later **T-069**/**T-070** slices — do not invent a multi-entity aggregator yet.
 
 ---
 
@@ -131,4 +131,4 @@ Re-export: `selectSlotCount` alongside `selectSlotIcons`.
 
 **T-059 (bulk paste/delete):** fix O(n²) spreads, cap selection/outliner after bulk paste, optional chunked paste — **10k paste without hard freeze**. Use **OBJ** to confirm totals. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md).
 
-**T-060.1.4** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **T-062** ✅. **T-062.2** ✅. **T-062.1** ✅. **T-062.1.1** ✅. **T-063** ✅. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067**. **Eden T-068+.**
+**T-060.1.4** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **T-062** ✅. **T-062.2** ✅. **T-062.1** ✅. **T-062.1.1** ✅. **T-063** ✅. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+.**

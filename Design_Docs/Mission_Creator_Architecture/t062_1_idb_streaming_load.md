@@ -116,7 +116,7 @@ Single DB **`tbd-mission-persist`**, two object stores:
 
 - ~~T-062.1.1 Save orbat dedup~~ → **shipped** ([`t062_1_1_batch_save.md`](t062_1_1_batch_save.md))
 - ~~T-063 spatial index~~ ✅ — spec [`t063_spatial_index.md`](t063_spatial_index.md)
-- **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067**
+- **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)
 - ≤10s @ 1M (T-066 worker stretch)
 - Post-hydrate v2 write without user edit
 
@@ -126,7 +126,7 @@ Single DB **`tbd-mission-persist`**, two object stores:
 
 - ~~**T-062.1.1** Save orbat dedup~~ ✅ — spec [`t062_1_1_batch_save.md`](t062_1_1_batch_save.md)
 - ~~**T-063** spatial index~~ ✅ — spec [`t063_spatial_index.md`](t063_spatial_index.md)
-- **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067**
+- **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)
 
 ---
 

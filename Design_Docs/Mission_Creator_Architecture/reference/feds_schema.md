@@ -131,6 +131,7 @@ Copy this structure for **every** feature. Heading level: `#### {ID} — {Short 
 | **Acceptance** | `- [ ]` verifiable bullets |
 | **Eden parity** | `Eden:{ID}` \| `N/A ({reason})` \| `TBD-only` |
 | **Status** | *(06 only)* `working` \| `partial` \| `stub` \| `disabled` \| `not_built` |
+| **Ticket** | *(06, optional)* Shipped `T-0xx` when a registry ticket owns the slice (e.g. `T-049`) |
 | **Evidence** | *(06)* file paths + symbols; *(07)* URL or `UNVERIFIED` |
 | **UI Surface** | *(07 required)* `MenuBar` \| `Toolbar` \| `AssetBrowser` \| `EntityList` \| `View` \| `AttributesDialog` \| `ScenarioAttributes` \| `ContextMenu` \| `StatusBar` \| `ConnectionLine` \| `—` |
 | **Feature kind** | *(07 required)* `interaction` \| `ui_chrome` \| `attribute_field` \| `connection_type` \| `browser_mode` \| `engine_action` |
@@ -178,18 +179,18 @@ The markdown FEDS block remains authoritative.
 
 ---
 
-## Gap analysis row format (`08`)
+## Gap analysis row format (`eden/gap_analysis.md`)
 
 ```markdown
-| eden_id | tbd_id | parity | priority | gap_notes |
-|---------|--------|--------|----------|-----------|
+| eden_id | tbd_id | parity | ticket | gap_notes |
+|---------|--------|--------|--------|-----------|
 | SEL-MAP-003 | SEL-MAP-003 | match | — | |
-| SEL-MOD-001 | — | missing | P1 | Ctrl+LMB additive select |
+| SEL-MOD-001 | SEL-MOD-001 | match | T-053 | Ctrl+LMB additive select |
 ```
 
 **Parity:** `match` | `partial` | `missing` | `deferred` | `na` | `tbd_only`
 
-**Priority:** `P0` (blocks authoring) | `P1` (Eden feel) | `P2` (power user) | `P3` (deferred product) | `—`
+**Ticket:** Registry `T-0xx` when queued or shipped; `—` when not ticketed. Open Eden backlog: [`docs/TICKET_LEAD.md`](../../../docs/TICKET_LEAD.md). Deferred map/DEM infra: **T-090** (aligned tiles), **T-091** (DEM + Z-axis). Terrain base at scale: **T-110** ([`t110_terrain_base_mission_layers.md`](../t110_terrain_base_mission_layers.md)).
 
 ---
 

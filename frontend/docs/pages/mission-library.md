@@ -95,4 +95,4 @@
 
 ## Open Questions / Blockers
 
-- None for T-048. Track A/B editor work: [MC ROADMAP](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md).
+- None for T-048. Mission Creator queue: [MC ROADMAP](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) · [TICKET_LEAD.md](../../../docs/TICKET_LEAD.md).

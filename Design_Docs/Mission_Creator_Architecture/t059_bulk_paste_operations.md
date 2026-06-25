@@ -122,7 +122,7 @@ export function runBulk(md, fn) { bulkDepth++; try { fn() } finally { bulkDepth-
 |-----|--------|
 | [`CLAUDE.md`](../../CLAUDE.md) §Status | T-059 bullet; validation notes; Next → **T-060.1.1** |
 | [`ROADMAP.md`](ROADMAP.md) | Scale table T-059 ✅; Next → **T-060.1.1** |
-| [`t056_eden_p1_copy_paste.md`](t056_eden_p1_copy_paste.md) | Note: bulk scale limits addressed T-059 |
+| [`t056_copy_paste.md`](t056_copy_paste.md) | Note: bulk scale limits addressed T-059 |
 | [`feature_inventory.md`](feature_inventory.md) | ACTION-PASTE bulk row or amend KEY-COPY-001 |
 | [`agent_execution.md`](agent_execution.md) | Decisions log; ACTIVE SLICE → **T-060.1.1** |
 | [`docs/TAGS.md`](../../docs/TAGS.md) | T-059 shipped row |
@@ -160,4 +160,4 @@ items d/e (design preserved above).
 
 ## After T-059
 
-**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **T-062** ✅. **T-062.2** ✅. **T-062.1** ✅. **T-062.1.1** ✅. **T-063** ✅. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067**. **Eden T-068+.**
+**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **T-062** ✅. **T-062.2** ✅. **T-062.1** ✅. **T-062.1.1** ✅. **T-063** ✅. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+.**

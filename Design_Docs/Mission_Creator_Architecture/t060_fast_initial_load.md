@@ -117,6 +117,6 @@ Evidence:
 
 ## After T-060 (shipped `b1fd25a`)
 
-**T-061..T-067:** mission-layer scale. **Eden T-068+.** **T-070+:** terrain base — [`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md).
+**T-061..T-067:** mission-layer scale. **Eden T-068+.** **T-110:** terrain base — [`t110_terrain_base_mission_layers.md`](t110_terrain_base_mission_layers.md).
 
 **Authority for acceptance slices:** [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md).

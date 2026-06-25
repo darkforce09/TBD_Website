@@ -1,6 +1,7 @@
-# T-070+ — Terrain base + mission layers (future architecture)
+# T-110 — Terrain base + mission layers (future architecture)
 
-**Status:** **future / not started** — do **not** implement before **T-061..T-067** + Eden **T-068+** unless product explicitly reprioritizes. (T-060 shipped `b1fd25a`.)
+**Status:** **future / not started** — do **not** implement before **T-067** + Eden **T-068+** unless product explicitly reprioritizes.
+**Git tag on ship:** *(none — not started)*
 **Authority:** [ROADMAP.md](ROADMAP.md) §Map performance · [engineering_plan.md](engineering_plan.md)
 **Relates to:** External “Base + Delta / event sourcing” proposal (2026-06) — **adopt the good parts here**, not as a rewrite of the current Y.Doc mission model.
 
@@ -19,7 +20,7 @@ Two **different** entity classes must not be conflated:
 
 **T-061..T-067** optimizes the **mission layer** (typed-array render, incremental bindings, spatial index, worker compile).
 
-**T-070+** adds an optional **terrain layer** using base + delta — only when Track A (tiles/DEM/world assets) and product need “edit native map objects at scale.”
+**T-110** adds an optional **terrain layer** using base + delta — only when **T-090**/**T-091** (tiles/DEM/world assets) and product need “edit native map objects at scale.”
 
 ---
 
@@ -27,7 +28,7 @@ Two **different** entity classes must not be conflated:
 
 | Idea | Adopt? | Where it lands |
 |------|--------|----------------|
-| Binary **base** loaded into TypedArray on boot | **Yes** (terrain only) | T-070+ after hosted world assets |
+| Binary **base** loaded into TypedArray on boot | **Yes** (terrain only) | **T-110** after **T-090**/**T-091** hosted world assets |
 | Save/load **sparse deltas** not full world JSON | **Yes** | Terrain deltas + T-062 mission patches |
 | **Server-side compile** to Enfusion on save | **Yes** (stretch) | Backend worker after T-066 client compile proven |
 | **Visual version timeline** | **Partial** | UI on existing `MissionVersion` semver rows; optional delta replay for terrain |
@@ -61,7 +62,7 @@ flowchart TB
   MissionPayload --> YDoc
 ```
 
-### Terrain base (T-070+)
+### Terrain base (T-110)
 
 - **Source:** Extracted Enfusion/world asset per terrain (Everon, Arland), versioned, CDN-hosted `ArrayBuffer`.
 - **Layout:** Fixed-stride TypedArray or chunked spatial bins (extends **T-067** spatial chunks).
@@ -73,7 +74,7 @@ flowchart TB
 
 - Keep **Y.Doc** normalized model ([`schema.ts`](../../frontend/src/features/tactical-map/state/schema.ts)).
 - **T-061.0.1 ✅ shipped:** Slot-position fast path in `bindings.ts` + `slotIconCache` (drag @ 360k — good enough).
-- **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067**.
+- **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)
 - **T-066:** Worker `compileMission` for export/save assembly.
 - **Save payload:** `orbat[]` (backend contract) + compact `editor` patch or full block for missions under ~50k; avoid duplicating orbat in editor block long-term.
 
@@ -96,17 +97,17 @@ flowchart TB
 
 | Tag | Focus | Depends on |
 |-----|-------|------------|
-| **T-068+** | Eden parity (locked before this) | gap_analysis P0–P2 |
-| **T-070** | Terrain base asset pipeline + read-only render | Track A tiles/DEM, hosted binaries |
+| **T-068+** | Eden parity (locked before this) | [`eden/gap_analysis.md`](eden/gap_analysis.md) ticket column |
+| **T-110** | Terrain base asset pipeline + read-only render | **T-090**/**T-091**, hosted binaries |
 | **T-071** | Terrain delta CRUD + sparse save | T-070 |
 | **T-072** | Server compile worker (Enfusion export) | T-066, export schema |
 | **T-073** | Version timeline UI (semver + optional delta scrub) | T-071 |
 
-**Do not renumber T-061..T-067.** T-070+ is explicitly **after** Eden T-068+ and scale milestones unless leadership reprioritizes.
+**Do not renumber T-061..T-067.** T-110 is explicitly **after** Eden T-068+ and scale milestones unless leadership reprioritizes.
 
 ---
 
-## Explicit non-goals (T-070+)
+## Explicit non-goals (T-110)
 
 - Replacing ORBAT / Event Hub `parseOrbatTemplate` contract
 - Storing 10M full JSON objects in Postgres `json_payload`
@@ -123,7 +124,7 @@ flowchart TB
 | Load 0→300k IDB jump | T-060.1.1 ✅ legacy v1 | **T-062.1** ✅ v2 chunked restore |
 | 360k authored **slots** | Mission layer scale program | Not terrain base (unless those slots *are* terrain props — product decision) |
 
-If the 360k test mission is **authored units**, stay on mission-layer fixes. If product later needs **millions of editable props**, add terrain base under T-070+.
+If the 360k test mission is **authored units**, stay on mission-layer fixes. If product later needs **millions of editable props**, add terrain base under T-110.
 
 ---
 

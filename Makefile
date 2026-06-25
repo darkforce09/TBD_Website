@@ -2,7 +2,7 @@
 # Uses `docker compose` if available, otherwise `podman compose`.
 COMPOSE := $(shell command -v docker >/dev/null 2>&1 && echo "docker compose" || echo "podman compose")
 
-.PHONY: help db-up db-down db-logs seed api web test build tidy
+.PHONY: help db-up db-down db-logs seed api web test build tidy tickets ticket-list ticket-sync ticket-check ticket-check-strict
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -38,3 +38,18 @@ build: ## Build the Go API and the frontend
 
 tidy: ## Tidy Go modules
 	go mod tidy
+
+tickets: ## Run Claude Code on ready tickets in parallel (see tickets/README.md)
+	./scripts/ticket run
+
+ticket-list: ## Show ticket queue status
+	./scripts/ticket list
+
+ticket-sync: ## Regenerate all ticket-derived docs from registry.json
+	./scripts/ticket sync
+
+ticket-check: ## Structural validation of ticket registry + outputs
+	./scripts/ticket check
+
+ticket-check-strict: ## Full validation including zero legacy planning IDs
+	./scripts/ticket check --strict

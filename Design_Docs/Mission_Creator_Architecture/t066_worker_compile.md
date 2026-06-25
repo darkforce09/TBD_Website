@@ -81,7 +81,7 @@ const snapshot = pickMapSnapshot(useMapStore.getState())
 | `npm run build` + `lint` | Clean | ✅ |
 | `pickMapSnapshot` before worker | No DataCloneError | ✅ |
 | Worker teardown | No leak on route leave | Pending optional check |
-| Git tag T-066 | Committed | Pending |
+| Git tag T-066 | Committed (`53bc2a8`) | ✅ |
 
 **Stretch:** ≤10 s compile+prepare @ 1M — profile after ship; may need T-066.1 tuning or T-067.
 
@@ -89,7 +89,7 @@ const snapshot = pickMapSnapshot(useMapStore.getState())
 
 ## After T-066 ship
 
-- **Active:** T-067 spatial chunks
+- **Active:** T-067 — [`t067_spatial_chunks.md`](t067_spatial_chunks.md) (**spec ready**; T-067.0 code pending)
 - Eden **T-068+**
 
 ---

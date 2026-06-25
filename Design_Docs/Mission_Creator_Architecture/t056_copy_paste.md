@@ -1,8 +1,8 @@
-# T-056 — Eden P1-02: Ctrl+C / Ctrl+V copy-paste (slots)
+# T-056 — Ctrl+C / Ctrl+V copy-paste (slots)
 
 **Status:** shipped (T-056)
 **Git tag on ship:** T-056
-**Authority:** [MC ROADMAP](ROADMAP.md) Eden P1 · [eden/gap_analysis.md](eden/gap_analysis.md) P1-02 · [eden/interactions.md](eden/interactions.md) ACTION-COPY-001 / ACTION-PASTE-001 · [feature_inventory.md](feature_inventory.md)
+**Authority:** [MC ROADMAP](ROADMAP.md) · [eden/gap_analysis.md](eden/gap_analysis.md) (`ACTION-COPY-001 / ACTION-PASTE-001`) · [eden/interactions.md](eden/interactions.md) ACTION-COPY-001 / ACTION-PASTE-001 · [feature_inventory.md](feature_inventory.md)
 
 ---
 
@@ -15,8 +15,8 @@ cursor, preserving the group's relative layout.
 
 | ID | Gap | Deliverable |
 |----|-----|-------------|
-| **P1-02** | `ACTION-COPY-001` `CopyUnit` | Ctrl/Cmd+C copies the current slot selection to an in-editor clipboard |
-| **P1-02** | `ACTION-PASTE-001` `PasteUnit` | Ctrl/Cmd+V pastes the clipboard at the map cursor, preserving relative layout; pasted slots become the selection |
+| **ACTION-COPY-001** | `ACTION-COPY-001` `CopyUnit` | Ctrl/Cmd+C copies the current slot selection to an in-editor clipboard |
+| **ACTION-COPY-001** | `ACTION-PASTE-001` `PasteUnit` | Ctrl/Cmd+V pastes the clipboard at the map cursor, preserving relative layout; pasted slots become the selection |
 
 **Out of scope:** Cut (`ACTION-CUT-001` Ctrl+X), paste-at-original (`ACTION-PASTE-ORIG-001`
 Ctrl+Shift+V), OS-clipboard / cross-tab copy, non-slot entities (vehicles / markers /
@@ -30,7 +30,7 @@ objectives aren't placeable yet — P0), backend changes, `useSelectTool` change
 |----------|--------|
 | Paste position | **At the map cursor**, preserving relative layout: translate the clip so its **centroid** lands at the cursor. |
 | Cursor off-map | If the cursor is `null` (mouse outside the map), fall back to a fixed **+20m / +20m nudge** from originals so copies don't perfectly overlap. |
-| Scope | **Copy + Paste only, slots only** — exactly the P1-02 gap item. |
+| Scope | **Copy + Paste only, slots only** — exactly the ACTION-COPY-001 / ACTION-PASTE-001 gap rows. |
 | Post-paste selection | Pasted slots become the new selection (`{ kind:'slot', ids: newIds }`) — matches Eden and the existing drop-to-place behavior. |
 | Clipboard | **In-editor, in-memory** (a `useRef` on the page). Reusable across multiple pastes; overwritten on each copy. |
 | Squad re-attach | Each pasted slot re-attaches to its **source squad** if it still exists, else `ensureDefaultSquad` (keeps the ORBAT export contract intact). |
@@ -240,8 +240,8 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 |-----|--------|
 | **This file** | Status → **shipped** |
 | [`CLAUDE.md`](../../CLAUDE.md) §Status | T-056 bullet + bump `latest feature work` line |
-| [`ROADMAP.md`](ROADMAP.md) | Move P1-02 → shipped (table + execution order line); add this doc to the hub; §Status "Next" leads with P1-07 |
-| [`eden/gap_analysis.md`](eden/gap_analysis.md) | P1-02 → ✅ shipped T-056 |
+| [`ROADMAP.md`](ROADMAP.md) | Move T-056 → shipped (table + execution order line); add this doc to the hub; §Status "Next" leads with T-074 |
+| [`eden/gap_analysis.md`](eden/gap_analysis.md) | T-056 → ✅ shipped T-056 |
 | [`feature_inventory.md`](feature_inventory.md) | copy/paste (CopyUnit/PasteUnit) row → working (Trigger, Procedure, Evidence, acceptance) |
 | [`agent_execution.md`](agent_execution.md) | Decisions log row **Copy/paste at cursor (T-056)** |
 | [`docs/frontend/ROADMAP.md`](../../docs/frontend/ROADMAP.md) + [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Shipped/milestone row for copy-paste |
@@ -270,5 +270,5 @@ Layers and ORBAT trees. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_
 
 ## Related
 
-- Prior: [t055_asset_browser_search.md](t055_asset_browser_search.md), [t053_eden_p1_additive_select.md](t053_eden_p1_additive_select.md)
-- Next: … → ~~**T-064**~~ ✅ → ~~**T-065**~~ ✅ cluster/LOD → ~~**T-066**~~ ✅ worker compile → **T-067** active; Eden **T-068+**
+- Prior: [t055_asset_browser_search.md](t055_asset_browser_search.md), [t053_additive_select.md](t053_additive_select.md)
+- Next: … → ~~**T-066**~~ ✅ worker compile → **T-067.0** active — [`t067_spatial_chunks.md`](t067_spatial_chunks.md); Eden **T-068+**

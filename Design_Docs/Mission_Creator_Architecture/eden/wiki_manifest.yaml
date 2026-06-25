@@ -1,6 +1,7 @@
 # Eden Editor wiki scrape manifest
 # Used by scripts/tools/scrape-eden-wiki.mjs
 # status: pending | scraped | reviewed | failed
+# ticket: T-0xx backlog row (replaces legacy parity tier field)
 
 version: 1
 mirrors:
@@ -12,102 +13,102 @@ categories:
     label: Eden_Editor:_Interface
     pages:
       - slug: Eden_Editor:_Asset_Browser
-        priority: P0
+        ticket: T-068
         status: scraped
       - slug: Eden_Editor:_Menu_Bar
-        priority: P0
+        ticket: T-083
         status: scraped
       - slug: Eden_Editor:_Toolbar
-        priority: P0
+        ticket: T-068
         status: scraped
       - slug: Eden_Editor:_Status_Bar
-        priority: P1
+        ticket: T-049
         status: scraped
 
   editing:
     label: Eden_Editor:_Editing
     pages:
       - slug: Eden_Editor:_Connecting
-        priority: P0
+        ticket: T-080
         status: scraped
       - slug: Eden_Editor:_Entity_Placing
-        priority: P0
+        ticket: T-072
         status: scraped
       - slug: Eden_Editor:_Entity_Transforming
-        priority: P0
+        ticket: T-073
         status: scraped
       - slug: Eden_Editor:_Transformation_Widget
-        priority: P0
+        ticket: T-081
         status: scraped
       - slug: Eden_Editor:_Entity_Attributes
-        priority: P0
+        ticket: T-082
         status: scraped
       - slug: Eden_Editor:_Setting_Attributes
-        priority: P0
+        ticket: T-049
         status: scraped
       - slug: Eden_Editor:_Transforming_Crew
-        priority: P2
+        ticket: T-076
         status: scraped
       - slug: Eden_Editor:_Custom_Entity_Textures
-        priority: P3
+        ticket: T-078
         status: scraped
 
   asset_types:
     label: Eden_Editor:_Asset_Types
     pages:
       - slug: Eden_Editor:_Object
-        priority: P0
+        ticket: T-068
         status: scraped
       - slug: Eden_Editor:_Group
-        priority: P0
+        ticket: T-071
         status: scraped
       - slug: Eden_Editor:_Marker
-        priority: P0
+        ticket: T-069
         status: scraped
       - slug: Eden_Editor:_Trigger
-        priority: P1
+        ticket: T-079
         status: scraped
       - slug: Eden_Editor:_Waypoint
-        priority: P1
+        ticket: T-079
         status: scraped
       - slug: Eden_Editor:_System
-        priority: P1
+        ticket: T-079
         status: scraped
       - slug: Eden_Editor:_Custom_Composition
-        priority: P0
+        ticket: T-078
         status: scraped
       - slug: Eden_Editor:_Composition
-        priority: P0
+        ticket: T-078
         status: scraped
       - slug: Eden_Editor:_Layer
-        priority: P0
+        ticket: T-037
         status: scraped
       - slug: Eden_Editor:_Comment
-        priority: P2
+        ticket: T-078
         status: scraped
 
   core:
     label: Eden_Editor
     pages:
       - slug: Eden_Editor:_Terminology
-        priority: P0
+        ticket: T-068
         status: scraped
       - slug: Eden_Editor:_Actions
-        priority: P0
+        ticket: T-056
         status: scraped
       - slug: Eden_Editor:_Entity_Context_Menu
-        priority: P0
+        ticket: T-054
         status: scraped
       - slug: Eden_Editor:_Object_Categorization
-        priority: P1
+        ticket: T-074
         status: scraped
       - slug: Eden_Editor:_Switching_from_2D_Editor
-        priority: P2
+        ticket: T-078
         status: scraped
 
   scenario:
     label: Eden_Editor:_Scenario
     pages:
       - slug: Eden_Editor:_Scenario_Attributes
-        priority: P0
+        ticket: T-049
         status: scraped

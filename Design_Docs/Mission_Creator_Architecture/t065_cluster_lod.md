@@ -86,7 +86,7 @@ Original premise: @ min zoom, Deck draws ~367k `IconLayer` markers wastefully �
 ## After T-065 ship
 
 - **Shipped:** T-065 cluster/LOD — [`t065_cluster_lod.md`](t065_cluster_lod.md) (`845bfb2`)
-- **Active:** T-067 spatial chunks — T-066 worker compile shipped ([`t066_worker_compile.md`](t066_worker_compile.md))
+- **Active:** T-067.0 — [`t067_spatial_chunks.md`](t067_spatial_chunks.md) (spec ready)
 - Eden **T-068+**
 
 ---

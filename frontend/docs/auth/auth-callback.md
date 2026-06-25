@@ -51,7 +51,7 @@
 - [x] Loading and error UI
 
 ### M3 — API wired
-- [x] Parse tokens and set session (FD-002 resolved)
+- [x] Parse tokens and set session (T-002 shipped)
 
 ### M4 — Complete
 - [x] Full OAuth round trip + dev-login
@@ -68,4 +68,4 @@
 
 ## Open Questions / Blockers
 
-- None (~~FD-002~~ resolved).
+- None (T-002 shipped).

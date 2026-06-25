@@ -1,8 +1,8 @@
-# T-053 — Eden P1-01: Ctrl/Cmd+LMB additive (toggle) select
+# T-053 — Ctrl/Cmd+LMB additive (toggle) select
 
 **Status:** shipped (T-053)  
 **Git tag on ship:** T-053  
-**Authority:** [MC ROADMAP](ROADMAP.md) Eden P1 · [eden/gap_analysis.md](eden/gap_analysis.md) P1-01 · [feature_inventory.md](feature_inventory.md) SEL-MOD-001
+**Authority:** [MC ROADMAP](ROADMAP.md) · [eden/gap_analysis.md](eden/gap_analysis.md) (`SEL-MOD-001`) · [feature_inventory.md](feature_inventory.md) SEL-MOD-001
 
 ---
 
@@ -15,10 +15,10 @@ fresh marquee each time. Eden lets you **Ctrl-click** units to add/remove them o
 
 | ID | Gap | Deliverable |
 |----|-----|-------------|
-| **P1-01** | `SEL-MOD-001` | Ctrl/Cmd+LMB on a slot toggles it in/out of the current selection |
+| **SEL-MOD-001** | `SEL-MOD-001` | Ctrl/Cmd+LMB on a slot toggles it in/out of the current selection |
 
 **Out of scope:** Shift range-select, Ctrl+A select-all (`KEY-SELALL-001`), copy/paste
-(P1-02), Ctrl+drag add-and-move, any `useSelectTool` gesture change, backend changes.
+(T-056), Ctrl+drag add-and-move, any `useSelectTool` gesture change, backend changes.
 
 ---
 
@@ -129,8 +129,8 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 | [`CLAUDE.md`](../../CLAUDE.md) §Status | T-053 bullet + bump `latest feature work` line |
 | [`feature_inventory.md`](feature_inventory.md) | SEL-MOD-001 → **working** (Trigger, Procedure, Evidence, acceptance); SEL-SYNC-001 stays partial |
 | [`agent_execution.md`](agent_execution.md) | Decisions log row **Additive select (T-053)** |
-| [`ROADMAP.md`](ROADMAP.md) | Move P1-01 → shipped; §Status "Next" leads with P1-04 asset search |
-| [`eden/gap_analysis.md`](eden/gap_analysis.md) | SEL-MOD-001 + P1-01 → ✅ shipped T-053 |
+| [`ROADMAP.md`](ROADMAP.md) | Move T-053 → shipped; §Status "Next" leads with T-055 asset search |
+| [`eden/gap_analysis.md`](eden/gap_analysis.md) | SEL-MOD-001 + T-053 → ✅ shipped T-053 |
 
 **Do not update:** archive stitch, Eden wiki artifacts, historical CLAUDE bullets.
 
@@ -145,5 +145,5 @@ using AI. **Do not commit until the user asks.**
 
 ## Related
 
-- Prior: [t052_eden_p1_undo_shortcuts.md](t052_eden_p1_undo_shortcuts.md)
-- Next Eden P1: P1-04 asset browser search, P1-09 ORBAT dbl-click attributes, P1-02 copy/paste
+- Prior: [t052_undo_shortcuts.md](t052_undo_shortcuts.md)
+- Next Eden backlog: see [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) (T-068+).

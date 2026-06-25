@@ -98,7 +98,7 @@ Stop everyday Y.Doc edits from flushing the entire Zustand mirror via `docToSnap
 - ~~**T-062.1** chunked IDB load~~ ✅ — spec [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md)
 - ~~**T-062.1.1** Save orbat dedup~~ ✅ — spec [`t062_1_1_batch_save.md`](t062_1_1_batch_save.md)
 - ~~**T-063** spatial index~~ ✅ — spec [`t063_spatial_index.md`](t063_spatial_index.md)
-- **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067**
+- **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)
 - **Eden T-068+** after scale milestones
 
 ---

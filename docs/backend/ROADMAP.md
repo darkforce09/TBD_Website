@@ -2,6 +2,8 @@
 
 **Start here.** Planning view for the Go API — what is **shipped**, what is **deferred**, and links to all backend documentation and code.
 
+**Queue:** [`docs/TICKET_LEAD.md`](../TICKET_LEAD.md) · **Full registry:** [`docs/TICKET_REGISTRY.md`](../TICKET_REGISTRY.md)
+
 **Code:** [`cmd/api/`](../../cmd/api/) · **Contract:** [`internal/models/`](../../internal/models/) (GORM JSON tags = API shape)
 
 ---
@@ -15,7 +17,7 @@
 | **[`docs/platform/registration_flow.md`](../platform/registration_flow.md)** | ORBAT registration design (**implemented** T-008–T-010) |
 | **[`docs/platform/context_handoff.md`](../platform/context_handoff.md)** | Original product blueprint (§3 partially stale) |
 | **[`CLAUDE.md`](../../CLAUDE.md)** | T-0xx milestones, auth tiers, doc-on-commit rule |
-| **[`docs/TAGS.md`](../TAGS.md)** | T-0xx vs FD-0xx glossary |
+| **[`docs/TAGS.md`](../TAGS.md)** | T-0xx naming contract |
 
 ---
 
@@ -38,21 +40,23 @@
 
 ---
 
-## NOT DONE — deferred
+## NOT DONE — deferred (T-IDs)
 
-| ID | Item | Blocked by | Notes |
-|----|------|------------|-------|
-| BE-001 | **`GET /api/v1/registry`** | Game/modpack ingest pipeline | MC Track B — classnames, icons, categories |
-| BE-002 | **Server control / RCON API** | Game server bridge | Frontend FD-001 |
-| BE-003 | **Per-handler API reference doc** | — | Deferred: future `docs/backend/api.md` |
-| BE-004 | **Live game-server telemetry bridge** | Service deployment | Ingest endpoints exist; no bridge wired |
+| T-ID | Item | Blocked by | Notes |
+|------|------|------------|-------|
+| **T-068** (partial) | **`GET /api/v1/registry`** | Game/modpack ingest pipeline | Unblocks MC asset registry + palette; minimal classname JSON |
+| **T-086** | **Server control / RCON API** | Game server bridge | Frontend `/admin/server` stub |
+| **T-095** | **Per-handler API reference doc** | — | Future `docs/backend/api.md` |
+| **T-096** | **Live game-server telemetry bridge** | Service deployment | Ingest endpoints exist; no bridge wired |
+
+Full deferred table: [`docs/TICKET_REGISTRY.md`](../TICKET_REGISTRY.md) (`program: backend` + related platform rows).
 
 ---
 
 ## Recommended next work
 
-1. **BE-001** — minimal registry JSON endpoint (unblocks MC Track B)
-2. **BE-002** — when RCON/game-server integration is scoped
+1. **T-068** — minimal registry JSON endpoint (unblocks MC **T-068** palette)
+2. **T-086** — when RCON/game-server integration is scoped
 3. Keep **`internal/models/`** as source of truth — update TS types in [`frontend/src/types/`](../../frontend/src/types/) when models change
 
 ---

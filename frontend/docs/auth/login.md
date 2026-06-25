@@ -28,7 +28,7 @@
 ### Primary flow
 1. User lands on `/login` (optional — CTAs across app also link here).
 2. Click Discord → browser navigates to `GET /api/v1/auth/discord/login` → Discord consent.
-3. On success → `/auth/callback` with tokens (FD-002 resolved).
+3. On success → `/auth/callback` with tokens (T-002 shipped).
 
 ### States
 - **Already authenticated:** Redirect to `/`.
@@ -52,7 +52,7 @@
 - [ ] Auto-redirect if session exists
 
 ### M4 — Complete
-- [x] End-to-end login (FD-002 resolved)
+- [x] End-to-end login (T-002 shipped)
 
 ## Test Plan
 
@@ -66,4 +66,4 @@
 
 ## Open Questions / Blockers
 
-- None (~~FD-002~~ resolved).
+- None (T-002 shipped).

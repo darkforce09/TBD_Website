@@ -119,7 +119,7 @@ Replace the 500-row cap with **real list virtualization** so users can expand an
 
 ## After T-064
 
-- **Active:** **T-067** spatial chunks (T-066 worker compile shipped — [`t066_worker_compile.md`](t066_worker_compile.md))
+- **Active:** T-067.0 — [`t067_spatial_chunks.md`](t067_spatial_chunks.md) (spec ready)
 - Eden **T-068+** after scale milestones
 
 ---

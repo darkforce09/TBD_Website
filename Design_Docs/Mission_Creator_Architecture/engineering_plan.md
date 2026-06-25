@@ -43,7 +43,9 @@ All already-present deps are reused: `zustand`, `@tanstack/react-query`, `@base-
    `json_payload` (the editor's autosave + "Save" target). Confirm exact route/verb against
    `internal/handlers/missions.go`.
 3. **Asset hosting** — top-down map tiles (Everon/Arland) and the 16-bit DEM heightmap for each
-   terrain, served as static assets the engine can `fetch`.
+   terrain, served as static assets the engine can `fetch`. **Tickets:** **T-090** (aligned map tiles),
+   **T-091** (DEM + Z-axis on place/move). Blocked on hosted binaries — do not start without approval
+   ([`agent_execution.md`](agent_execution.md) §Deferrals).
 
 ---
 
@@ -467,8 +469,11 @@ JetBrains-Mono readout). Tools: Select, Ruler, Line-of-Sight. (Unit placement is
 > **Refined ordering (authoritative in `agent_execution.md`):** Phases 0/1/4 and a first-cut
 > Phase 3 shell shipped as **T-029…T-032**; the Outliner↔Y.Doc + asset-drag wiring shipped as
 > **T-033 (PRE-3.5)**. The remaining near-term order is **DOC-0 → 3.5 (Eden docked shell) → 7b (map
-> drag + marquee) → 7a (outliner reparent/rename/delete) → 9 (compiler + autosave)**. Phases 2, 5,
-> 6, 8 stay blocked on external assets/backend. Use 05 for the live status of each sub-phase.
+> drag + marquee) → 7a (outliner reparent/rename/delete) → 9 (compiler + autosave)**. Phases 2
+> (**T-090**/**T-091**), 5 (**T-068** registry), 6, 8 stay blocked on external assets/backend or Eden
+> queue. **T-110** terrain base (millions of map props) is separate from mission-layer scale — see
+> [`t110_terrain_base_mission_layers.md`](t110_terrain_base_mission_layers.md). Use
+> [`agent_execution.md`](agent_execution.md) for live status of each sub-phase.
 
 **Phase 0 — Dependencies & scaffold**
 `npm i deck.gl @deck.gl/core @deck.gl/layers @deck.gl/react @luma.gl/core yjs y-indexeddb comlink idb`.
@@ -479,9 +484,10 @@ Create both feature trees (§1) as stubs. Register the `React.lazy` route `/miss
 `view/useOrthographicView.ts`, `TacticalMap.tsx`, `layers/useBaseMapLayer.ts`, `context/MapContext.tsx`.
 **Deliverable:** a blank base map with 60 fps pan/zoom.
 
-**Phase 2 — DEM / Z-axis** → `dem/DemTexture.ts`, `dem/sampleElevation.ts`, `dem/DemController.ts`,
+**Phase 2 — DEM / Z-axis** (**T-091**, blocked on heightmap assets) → `dem/DemTexture.ts`, `dem/sampleElevation.ts`, `dem/DemController.ts`,
 `layers/useDemLayer.ts`, `layout/BottomToolbelt.tsx` (X/Y/Z readout). **Deliverable:** hover the
-map and read true elevation; hillshade overlay toggles.
+map and read true elevation; hillshade overlay toggles. Map tile imagery is **T-090** (Phase 2
+prerequisite for visual parity — see [`ROADMAP.md`](ROADMAP.md) §Recommended program order).
 
 **Phase 3 — Shell / layout** → `MissionCreatorPage.tsx`, `layout/TopCommandStrip.tsx`,
 `LeftOutliner/*`, `RightInspector/InspectorPanel.tsx` + `GlobalSettingsInspector.tsx`.
@@ -491,7 +497,7 @@ map and read true elevation; hillshade overlay toggles.
 `state/bindings.ts`, `state/undo.ts`, `state/selectors.ts`, `layers/useIconLayer.ts`.
 **Deliverable:** add/move test icons that persist across reload (v2 IDB, T-062.1) and undo/redo.
 
-**Phase 5 — Registry worker** → `registry/registry.worker.ts`, `registry/registryClient.ts`,
+**Phase 5 — Registry worker** (**T-068** dependency) → `registry/registry.worker.ts`, `registry/registryClient.ts`,
 `registry/registryTypes.ts`. (Depends on backend `/api/v1/registry`.) **Deliverable:** off-thread
 `canEquip`/`canAttach` answers in the console; IndexedDB cache verified.
 

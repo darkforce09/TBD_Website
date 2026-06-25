@@ -4,7 +4,7 @@
 **Inputs:** [feature_inventory.md](../feature_inventory.md) + [interactions](./interactions.md) + [ui_anatomy](./ui_anatomy.md) + [attributes](./attributes.md)  
 **Schema:** [reference/feds_schema.md](../reference/feds_schema.md)
 
-**Execution order (locked):** … → **T-061..T-067** → Eden **T-068+** → **T-070+** terrain base → Track A Phase 2 (tiles/DEM).
+**Execution order (locked):** … → **T-061..T-067** → Eden **T-068+** → **T-110** terrain base ([`t110_terrain_base_mission_layers.md`](../t110_terrain_base_mission_layers.md)) → **T-090** / **T-091** map tiles + DEM (blocked on hosted assets).
 
 ---
 
@@ -23,146 +23,101 @@
 
 ## Asset Browser & placement
 
-| eden_id | tbd_id | parity | priority | gap_notes |
+| eden_id | tbd_id | parity | ticket | gap_notes |
 |---------|--------|--------|----------|-----------|
-| RIGHT-MODE-001 | RIGHT-CAT-001 | partial | P0 | Factions mock only; not F1 Object taxonomy |
-| RIGHT-MODE-002 | — | missing | P2 | Compositions / custom save |
-| RIGHT-MODE-003 | RIGHT-STUB-003 | missing | P2 | Triggers |
-| RIGHT-MODE-004 | — | missing | P2 | Waypoints |
-| RIGHT-MODE-005 | — | missing | P2 | Systems/modules |
-| RIGHT-MODE-006 | RIGHT-STUB-002 | missing | P0 | Markers |
-| RIGHT-SUBMODE-001 | — | missing | P1 | BLUFOR/OPFOR submode |
-| RIGHT-SEARCH-001 | — | working | P1 | Asset search field (T-055; filters Factions tree) |
-| RIGHT-SEARCH-002 | — | missing | P2 | class: prefix |
-| RIGHT-CREW-001 | — | missing | P1 | Vehicle crew toggle |
+| RIGHT-MODE-001 | RIGHT-CAT-001 | partial | T-068 | Factions mock only; not F1 Object taxonomy |
+| RIGHT-MODE-002 | — | missing | — | Compositions / custom save |
+| RIGHT-MODE-003 | RIGHT-STUB-003 | missing | — | Triggers |
+| RIGHT-MODE-004 | — | missing | — | Waypoints |
+| RIGHT-MODE-005 | — | missing | — | Systems/modules |
+| RIGHT-MODE-006 | RIGHT-STUB-002 | missing | T-069 | Markers |
+| RIGHT-SUBMODE-001 | — | missing | T-074 | BLUFOR/OPFOR submode |
+| RIGHT-SEARCH-001 | — | working | T-055 | Asset search field (T-055; filters Factions tree) |
+| RIGHT-SEARCH-002 | — | missing | — | class: prefix |
+| RIGHT-CREW-001 | — | missing | — | Vehicle crew toggle |
 | PLACE-001 | PLACE-DROP-001 | partial | — | TBD drag-only; no click-then-click |
 | PLACE-002 | PLACE-DROP-001 | match | — | Drag place works (mock) |
-| PLACE-003 | — | missing | P2 | Dbl-click empty picker |
-| PLACE-004 | — | missing | P1 | Ctrl multi-place |
-| PLACE-005 | — | missing | P0 | Area draw triggers/markers |
-| PLACE-COMMENT-001 | — | missing | P3 | Editor annotations |
-| PLACE-CREW-001 | — | missing | P1 | Alt empty vehicle |
+| PLACE-003 | — | missing | — | Dbl-click empty picker |
+| PLACE-004 | — | missing | T-072 | Ctrl multi-place |
+| PLACE-005 | — | missing | — | Area draw triggers/markers |
+| PLACE-COMMENT-001 | — | missing | — | Editor annotations |
+| PLACE-CREW-001 | — | missing | T-077 | Alt empty vehicle |
 
 ---
 
 ## Transform, widget, toolbar
 
-| eden_id | tbd_id | parity | priority | gap_notes |
+| eden_id | tbd_id | parity | ticket | gap_notes |
 |---------|--------|--------|----------|-----------|
 | XFORM-MOVE-001 | XFORM-MOVE-001 | match | — | 2D drag |
-| XFORM-ALT-001 | — | na | deferred | DEM Phase 2 |
-| XFORM-SHIFT-001 | XFORM-ROT-001 | missing | P1 | No Shift rotate |
-| XFORM-VERT-001 | — | na | deferred | 3D vertical mode |
-| XFORM-SNAP-001 | XFORM-SNAP-001 | na | deferred | DEM |
-| WIDGET-CYCLE-001 | — | missing | P1 | Space cycles widget in Eden; TBD Space = flyTo |
-| WIDGET-TRANS-001 | — | missing | P2 | Axis widget |
-| TOOLBAR-INTEL-001 | TOP-SETTINGS-001 | partial | P1 | Scenario attrs partial |
+| XFORM-ALT-001 | — | na | — | DEM Phase 2 |
+| XFORM-SHIFT-001 | XFORM-ROT-001 | missing | T-073 | No Shift rotate |
+| XFORM-VERT-001 | — | na | — | 3D vertical mode |
+| XFORM-SNAP-001 | XFORM-SNAP-001 | na | — | DEM |
+| WIDGET-CYCLE-001 | — | missing | T-075 | Space cycles widget in Eden; TBD Space = flyTo |
+| WIDGET-TRANS-001 | — | missing | — | Axis widget |
+| TOOLBAR-INTEL-001 | TOP-SETTINGS-001 | partial | — | Scenario attrs partial |
 | TOOLBAR-MAP-001 | MAP-VIEW-001 | partial | — | TBD 2D-only always |
-| TOOLBAR-GRID-MOVE-001 | — | missing | P2 | Snap grid |
-| TOOLBAR-UNDO-001 | TOP-UNDO-001 | match | P1 | ✅ T-052 — Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard + toolbar buttons |
+| TOOLBAR-GRID-MOVE-001 | — | missing | — | Snap grid |
+| TOOLBAR-UNDO-001 | TOP-UNDO-001 | match | T-052 | ✅ T-052 — Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard + toolbar buttons |
 
 ---
 
 ## Compositions
 
-| eden_id | tbd_id | parity | priority | gap_notes |
+| eden_id | tbd_id | parity | ticket | gap_notes |
 |---------|--------|--------|----------|-----------|
-| COMP-SAVE-001 | — | missing | P2 | Custom compositions |
-| COMP-PLACE-001 | — | missing | P2 | Place composition |
-| COMP-WORKSHOP-001 | — | deferred | P3 | Steam Workshop |
+| COMP-SAVE-001 | — | missing | T-078 | Custom compositions |
+| COMP-PLACE-001 | — | missing | T-078 | Place composition |
+| COMP-WORKSHOP-001 | — | deferred | — | Steam Workshop |
 
 ---
 
 ## Connections & groups
 
-| eden_id | tbd_id | parity | priority | gap_notes |
+| eden_id | tbd_id | parity | ticket | gap_notes |
 |---------|--------|--------|----------|-----------|
-| CONN-GROUP-001 | — | missing | P1 | ORBAT squad authoring related |
-| CONN-SYNC-001 | XFORM-SYNC-001 | missing | P2 | Entity sync |
-| CONN-TRG-OWNER-001 | — | missing | P2 | Triggers |
-| CONN-WP-ACT-001 | — | missing | P2 | Waypoints |
-| CONN-WP-ATTACH-001 | — | missing | P2 | WP attach/detach |
-| CREW-PANEL-001 | — | missing | P1 | Hover crew list |
-| CREW-BOARD-001 | — | missing | P1 | Drag into vehicle |
-| CREW-SEAT-001 | — | missing | P2 | Change seat RMB |
-| SEL-GROUP-ICON-001 | LEFT-ORBAT-001 | partial | P1 | ORBAT read-only |
+| CONN-GROUP-001 | — | missing | T-071 | ORBAT squad authoring related |
+| CONN-SYNC-001 | XFORM-SYNC-001 | missing | — | Entity sync |
+| CONN-TRG-OWNER-001 | — | missing | — | Triggers |
+| CONN-WP-ACT-001 | — | missing | — | Waypoints |
+| CONN-WP-ATTACH-001 | — | missing | — | WP attach/detach |
+| CREW-PANEL-001 | — | missing | T-076 | Hover crew list |
+| CREW-BOARD-001 | — | missing | T-076 | Drag into vehicle |
+| CREW-SEAT-001 | — | missing | — | Change seat RMB |
+| SEL-GROUP-ICON-001 | LEFT-ORBAT-001 | partial | T-071 | ORBAT read-only |
 
 ---
 
 ## Layers & selection
 
-| eden_id | tbd_id | parity | priority | gap_notes |
+| eden_id | tbd_id | parity | ticket | gap_notes |
 |---------|--------|--------|----------|-----------|
 | LAYER-CREATE-001 | LEFT-LAYER-005 | tbd_only | — | Editor Layers ≠ Eden layers |
 | LAYER-DEL-001 | LEFT-LAYER-007 | partial | — | TBD deletes slots in folder |
-| SEL-MOD-001 | SEL-MOD-001 | match | P1 | ✅ T-053 — Ctrl/Cmd+LMB toggle additive select (Shift unbound) |
-| SEL-ALL-001 | KEY-SELALL-001 | missing | P2 | Select all |
-| ATTR-FIELD-OBJ-SKILL | ATTR-TAB-003 | missing | P2 | States stub |
-| ATTR-FIELD-OBJ-FUEL | — | missing | P2 | Vehicles |
-| ATTR-FIELD-OBJ-POSITION | ATTR-TAB-001 | match | P0 | ✅ T-049 — editable X/Y/Z/rotation (NumberField → updateSlotPosition) |
-| ATTR-MULTI-CHK-001 | — | missing | P2 | Multi-edit per-field checkbox |
-| SEL-ORBAT-DBL-001 | SEL-ORBAT-DBL-001 | match | P1 | ✅ T-054 — ORBAT slot row dbl-click → Attributes (map uses native dblclick + pickObject) |
-| MAP-TERRAIN-001 | MAP-TERRAIN-001 | match | P1 | ✅ T-049 — meta.terrain → viewport (key-remount, Everon/Arland bounds) |
+| SEL-MOD-001 | SEL-MOD-001 | match | T-053 | ✅ T-053 — Ctrl/Cmd+LMB toggle additive select (Shift unbound) |
+| SEL-ALL-001 | KEY-SELALL-001 | missing | — | Select all |
+| ATTR-FIELD-OBJ-SKILL | ATTR-TAB-003 | missing | — | States stub |
+| ATTR-FIELD-OBJ-FUEL | — | missing | — | Vehicles |
+| ATTR-FIELD-OBJ-POSITION | ATTR-TAB-001 | match | T-049 | ✅ T-049 — editable X/Y/Z/rotation (NumberField → updateSlotPosition) |
+| ATTR-MULTI-CHK-001 | — | missing | — | Multi-edit per-field checkbox |
+| SEL-ORBAT-DBL-001 | SEL-ORBAT-DBL-001 | match | T-054 | ✅ T-054 — ORBAT slot row dbl-click → Attributes (map uses native dblclick + pickObject) |
+| MAP-TERRAIN-001 | MAP-TERRAIN-001 | match | T-049 | ✅ T-049 — meta.terrain → viewport (key-remount, Everon/Arland bounds) |
 | ENV-SETTINGS-002 | TOP-SETTINGS-001 | partial | — | Thermals + view dist in dialog |
-| DATA-HYD-TITLE-001 | TOP-TITLE-001 | match | P0 | ✅ T-049 — applyMissionRowMeta hydrates title/terrain/env on load (no PATCH-back) |
+| DATA-HYD-TITLE-001 | TOP-TITLE-001 | match | T-049 | ✅ T-049 — applyMissionRowMeta hydrates title/terrain/env on load (no PATCH-back) |
 
 ---
 
 ## Shell & data (unchanged core)
 
-| eden_id | tbd_id | parity | priority | gap_notes |
+| eden_id | tbd_id | parity | ticket | gap_notes |
 |---------|--------|--------|----------|-----------|
 | SEL-MAP-003 | SEL-MAP-003 | match | — | Marquee |
 | XFORM-DEL-001 | XFORM-DEL-001 | match | — | Delete |
 | TOP-SAVE-001 | TOP-SAVE-001 | partial | — | Semver vs Eden save |
-| TOP-EXPORT-001 | TOP-EXPORT-001 | match | — | |
+| TOP-EXPORT-001 | TOP-EXPORT-001 | match | — |  |
 | — | TBD-LAYER-001 | tbd_only | — | Workflow folders |
 | — | TBD-CONFLICT-001 | tbd_only | — | IndexedDB conflict |
-
----
-
-## Numbered backlog (Phase 2)
-
-### P0 — Ship-blocking
-
-1. **P0-01** Real asset registry + RIGHT-MODE-001 parity (`RIGHT-CAT-001`)
-2. **P0-02** Markers on map (`RIGHT-MODE-006`, `PLACE-005`)
-3. **P0-03** Vehicles placeable (`RIGHT-MODE-001` vehicles)
-4. ~~**P0-04** Numeric position edit (`ATTR-FIELD-OBJ-POSITION`)~~ — ✅ shipped T-049
-5. **P0-05** ORBAT authoring (`CONN-GROUP-001`, `LEFT-ORBAT-001`)
-6. ~~**P0-06** Title hydrate from mission row (`TOP-TITLE-001`, `DATA-HYD-TITLE-001`)~~ — ✅ shipped T-049
-7. ~~**P0-07** Wire `meta.terrain` to map viewport (`MAP-TERRAIN-001`)~~ — ✅ shipped T-049
-
-### P1 — Eden feel
-
-7. ~~**P1-01** Ctrl+LMB additive select (`SEL-MOD-001`)~~ — ✅ shipped T-053
-8. ~~**P1-02** Ctrl+C/V copy paste (`ACTION-CopyUnit` / `PasteUnit`)~~ — ✅ shipped T-056
-9. ~~**P1-03** Ctrl+Z/Y (`TOP-UNDO-001`)~~ — ✅ shipped T-052
-10. ~~**P1-04** Asset browser search (`RIGHT-SEARCH-001`)~~ — ✅ shipped T-055
-11. **P1-05** Ctrl multi-place (`PLACE-004`)
-12. **P1-06** Map rotation / Shift rotate (`XFORM-SHIFT-001`)
-13. **P1-07** Faction submode or catalog structure (`RIGHT-SUBMODE-001`)
-14. **P1-08** Resolve Space conflict: flyTo vs widget cycle (`WIDGET-CYCLE-001` vs `MAP-FLY-001`)
-15. ~~**P1-09** ORBAT dbl-click opens attributes (`SEL-ORBAT-DBL-001`)~~ — ✅ shipped T-054
-16. **P1-10** Vehicle crew UI (`CREW-PANEL-001`, `CREW-BOARD-001`)
-17. **P1-11** Empty vehicle place Alt (`PLACE-CREW-001`)
-
-### P2 — Power user
-
-15. **P2-01** Custom compositions (`COMP-*`)
-16. **P2-02** Triggers/waypoints/systems modes
-17. **P2-03** Connection/sync UI (`CONN-*`)
-18. **P2-04** Transformation widget + grids (`WIDGET-*`, `TOOLBAR-GRID-*`)
-19. **P2-05** Full attribute fields per `07b`
-20. **P2-06** Menu bar implementation (`TOP-MENU-001`)
-21. **P2-07** class:/mod: search (`RIGHT-SEARCH-002/003`)
-
-### P3 — Deferred
-
-22. **P3-01** Workshop compositions (`COMP-WORKSHOP-001`)
-23. **P3-02** DEM / 3D snap (`XFORM-SNAP-001`, `XFORM-ALT-001`)
-24. **P3-03** Arsenal (`ATTR-FIELD-*` loadout)
-25. **P3-04** y-websocket collab
 
 ---
 

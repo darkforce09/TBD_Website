@@ -73,4 +73,4 @@
 
 ## Open Questions / Blockers
 
-- None, or link to [TRACKING.md](TRACKING.md) IDs (e.g. FD-001)
+- None, or link to [TICKET_LEAD.md](../../docs/TICKET_LEAD.md) / [TICKET_REGISTRY.md](../../docs/TICKET_REGISTRY.md) (T-0xx only)

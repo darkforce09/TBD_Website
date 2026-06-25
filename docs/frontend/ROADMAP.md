@@ -2,6 +2,8 @@
 
 **Start here.** Planning view for the React SPA — what is **shipped**, what is **deferred**, and links to every surface doc.
 
+**Queue:** [`docs/TICKET_LEAD.md`](../TICKET_LEAD.md) · **Full registry:** [`docs/TICKET_REGISTRY.md`](../TICKET_REGISTRY.md)
+
 **Code:** [`frontend/src/`](../../frontend/src/) · **Routes:** [`frontend/src/router.tsx`](../../frontend/src/router.tsx)
 
 ---
@@ -11,10 +13,9 @@
 | Doc | When to open it |
 |-----|-----------------|
 | **[`frontend/docs/INDEX.md`](../../frontend/docs/INDEX.md)** | Per-route surface specs (28 pages) |
-| **[`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md)** | FD-0xx deferred backlog |
 | **[`frontend/docs/THEME.md`](../../frontend/docs/THEME.md)** | Aegis tokens in use |
 | **[`frontend/docs/_template.md`](../../frontend/docs/_template.md)** | Template for new page docs |
-| **[Mission Creator ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md)** | 2D editor Tracks A/B/C |
+| **[Mission Creator ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md)** | 2D editor ticket queue |
 | **[`docs/platform/macos_ux_architecture.md`](../platform/macos_ux_architecture.md)** | Split-pane / frictionlessness methodology |
 | **[`CLAUDE.md`](../../CLAUDE.md)** | Agent runtime, T-0xx status, doc-on-commit rule |
 | **[`docs/AGENT_COMMIT_CHECKLIST.md`](../AGENT_COMMIT_CHECKLIST.md)** | Same-commit doc sync — read before every T-0xx |
@@ -36,7 +37,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
 | `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-066 shipped; active T-067; Eden T-068+ |
+| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-067 spec ready ([`t067_spatial_chunks.md`](../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md)); T-067.0 code pending |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
 | `/events/:id/missions/:emid/orbat` | [event-hub.md § ORBAT deep-link](../../frontend/docs/pages/event-hub.md) | |
@@ -47,7 +48,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/settings` | [settings.md](../../frontend/docs/pages/settings.md) | |
 | `/admin/events` | [event-manager.md](../../frontend/docs/pages/event-manager.md) | |
 | `/admin/approvals` | [mission-approvals.md](../../frontend/docs/pages/mission-approvals.md) | |
-| `/admin/server` | [server-control.md](../../frontend/docs/pages/server-control.md) | **stub** — FD-001 |
+| `/admin/server` | [server-control.md](../../frontend/docs/pages/server-control.md) | **stub** — **T-086** |
 | `/admin/personnel` | [personnel-roster.md](../../frontend/docs/pages/personnel-roster.md) | Live API |
 | `/admin/content` | [content-manager.md](../../frontend/docs/pages/content-manager.md) | Nav: Comms Broadcaster |
 | `/admin/audit` | [audit-logs.md](../../frontend/docs/pages/audit-logs.md) | Live API |
@@ -56,17 +57,17 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 
 ---
 
-## NOT DONE — deferred (FD-0xx)
+## NOT DONE — deferred (T-IDs)
 
-| ID | Item | Doc | Blocked by |
-|----|------|-----|------------|
-| FD-001 | Server Control `/admin/server` | [server-control.md](../../frontend/docs/pages/server-control.md) | RCON/admin API |
-| FD-003 | Mission editor completion | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | MC Track A/B (DEM, registry) |
-| FD-007 | CMS rich text | [content-manager.md](../../frontend/docs/pages/content-manager.md) | WYSIWYG choice |
-| FD-008 | Wiki markdown renderer | [wiki.md](../../frontend/docs/pages/wiki.md) | react-markdown |
-| FD-009 | Multi-server picker | [server-intel.md](../../frontend/docs/pages/server-intel.md) | UI for `GET /servers` |
+| T-ID | Item | Doc | Blocked by |
+|------|------|-----|------------|
+| **T-085** | Wiki markdown renderer | [wiki.md](../../frontend/docs/pages/wiki.md) | react-markdown |
+| **T-086** | Server Control `/admin/server` | [server-control.md](../../frontend/docs/pages/server-control.md) | **T-086** backend RCON API |
+| **T-087** | CMS rich text | [content-manager.md](../../frontend/docs/pages/content-manager.md) | WYSIWYG choice |
+| **T-088** | Multi-server picker | [server-intel.md](../../frontend/docs/pages/server-intel.md) | UI for `GET /servers` |
+| **T-068+** | Mission editor Eden parity | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | Scale **T-067** then registry (**T-068**), markers (**T-069**), … |
 
-Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
+Full deferred table: [`docs/TICKET_REGISTRY.md`](../TICKET_REGISTRY.md).
 
 ---
 
@@ -74,30 +75,29 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 | Item | Spec | Notes |
 |------|------|-------|
-| **T-061 drag-move @ 360k (shipped — good enough)** | [t061_drag_move_hotfix.md](../../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) | T-061.0 motion ~60 fps + T-061.0.1 `slotIconCache` + slot fast path; mega opts deferred |
+| **T-061 drag-move @ 360k (shipped — good enough)** | [t061_drag_move_hotfix.md](../../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) | T-061.0 motion ~60 fps + T-061.0.1 `slotIconCache` + slot fast path; **T-094** deferred |
 | **T-062 incremental bindings (shipped)** | [t062_incremental_bindings.md](../../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md) | Classifier + bulk delete @ 360k |
 | **T-062.2 editor session (shipped)** | [t062_2_editor_session_persistence.md](../../Design_Docs/Mission_Creator_Architecture/t062_2_editor_session_persistence.md) | Alt-tab / warm session fast path |
 | **T-060 scale load/save (shipped `b1fd25a`)** | [t060_1](../../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) · [t060](../../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md) | Four-phase load; Save @ ~367k/~142 MB → 201 |
 | **T-064 Virtualized outliner (shipped)** | [t064_virtualized_outliner.md](../../Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md) | `@tanstack/react-virtual` + segment flatten; scrollable @ ~367k; T-064.1 scroll-ref hotfix |
 | **T-063 Spatial index (shipped)** | [t063_spatial_index.md](../../Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md) | rbush pick/marquee @ ~367k |
 | **T-059 Bulk paste at scale** | [t059_bulk_paste_operations.md](../../Design_Docs/Mission_Creator_Architecture/t059_bulk_paste_operations.md) | Batch O(n) `pasteSlots`; selection cap 500; outliner virtualization (T-064). **Validated: 360k @ 100+ fps** pan; 6k paste loops smooth |
-| **T-058 Toolbelt OBJ/SEL counts** | [t058_entity_count_readout.md](../../Design_Docs/Mission_Creator_Architecture/t058_entity_count_readout.md) | Bottom toolbelt shows OBJ (total placed slots, memoized `selectSlotCount`) + SEL (selected count); mono, right of X/Y/Z; subscribes in the memoized toolbelt so no cursor-move re-render; scale telemetry |
-| **T-057 Map perf hotfix** | [t057_map_performance_hotfix.md](../../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) | ≥55 fps pan/zoom @ 200+ slots: cursor → transient store (rAF), drop Deck `onHover` (no per-move pick), pan rAF-coalesce, `React.memo` panels; interactions unchanged |
-| **T-056 Ctrl+C/V copy-paste** | [t056_eden_p1_copy_paste.md](../../Design_Docs/Mission_Creator_Architecture/t056_eden_p1_copy_paste.md) | Ctrl/Cmd+C copies slot selection; Ctrl/Cmd+V pastes at cursor (relative layout; off-map +20m nudge); pasted slots selected; one undo step (P1-02) |
-| **T-055 Asset browser search** | [t055_asset_browser_search.md](../../Design_Docs/Mission_Creator_Architecture/t055_asset_browser_search.md) | Search field filters the Asset Browser (Factions) tree by name; folder-name match shows subtree; X/Esc clears; filtered leaves still drag (P1-04) |
-| **T-054 Attributes entry points** | [t054_attributes_entry_points.md](../../Design_Docs/Mission_Creator_Architecture/t054_attributes_entry_points.md) | Map native dbl-click + ORBAT tree dbl-click → Attributes modal (P1-09); multi-select suppress unchanged |
-| **T-053 Ctrl/Cmd additive select** | [t053_eden_p1_additive_select.md](../../Design_Docs/Mission_Creator_Architecture/t053_eden_p1_additive_select.md) | Ctrl/Cmd+LMB toggles slot in/out of selection; Ctrl/Cmd+empty preserves; Shift unbound (P1-01) |
-| **T-052 Eden P1 undo keyboard** | [t052_eden_p1_undo_shortcuts.md](../../Design_Docs/Mission_Creator_Architecture/t052_eden_p1_undo_shortcuts.md) | Keyboard undo/redo + `useMissionDoc` StrictMode lifecycle fix; focus-guarded; session edits only |
-| **T-050 Cursor Z readout** | [t050_cursor_z_readout.md](../../Design_Docs/Mission_Creator_Architecture/t050_cursor_z_readout.md) | Editor toolbelt CUR mode shows cursor X/Y/**Z** (Z=0 on the flat map until DEM); off-map → dashes; SEL mode unchanged |
-| **T-049 Track A quick P0** | [t049_track_a_quick_p0.md](../../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) | Terrain wired to viewport; mission row title/terrain/env hydrate on load; editable X/Y/Z/rotation in Attributes Transform; selection-aware toolbelt readout |
-| **T-048 Library create dialog** | [t048_library_create_dialog.md](../../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) | `CreateMissionDialog` on `/missions` (header button + My-Missions empty-state CTA + Cmd/Ctrl+N, `mission_maker+`); `/missions/create` route + sidebar item removed; macOS frosted modal |
+| **T-058 Toolbelt OBJ/SEL counts** | [t058_entity_count_readout.md](../../Design_Docs/Mission_Creator_Architecture/t058_entity_count_readout.md) | OBJ + SEL in toolbelt; scale telemetry |
+| **T-057 Map perf hotfix** | [t057_map_performance_hotfix.md](../../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) | ≥55 fps pan/zoom @ 200+ slots |
+| **T-056 Ctrl+C/V copy-paste** | [t056_copy_paste.md](../../Design_Docs/Mission_Creator_Architecture/t056_copy_paste.md) | Copy/paste at cursor; one undo step |
+| **T-055 Asset browser search** | [t055_asset_browser_search.md](../../Design_Docs/Mission_Creator_Architecture/t055_asset_browser_search.md) | Factions tree filter; X/Esc clears |
+| **T-054 Attributes entry points** | [t054_attributes_entry_points.md](../../Design_Docs/Mission_Creator_Architecture/t054_attributes_entry_points.md) | Map + ORBAT dbl-click → Attributes |
+| **T-053 Ctrl/Cmd additive select** | [t053_additive_select.md](../../Design_Docs/Mission_Creator_Architecture/t053_additive_select.md) | Modifier-click toggle select |
+| **T-052 Undo/redo keyboard** | [t052_undo_shortcuts.md](../../Design_Docs/Mission_Creator_Architecture/t052_undo_shortcuts.md) | Keyboard undo/redo + StrictMode fix |
+| **T-050 Cursor Z readout** | [t050_cursor_z_readout.md](../../Design_Docs/Mission_Creator_Architecture/t050_cursor_z_readout.md) | Toolbelt CUR X/Y/Z until **T-091** DEM |
+| **T-049 Terrain, title, position** | [t049_terrain_title_position.md](../../Design_Docs/Mission_Creator_Architecture/t049_terrain_title_position.md) | Terrain viewport; row meta hydrate; editable transform |
+| **T-048 Library create dialog** | [t048_library_create_dialog.md](../../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) | `CreateMissionDialog` on `/missions` |
 
 ## Recommended next work
 
-1. **Mission Creator — T-067 spatial chunks** (active; ~~T-066~~ ✅ worker compile — [`t066_worker_compile.md`](../../Design_Docs/Mission_Creator_Architecture/t066_worker_compile.md)) → Eden **T-068+**
-2. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — **deferred until Eden P0–P2**
-3. **FD-008** — wiki markdown (low risk, high UX)
-4. **FD-001** — when backend exposes server/RCON endpoints
+1. **Mission Creator — T-067.0 spatial chunks** (spec ready — [`t067_spatial_chunks.md`](../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md)) → T-067.1 → **T-068+** per [`TICKET_LEAD.md`](../TICKET_LEAD.md)
+2. **T-085** — wiki markdown (low risk, high UX)
+3. **T-086** — when backend exposes server/RCON endpoints
 
 ---
 

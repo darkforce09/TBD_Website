@@ -10,7 +10,7 @@
 
 Restore the engineering-plan performance contract: **60 fps pan/zoom with 200+ pickable
 slot icons** on the flat grid. A 2026-06 regression dropped this to **~9 fps at ~100–200
-slots**. T-057 is an **interrupt hotfix** that must land before any further Eden P1 work or
+slots**. T-057 is an **interrupt hotfix** that must land before Eden **T-068+** or
 the T-059..T-067 scale program.
 
 **Acceptance:** ≥55 fps sustained pan/zoom with 200+ slots (read from the existing
@@ -150,4 +150,4 @@ hovering an icon (no per-move hover pick). Click/dbl-click/marquee/drag picking 
 
 ## After T-057
 
-**T-058** — toolbelt entity-count telemetry. **T-059** bulk paste ✅ (**360k @ 100+ fps**). **T-060** ✅ (`b1fd25a`). **T-061** ✅ drag-move good enough @ 360k. **T-062** ✅ incremental bindings @ 360k. **T-062.2** ✅ editor session. **T-062.1** ✅ chunked IDB load. **T-062.1.1** ✅ Save orbat dedup. **T-063** ✅ spatial index. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067**. Eden **T-068+**.
+**T-058** — toolbelt entity-count telemetry. **T-059** bulk paste ✅ (**360k @ 100+ fps**). **T-060** ✅ (`b1fd25a`). **T-061** ✅ drag-move good enough @ 360k. **T-062** ✅ incremental bindings @ 360k. **T-062.2** ✅ editor session. **T-062.1** ✅ chunked IDB load. **T-062.1.1** ✅ Save orbat dedup. **T-063** ✅ spatial index. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). Eden **T-068+**.

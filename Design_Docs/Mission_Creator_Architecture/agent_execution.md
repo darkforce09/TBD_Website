@@ -1,6 +1,6 @@
 ---
 name: Mission Creator — Agent Execution Plan
-overview: "Self-contained agent handoff for Mission Creator. T-057–T-066 shipped. Active T-067. Eden T-068+."
+overview: "Self-contained agent handoff for Mission Creator. T-057–T-066 shipped. T-067 spec ready (T-067.0 code pending). Next: T-068+ per TICKET_LEAD."
 todos:
   - id: step-0-publish
     content: "STEP 0: Plan published to Design_Docs/Mission_Creator_Architecture/agent_execution.md"
@@ -24,10 +24,10 @@ todos:
     content: "PHASE 9: Compiler + Export + useMissionEditor autosave (only after 3.5, 7b, 7a complete)"
     status: completed
   - id: eden-backlog
-    content: "T-057–T-066 SHIPPED. Active T-067. Eden T-068+."
+    content: "T-057–T-066 SHIPPED. T-067 spec ready — T-067.0 code pending. Next T-068+ per docs/TICKET_LEAD.md."
     status: in_progress
   - id: phase-blocked
-    content: "DEFERRED until after Eden P0-P2: Phase 2 DEM/tiles, full registry/Arsenal (Phases 5-6), Phase 8 tools — do not start without user approval"
+    content: "DEFERRED: T-090/T-091 map tiles+DEM, T-078+ power-user Eden, ruler/LoS — do not start without user approval"
     status: pending
 isProject: false
 ---
@@ -35,27 +35,27 @@ isProject: false
 # AGENT EXECUTION CONTRACT
 
 > **Phase completion log (T-033–T-040):** PRE-3.5 ✅ DOC-0 ✅ 3.5 ✅ 7b ✅ 7a ✅ 9 ✅.
-> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-066 shipped.** **Active: T-067** spatial chunks. Eden **T-068+**.
+> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-066 shipped.** **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md) spec ready. Next: **T-068+** — [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md).
 
 > **For the human:** Open a new Cursor Agent / CLI session and paste the prompt below. The agent reads this file; execute **open** phases only.
 
 ## One-line prompt (copy this)
 
 ```
-Read CLAUDE.md first. Mission Creator is Eden-first (locked 2026-06): the shell phases
-PRE-3.5–9 are DONE (T-033–T-040). Open work = the Eden parity backlog in
-eden/gap_analysis.md — P0 remaining + P1 + P2 — shipped as T-053+ slices BEFORE Track A
-Phase 2 (map tiles A-01, DEM A-03/A-04) and DEM-dependent Phase 8 tools. Authority:
-ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **T-057–T-066 shipped.** **Active T-067** → Eden **T-068+**.
-A thin Track B registry (B-01) for Eden P0 (P0-01..03) is in scope; full registry/Arsenal and
-tiles/DEM are deferred. After each slice: `cd frontend && npm run build && npm run lint`. Do not
-commit unless I ask.
+Read CLAUDE.md first. Mission Creator shell T-033–T-040 is DONE. Open work = next
+queued tickets in docs/TICKET_LEAD.md (T-067.0 active, then T-068+). Authority:
+ROADMAP.md → this file §ACTIVE SLICE + Decisions log. **T-057–T-066 shipped.**
+**Active T-067.0** ([`t067_spatial_chunks.md`](t067_spatial_chunks.md)) → **T-068+**.
+Thin registry API (T-068 dependency) is in scope; full tiles/DEM (**T-090**, **T-091**)
+and ruler/LoS are deferred. After each slice: `cd frontend && npm run build && npm run lint`.
+Do not commit unless I ask.
 ```
 
 Shorter variant:
 
 ```
-ROADMAP.md §Current strategy → @agent_execution.md §ACTIVE SLICE. **T-066 shipped.** **Active T-067** → Eden **T-068+**.
+ROADMAP.md → @agent_execution.md §ACTIVE SLICE. **T-066 shipped.** **Active T-067.0**
+([`t067_spatial_chunks.md`](t067_spatial_chunks.md)) → **T-068+** per docs/TICKET_LEAD.md.
 ```
 
 ## Agent roles — Cursor vs Claude Code (locked 2026-06)
@@ -79,7 +79,8 @@ Claude Code prompts in `t0xx_*.md` files should end with **DO NOT edit documenta
 
 | Priority | Document | Agent uses it for |
 |----------|----------|-------------------|
-| **0** | **`ROADMAP.md`** | **Planning authority** — Tracks A/B/C, DONE vs must-work, doc index. Start here. |
+| **0** | **`ROADMAP.md`** | **Planning authority** — shipped vs queued tickets, doc index. Start here. |
+| **0b** | **[`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md)** | Ready / active / next queued — generated from [`tickets/registry.json`](../../tickets/registry.json) |
 | **1** | **This file** (`agent_execution.md`) | **Execution authority** for UX phases. Decisions log. If UX conflicts, this file wins over ROADMAP priorities. |
 | **2** | **Decisions log** (below) | Locked human choices. Do not re-litigate. |
 | **3** | `ux_spec.md` | UX contract — copies Decisions log + interaction table. |
@@ -88,8 +89,8 @@ Claude Code prompts in `t0xx_*.md` files should end with **DO NOT edit documenta
 | **3d** | `eden/ui_anatomy.md` | **Eden UI** — panel-by-panel layout (Asset Browser, Toolbar, Entity List). |
 | **3e** | `eden/attributes.md` | **Eden attributes** — `ATTR-FIELD-*` per entity type. |
 | **3f** | `eden/interactions.md` | **Eden interactions** — wiki-anchored FEDS (toolbar, compositions, connect, …). |
-| **3g** | `eden/gap_analysis.md` | **Gap + backlog** — ID-linked parity; P0–P3. |
-| **3i** | `ROADMAP.md` | **Master roadmap** — DONE vs must-work (Tracks A/B/C); kits vs armory clarified. |
+| **3g** | `eden/gap_analysis.md` | **Gap + backlog** — ID-linked parity; ticket column synced from registry |
+| **3i** | `ROADMAP.md` | **Master roadmap** — shipped vs queued; kits vs armory clarified |
 | **3h** | `eden/wiki_manifest.yaml` + `scripts/tools/scrape-eden-wiki.mjs` | Wiki scrape manifest + automation; cache in `artifacts/eden-wiki/`. |
 | **4** | `engineering_plan.md` | Engineering ADRs, Y.Doc schema, compiler/export contract, file tree. |
 | **5** | `CLAUDE.md` | Repo conventions, run commands, commit tags. |
@@ -134,7 +135,7 @@ Every Mission Creator-related folder and its role. **Execution authority remains
 | `engineering_plan.md` | ADRs, full file tree, phases 0–9, Y.Doc schema, compiler JSON §8, workers |
 | `problem_statement.md` | Problem statement (200-slot DOM, DEM, nesting, registry) |
 | `ux_spec.md` | Human-readable UX contract copied from Decisions log |
-| `ROADMAP.md` | Master roadmap — Tracks A/B/C |
+| `ROADMAP.md` | Master roadmap — ticket queue |
 | `feature_inventory.md` | Code-evidenced feature inventory |
 | `eden/` | Eden parity research (interactions, UI, attributes, gaps) |
 | `reference/feds_schema.md` | FEDS v2 schema |
@@ -146,7 +147,7 @@ Every Mission Creator-related folder and its role. **Execution authority remains
 | `mission_creator_design.md` | Product blueprint: Forge, Loadout Forge, Visual-Git, Briefing UI, JSON sync |
 | `aegis_tokens/DESIGN.md` | Aegis tokens + panel dimensions (256 / 320) |
 | `aegis_tokens/code.html` + `screen.png` | Historical layout exploration — **do not execute against** |
-| `Arsenal/DESIGN.md` | Arsenal / Loadout Forge visual tokens (Phase 5–6) |
+| `Arsenal/DESIGN.md` | Arsenal / Loadout Forge visual tokens (**T-068+** registry work) |
 
 ### `Design_Docs/macOS_Blueprints/` — editor-adjacent references
 
@@ -197,8 +198,8 @@ flowchart LR
     Scale["Scale program"]
   end
   subgraph later [After scale milestones]
-    Eden["Eden T-068+"]
-    Terrain["T-070+ terrain base"]
+    Eden["T-068+ Eden queue"]
+    Terrain["T-110 terrain base"]
   end
   shipped --> active --> later
 ```
@@ -211,11 +212,11 @@ flowchart LR
 
 **Known regression (T-057 — resolved):** ~~~100–200 slots + pan → ~9 fps~~ Fixed T-057: cursor off render path, no hover pick, pan rAF-coalesce. Manual acceptance: ≥55 fps @ 200+ via `FpsCounter`.
 
-**Open Eden gaps (active after T-060..T-067 scale milestones — `eden/gap_analysis.md`):**
-- **P0 ship-blocking:** P0-01 real asset registry + catalog parity, P0-02 markers on map, P0-03 vehicles placeable, P0-05 ORBAT authoring UI (currently read-only).
-- **P1 Eden feel:** P1-05 Ctrl multi-place, P1-06 Shift/map rotate, P1-07 faction submode, P1-08 Space conflict, P1-10 vehicle crew, P1-11 empty-vehicle Alt place. *(P1-01 → T-053; P1-02 copy/paste → T-056; P1-03 undo keyboard → T-052; P1-04 asset search → T-055; P1-09 Attributes entry → T-054.)*
-- **P2 power-user:** compositions, triggers/waypoints/systems, connection/sync, transform widget + snap grids, full attribute fields, menu bar, class:/mod: search.
-- **Deferred until after Eden P0–P2:** DEM Z-axis + Z auto-sample, aligned map tiles, full registry/Arsenal (Track C loadouts), Phase 8 ruler/LoS/viewshed.
+**Open Eden gaps (active after T-060..T-067 scale milestones — see [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) and `eden/gap_analysis.md`):**
+- **Queued Eden (T-068–T-071):** asset registry + palette (**T-068**), markers (**T-069**), vehicles (**T-070**), ORBAT authoring UI (**T-071**).
+- **Queued Eden feel (T-072–T-077):** Ctrl multi-place, Shift/map rotate, faction submode, Space conflict, vehicle crew, empty-vehicle Alt place. *(**T-052** undo keyboard; **T-056** copy/paste; **T-055** asset search; **T-054** Attributes entry; **T-053** additive select — shipped.)*
+- **Deferred Eden (T-078+):** compositions, triggers/waypoints/systems, connection/sync, transform widget + snap grids, full attribute fields, menu bar, classname search (**T-084**).
+- **Deferred infra:** DEM + Z (**T-091**), aligned map tiles (**T-090**), terrain base (**T-110**), ruler/LoS/viewshed (after **T-091**).
 
 ---
 
@@ -232,9 +233,9 @@ flowchart LR
 | **7b** | **Map manipulation** | **Done** (T-036) | Drag-move, marquee, Spacebar, Delete |
 | **7a** | **Outliner ops** | **Done** (T-037) | Reparent, rename, delete folders/slots |
 | **9** | **Compiler + save** | **Done** (T-038) | `json_payload` export, Save Version |
-| 2 | DEM / Z-axis | Blocked | Heightmap assets |
-| 5–6 | Registry + Arsenal | Blocked | `GET /api/v1/registry` |
-| 8 | Tools + objectives | Blocked | Ruler, zones, LoS GLSL |
+| 2 | DEM / Z-axis | Blocked | **T-091** heightmap assets |
+| 5–6 | Registry + Arsenal | Blocked | **T-068** + `GET /api/v1/registry` |
+| 8 | Tools + objectives | Blocked | Ruler, zones, LoS GLSL — after **T-091** |
 | T-048 | Create dialog | Done | `CreateMissionDialog` on `/missions` → POST mission → open editor (replaced `/missions/create`) |
 
 ```mermaid
@@ -298,7 +299,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 |-------|----------|
 | **Visual target** | **Arma 3 Eden Editor** layout + interactions, **modernized with Aegis glass** (macOS). Not HTML mockups. |
 | **Platform chrome** | **Hide** platform `Sidebar` + `TopNav` on `/missions/:id/edit` — true fullscreen Eden-style editor (dedicated layout escape in `AppLayout` or editor wrapper). |
-| **Left sidebar** | **Both sections visible** in one scroll: **ORBAT** (Factions→Squads→Slots) on top, **Editor Layers** (workflow folders) below. Stub sections for Waypoints/Zones/Logic until Phase 8. |
+| **Left sidebar** | **Both sections visible** in one scroll: **ORBAT** (Factions→Squads→Slots) on top, **Editor Layers** (workflow folders) below. Stub sections for Waypoints/Zones/Logic until **T-079+**. |
 | **Right palette** | **Docked flush right** — mirror left sidebar (~`w-80` / 320px), full height below top bar, no floating gap. Map sits between two glass panels. |
 | **Inspector** | Asset Palette always visible. **Attributes modal on double-click only** (no right-panel inspector swap). |
 | **Map pan** | **Middle-mouse or right-drag** = pan/zoom. **Left-drag on empty map** = marquee box-select. |
@@ -310,18 +311,18 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Time of day** | Match **Arma 3 Eden** environment control (slider/scrub in environment UI — not preset-only dropdowns). Expose quick readout in top bar; fine control in Mission Settings. |
 | **Mission create entry** | **No standalone `/missions/create` route or sidebar tab** (T-048). `mission_maker+` creates from **New Mission** header (tooltip **⌘N/Ctrl+N**), **My Missions true-empty CTA** (no filters active), or **Cmd/Ctrl+N**. Close dossier Sheet before opening dialog. Form resets on every dialog close. Editor surfaces keep **Mission Creator** naming. |
 | **Numeric transform** (T-049) | Editable X/Y/Z/rotation lives in the **Attributes modal Transform tab** (commit on blur/Enter, one undo step). The **bottom toolbelt is readout-only** — selection-aware (single slot → SEL X/Y/Z; else CUR cursor X/Y/Z). x/y clamp to terrain bounds; Z is manual until DEM. |
-| **Cursor readout** (T-050) | The toolbelt **CUR** mode shows cursor **X/Y/Z**; **Z = 0** on the flat map (a real ground-plane value, not `—`), carrying real elevation once Phase 2 DEM feeds z. Off-map hover → `—` on all axes. |
+| **Cursor readout** (T-050) | The toolbelt **CUR** mode shows cursor **X/Y/Z**; **Z = 0** on the flat map (a real ground-plane value, not `—`), carrying real elevation once **T-091** DEM feeds z. Off-map hover → `—` on all axes. |
 | **Undo keyboard** (T-052) | Keyboard undo/redo lives in the `MissionCreatorPage` host keydown handler and **reuses the existing `UndoController`** (no second stack): **Cmd/Ctrl+Z** undo, **Cmd/Ctrl+Shift+Z** or **Ctrl+Y** redo. Skipped while focus is in `INPUT`/`SELECT`/`TEXTAREA`/contentEditable (same guard as Space/Delete); `preventDefault` on match, drives the stack only when `canUndo()`/`canRedo()`. Toolbar buttons unchanged. **`useMissionDoc` StrictMode fix:** one-shot `instanceKey` bump on teardown so dev `<StrictMode>` gets a live `UndoController` (without it, undo was permanently dead in dev). Undo = **session edits only** (`LOCAL_ORIGIN`); IndexedDB/server hydrate not undoable. |
 | **Additive select** (T-053) | **Ctrl/Cmd-only** modifier multi-select lives in `TacticalMap`'s Deck `onClick` (reads `event.srcEvent.ctrlKey/metaKey`). Click a slot with the modifier → **toggle** it in/out of `selection.ids` (removing the last id → `none`); Ctrl/Cmd + empty-click **preserves** the selection (only a plain empty click deselects). **Shift stays unbound** (reserved for a future range-select); marquee still **replaces**. One-file change — no store/schema or `useSelectTool` change; a Ctrl-built multi (>1) keeps dbl-click attributes suppressed. |
-| **Copy/paste at cursor** (T-056) | **Ctrl/Cmd+C** snapshots the slot selection to an in-editor clipboard (`ClipboardSlot[]` ref on `MissionCreatorPage`); **Ctrl/Cmd+V** pastes via new batched `pasteSlots(md, clip, { anchorAt, layerId })` in `state/ydoc.ts` — one transact (one undo step) that translates the clip so its **centroid lands at the map cursor** (mouse off-map → fixed **+20m/+20m** nudge), re-attaches each copy to its **source squad** (or `ensureDefaultSquad`), files into the **active layer** (or `ensureDefaultLayer`), clamps x/y to terrain bounds, and returns the new ids → selection. Two keydown branches behind the existing INPUT/SELECT/TEXTAREA/contentEditable guard (native text copy/paste preserved); cursor read via `cursorRef` (no keydown re-bind on mouse move). **Scope locked:** copy+paste, slots only — Cut (Ctrl+X) and paste-at-original (Ctrl+Shift+V) deferred. Four files; no backend/`useSelectTool`/compiler change. Closes gap_analysis **P1-02** / ACTION-COPY-001 / ACTION-PASTE-001. |
-| **Asset browser search** (T-055) | The **Asset Browser** (Factions tab in the right palette) gets a search field over a recursive `filterCatalog(ASSET_CATALOG, q)` — **case-insensitive label substring**; a folder is kept on a self-match (→ full subtree, so "nato" shows all NATO) or on any descendant match (→ filtered children); retained folders force-`defaultExpanded`. The `TreeView` is **keyed on the query** so its mount-time `collectExpanded` re-runs and reveals matches; empty result → "No assets match"; X/Esc clears; filtered leaves still drag-to-place. Search is **scoped to AssetBrowser** (only live catalog) — stub tabs unchanged; no `class:` prefix (P2). One real file; no `TreeView`/`ASSET_CATALOG`/store change. Closes gap_analysis **P1-04** / RIGHT-SEARCH-001. |
+| **Copy/paste at cursor** (T-056) | **Ctrl/Cmd+C** snapshots the slot selection to an in-editor clipboard (`ClipboardSlot[]` ref on `MissionCreatorPage`); **Ctrl/Cmd+V** pastes via new batched `pasteSlots(md, clip, { anchorAt, layerId })` in `state/ydoc.ts` — one transact (one undo step) that translates the clip so its **centroid lands at the map cursor** (mouse off-map → fixed **+20m/+20m** nudge), re-attaches each copy to its **source squad** (or `ensureDefaultSquad`), files into the **active layer** (or `ensureDefaultLayer`), clamps x/y to terrain bounds, and returns the new ids → selection. Two keydown branches behind the existing INPUT/SELECT/TEXTAREA/contentEditable guard (native text copy/paste preserved); cursor read via `cursorRef` (no keydown re-bind on mouse move). **Scope locked:** copy+paste, slots only — Cut (Ctrl+X) and paste-at-original (Ctrl+Shift+V) deferred. Four files; no backend/`useSelectTool`/compiler change. Closes gap_analysis **T-056** / ACTION-COPY-001 / ACTION-PASTE-001. |
+| **Asset browser search** (T-055) | The **Asset Browser** (Factions tab in the right palette) gets a search field over a recursive `filterCatalog(ASSET_CATALOG, q)` — **case-insensitive label substring**; a folder is kept on a self-match (→ full subtree, so "nato" shows all NATO) or on any descendant match (→ filtered children); retained folders force-`defaultExpanded`. The `TreeView` is **keyed on the query** so its mount-time `collectExpanded` re-runs and reveals matches; empty result → "No assets match"; X/Esc clears; filtered leaves still drag-to-place. Search is **scoped to AssetBrowser** (only live catalog) — stub tabs unchanged; no `class:` prefix (**T-084** deferred). One real file; no `TreeView`/`ASSET_CATALOG`/store change. Closes gap_analysis **T-055** / RIGHT-SEARCH-001. |
 | **Attributes entry points** (T-054, pick path **T-063**) | **Map:** native `onDoubleClick` + `slotSpatialIndex.pickNearest` → `onEntityActivate` (was `deckRef.pickObject`). **ORBAT tree:** slot row dbl-click via `TreeView.onActivate`. Multi-select suppression unchanged. |
 | **Map performance** (T-057) | The toolbelt cursor read-out is **transient `useMapStore.cursor`** (set rAF-throttled), not page state — so a pointer move re-renders only `BottomToolbelt`, never the Outliner trees. Cursor coords come from **unprojecting the mouse ourselves** (`view.makeViewport(...).unproject` on the container `onPointerMove`), **not** Deck's `onHover` — `onHover` is removed and `getCursor` is constant `'crosshair'`, so Deck does **no per-move hover pick**. Picking is kept only for click / dbl-click / marquee / drag-start. Pan is **rAF-coalesced** in `useSelectTool` (one `setViewState`/frame, flushed on pointer-up). `React.memo` on `TacticalMap`, `LeftSidebar`, `AssetPalette`, `TopCommandStrip`, `BottomToolbelt`, `AttributesModal`. **Accepted UX trade:** the pointer no longer changes to a "pointer" glyph over an icon (no hover pick). No schema/compiler/backend change; all interactions unchanged. Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md). |
-| **Entity count readout** (T-058) | Bottom toolbelt shows **OBJ** = `slotCount` from store (T-062; was memoized `selectSlotCount`) + **SEL** = `selection.ids.length` when `kind==='slot'` else 0, in a mono `tabular-nums` block right of the X/Y/Z coords. Both subscribe **inside the already-memoized `BottomToolbelt`** so they track add/remove/paste/delete/selection but **never** a cursor move (T-057 channel untouched). Slots only — vehicles/markers join in a later P0 slice; plain integers (no commas) so 100000+ doesn't break layout. Closes `BOTTOM-OBJCOUNT-001`. |
+| **Entity count readout** (T-058) | Bottom toolbelt shows **OBJ** = `slotCount` from store (T-062; was memoized `selectSlotCount`) + **SEL** = `selection.ids.length` when `kind==='slot'` else 0, in a mono `tabular-nums` block right of the X/Y/Z coords. Both subscribe **inside the already-memoized `BottomToolbelt`** so they track add/remove/paste/delete/selection but **never** a cursor move (T-057 channel untouched). Slots only — vehicles/markers join in **T-069**/**T-070**; plain integers (no commas) so 100000+ doesn't break layout. Closes `BOTTOM-OBJCOUNT-001`. |
 | **Mission version API body limit** (T-060 — **code shipped**) | **Was:** global 1 MB rejected 360k payloads. **Fix (T-060 code):** `internal/middleware/bodylimit.go` — `GlobalBodyLimit` skips versions POST; route `BodyLimit(256 MB)`; **413** in `CreateVersion`. **Upload @ scale (T-060.1):** version POST `timeout: 600_000` + `maxBody/maxContentLength: Infinity`; Vite `/api` proxy `timeout`/`proxyTimeout: 600_000`; chunked `editor.slots` assembly; `!resp` catch surfaces axios `code`/`message`. |
 | **Load gate + save progress** (T-060 **shipped** `b1fd25a`) | **Load:** four-phase overlay; partial pass @ 360k. **Save:** @ ~367k / ~142 MB → **201** (browser + curl 140 MB). Mid-upload reset fixed — 1 MB global cap on stale API; `isMissionVersionPOST` + production-like IT. Spec: [`t060_1_scale_load_save_completion.md`](t060_1_scale_load_save_completion.md). |
 | **Save mid-upload @ 135 MB** (T-060.1.4) | **Proven root cause:** stale `go run` API let 1 MB `GlobalBodyLimit` wrap the version POST. **Fix shipped:** `isMissionVersionPOST`, `setupITProd`, `bodylimit_test.go`, `phaseAtFailure`, `scripts/mission-version-upload-repro.sh`. **Ops:** restart `make api` after middleware changes. |
-| **Dual-layer scale model** (2026-06) | **Mission layer** (ORBAT slots, markers — Y.Doc, **T-061..T-062**) = authored entities. **Terrain layer** (millions of map props) → **T-070+** binary base + sparse deltas; **not** a Y.Doc rewrite. External Base+Delta adopted for terrain only. Spec: [`t070_terrain_base_mission_layers.md`](t070_terrain_base_mission_layers.md). |
+| **Dual-layer scale model** (2026-06) | **Mission layer** (ORBAT slots, markers — Y.Doc, **T-061..T-062**) = authored entities. **Terrain layer** (millions of map props) → **T-110** binary base + sparse deltas; **not** a Y.Doc rewrite. External Base+Delta adopted for terrain only. Spec: [`t110_terrain_base_mission_layers.md`](t110_terrain_base_mission_layers.md). |
 | **Bulk paste at scale** (T-059) | `pasteSlots` batch O(n) append; post-paste selection cap (`BULK_SELECT_CAP = 500` → `none`). T-059 outliner leaf cap **superseded by T-064** virtualization. **Validated:** 6k paste loops smooth; **360k @ 100+ fps** pan. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md). |
 | **Drag-move @ 360k** (T-061 — **shipped, good enough**) | **T-061.0:** dual IconLayer + split drag state + rAF delta → ~60 fps sustained. **T-061.0.1:** `slotIconCache` O(k) + bindings slot fast path → pickup/release materially improved (minor release frame possible — deferred). Mega opts → [ROADMAP.md](ROADMAP.md) §Deferred mega optimizations. Spec: [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md). |
 | **Incremental bindings @ 360k** (T-062 — **shipped**) | **T-062.0:** `classifyTransaction` → O(k) Zustand patches (drop, delete, meta, editor-layers). **T-062.0.1:** batched `removeEntities`, `slotCount`/`slotsRevision`, `REMOVE_PATCH_CAP` 10k. Verified delete 4k + undo 6k @ ~360k. Spec: [`t062_incremental_bindings.md`](t062_incremental_bindings.md). |
@@ -330,24 +331,25 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Spatial index** (T-063 — **shipped**) | rbush R-tree for click/marquee pick @ ~367k; `slot-icons` `pickable: false`. Spec: [`t063_spatial_index.md`](t063_spatial_index.md). |
 | **Virtualized outliner** (T-064 — **shipped**) | `@tanstack/react-virtual` + segment flatten; `virtualSlotIds`; T-064.1 callback-ref `scrollEl`. **Verified @ ~367k.** Spec: [`t064_virtualized_outliner.md`](t064_virtualized_outliner.md). |
 | **Editor session / alt-tab** (T-062.2 — **shipped**) | Dev: `viteReloadGuard` blocks Vite HMR full reload on editor route. Warm session: `editorSession.ts` → skip multi-MB GET on same-tab return when IDB has content. Background-safe yields. **Tradeoff:** warm path trusts local IDB. Spec: [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md). |
-| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-066 shipped**; **active T-067**). Eden **T-068+**; **T-070+** terrain base after that. … |
-| **Mission title hydrate** (T-049) | On editor load the **PostgreSQL mission row** (`title`, `terrain`, time/weather) hydrates `meta` via `applyMissionRowMeta` (INIT_ORIGIN) — including new missions whose `json_payload` is `{}`. **No PATCH-back** in T-049; Save Version still compiles payload only. |
-| **Phase order** | … **T-057–T-066 shipped.** **Active T-067** → Eden **T-068+** → **T-070+** terrain base (optional). … |
-| **Drag perf — good enough** (2026-06) | T-061 closed Eden-blocking drag @ ~360k. T-062 closed everyday edit bindings @ ~360k. T-063 closed pick/marquee @ ~367k. T-064 closed outliner @ ~367k. T-065 closed extreme-zoom clusters. Do **not** pursue T-061.1 / release repack collapse until T-066..T-067 + Eden milestones unless regression. See ROADMAP §Deferred mega optimizations. |
-| **Eden completeness** | Eden parity checklist = `eden/interactions.md`, `eden/ui_anatomy.md`, `eden/attributes.md`, `eden/gap_analysis.md` + scrape artifacts. Read `eden/ui_anatomy.md` / `eden/attributes.md` before implementing UI/attrs. Implement the P0 backlog from `eden/gap_analysis.md`. Feature status lives in `feature_inventory.md` + `reference/feds_schema.md`; new TBD features → FEDS row in `feature_inventory.md`. Wiki cache = `eden/wiki_manifest.yaml` + `artifacts/eden-wiki/`; regenerate via `node scripts/tools/scrape-eden-wiki.mjs` when the wiki updates. |
+| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-066 shipped**; **T-067 spec ready** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)). Then **T-068+** per [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md); **T-110** terrain base after that. … |
+| **Mission title hydrate** (T-049) | On editor load the **PostgreSQL mission row** (`title`, `terrain`, time/weather) hydrates `meta` via `applyMissionRowMeta` (INIT_ORIGIN) — including new missions whose `json_payload` is `{}`. **No PATCH-back** in T-049 (**T-089** deferred); Save Version still compiles payload only. |
+| **Phase order** | … **T-057–T-066 shipped.** **T-067 spec ready** (T-067.0 code pending) → **T-068+** → **T-110** terrain base (optional). … |
+| **Drag perf — good enough** (2026-06) | T-061 closed Eden-blocking drag @ ~360k. T-062 closed everyday edit bindings @ ~360k. T-063 closed pick/marquee @ ~367k. T-064 closed outliner @ ~367k. T-065 closed extreme-zoom clusters. T-066 closed worker compile. Do **not** pursue **T-094** / release repack collapse until **T-067** + **T-068+** milestones unless regression. See ROADMAP §Deferred mega optimizations. |
+| **Spatial chunks** (T-067 — **spec ready**) | **Phased:** T-067.0 = 512m grid + viewport IconLayer cull + `slot-add-bulk` paste patch; T-067.1 = lazy RAM + Y.Doc compile @ 1M. Pick (T-063) unchanged in .0. **Claude Code implements from [`t067_spatial_chunks.md`](t067_spatial_chunks.md) only** — Cursor owns docs. Repro: `70a36667-612f-40c5-ad56-3fb8e0613a17`. |
+| **Eden completeness** | Eden parity checklist = `eden/interactions.md`, `eden/ui_anatomy.md`, `eden/attributes.md`, `eden/gap_analysis.md` + scrape artifacts. Read `eden/ui_anatomy.md` / `eden/attributes.md` before implementing UI/attrs. Implement queued tickets from [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) and `eden/gap_analysis.md`. Feature status lives in `feature_inventory.md` + `reference/feds_schema.md`; new TBD features → FEDS row in `feature_inventory.md`. Wiki cache = `eden/wiki_manifest.yaml` + `artifacts/eden-wiki/`; regenerate via `node scripts/tools/scrape-eden-wiki.mjs` when the wiki updates. |
 
 ---
 
 ## Agent rules (mandatory)
 
-1. **Read first:** `CLAUDE.md` (conventions), then this file, then `engineering_plan.md` §0–§2.
-2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-066 shipped.** **Active: T-067** spatial chunks. Eden **T-068+**.
+1. **Read first:** [`CLAUDE.md`](../../CLAUDE.md) §Status — **ACTIVE SLICE is T-067.0** (spec [`t067_spatial_chunks.md`](t067_spatial_chunks.md); code pending). Then this file, then `engineering_plan.md` §0–§2.
+2. **Planning:** `ROADMAP.md` + [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md). **Do not start T-068+** until T-067 ships.
 3. **Verify gate** after every phase:
    ```bash
    cd frontend && npm run build && npm run lint
    ```
 4. **Do not commit** unless the user explicitly asks.
-5. **Eden-first deferrals:** do **not** start Phase 2 (map tiles/DEM), full Phases 5–6 (registry completeness / Arsenal), or Phase 8 (tools) without user approval — these wait until after Eden P0–P2. **Exception:** a **thin Track B registry (B-01)** — classname, displayName, category, iconUrl — is **in scope** when needed to unblock Eden P0 (P0-01..03); keep it minimal, not full registry completeness.
+5. **Deferrals:** do **not** start **T-090**/**T-091** (map tiles/DEM), full registry/Arsenal completeness, or ruler/LoS/viewshed without user approval — these wait until after **T-068–T-077**. **Exception:** minimal registry JSON (**T-068** dependency — classname, displayName, category, iconUrl) is **in scope** when needed to unblock **T-068**/**T-069**/**T-070**; keep it minimal.
 6. **Visual target:** Arma 3 Eden Editor + Aegis tokens. **Never** derive layout from `code.html` / `screen.png` mockups — use Decisions log + this plan only.
 7. **State rule:** Entity mutations go through `tactical-map/state/ydoc.ts` → `bindings.ts` → `useMapStore`. Never set entity data directly on Zustand.
 8. **Inspector rule:** Asset Palette stays on the right always. Properties edit via **AttributesModal on double-click only** — no right-panel inspector swap.
@@ -358,11 +360,17 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 
 ---
 
-## ACTIVE SLICE — T-067 spatial chunks
+## ACTIVE SLICE — T-067 spatial chunks (spec ready — T-067.0 code pending)
 
-**T-066 shipped** — spec: [`t066_worker_compile.md`](t066_worker_compile.md). Worker + Comlink client; **T-066.1** `pickMapSnapshot` hotfix. Manual @ ~367k: Save **201** (user verified).
+**Authority spec:** [`t067_spatial_chunks.md`](t067_spatial_chunks.md) — **Claude Code reads this; does not write docs.**
 
-**Next:** T-067 spatial chunks (spec pending). **Eden T-068+** after scale milestones.
+**T-067.0 (implement first):** 512m world grid; viewport-culled detail IconLayer (`getBaseIconsForBbox` + selection); `slot-add-bulk` incremental patch for paste ≤10k. **No regression @ 367k.**
+
+**T-067.1 (after .0 ships):** Lazy chunk residency; compile from Y.Doc without full `slotsById` @ 1M.
+
+**T-066 shipped** (`53bc2a8`) — [`t066_worker_compile.md`](t066_worker_compile.md). Save **201** @ ~367k.
+
+**After T-067:** **T-068+** per [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md).
 
 ---
 
@@ -415,7 +423,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 3. **Left sidebar — both sections in one scroll:**
    - **ORBAT** (top): `factions` → `squads` → `slots` (export truth; read-only OK if no ORBAT UI yet)
    - **Editor Layers** (below): `editorLayers` workflow folders (current outliner)
-   - **Stubs:** Waypoints, Zones, Logic & Events (empty until Phase 8)
+   - **Stubs:** Waypoints, Zones, Logic & Events (empty until **T-079+**)
    - **Bottom icon tabs:** Hierarchy, Layers, Assets, History, Settings (stubs switch content later)
    - Header: OUTLINER + mission name + New folder
 4. **Right asset palette (always visible):**
@@ -502,9 +510,9 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 
 | Phase | Blocker / notes |
 |-------|-----------------|
-| 2 DEM / Z-axis | Hosted 16-bit heightmaps + topo tiles; `dem/*`, `useDemLayer.ts` |
-| 5–6 Registry + Arsenal | `GET /api/v1/registry`; `registry.worker.ts`, `ArsenalInspector`, paper-doll |
-| 8 Tools + objectives | Ruler, LoS GLSL, zones, `useLineLayer`, `usePolygonLayer`; needs DEM for LoS |
+| **T-091** DEM / Z-axis | Hosted 16-bit heightmaps + topo tiles; `dem/*`, `useDemLayer.ts` |
+| **T-068** Registry + Arsenal | `GET /api/v1/registry`; `registry.worker.ts`, `ArsenalInspector`, paper-doll |
+| Ruler / LoS / viewshed | After **T-091**; `useLineLayer`, `usePolygonLayer` |
 | Product (future) | Visual-Git diff ghosts, Mission Planner, in-game Briefing UI, multiplayer y-websocket — see `mission_creator_design.md` |
 
 ---

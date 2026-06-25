@@ -42,7 +42,7 @@
 ### M1 — [x] Routes `/wiki`, `/wiki/:slug`
 ### M2 — [ ] Stitch layout static HTML content
 ### M3 — [ ] `useWiki(slug)`
-### M4 — [ ] Markdown render FD-008
+### M4 — [ ] Markdown render (T-085)
 
 ## Test Plan
 
@@ -52,4 +52,4 @@
 
 ## Open Questions / Blockers
 
-- [FD-008](../TRACKING.md): react-markdown for M4.
+- **T-085** ([ticket registry](../../../docs/TICKET_REGISTRY.md)): react-markdown for M4.

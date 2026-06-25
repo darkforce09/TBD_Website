@@ -43,7 +43,7 @@
 | 24 | Verified pill | span | Verified | Modpack OK | Static |
 | 25 | Launch CTA | button | Launch Reforger & Connect | Join server | `steam://` or copy |
 
-**Server assumption:** Display name **TBD Main**; ID from `VITE_DEFAULT_SERVER_ID` or first `GET /servers` result (FD-009).
+**Server assumption:** Display name **TBD Main**; ID from `VITE_DEFAULT_SERVER_ID` or first `GET /servers` result (multi-server picker deferred — **T-088**).
 
 ## Behavior
 
@@ -87,4 +87,4 @@
 
 ## Open Questions / Blockers
 
-- [FD-009](../TRACKING.md): Multi-server picker deferred.
+- **T-088** ([ticket registry](../../../docs/TICKET_REGISTRY.md)): Multi-server picker deferred.

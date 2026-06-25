@@ -51,10 +51,10 @@ open it in the browser to log in, or curl it and read `access_token` from the
 - Refresh tokens are **single-use** (rotated + revoked each call). All refreshes go
   through one single-flight helper (`frontend/src/api/refresh.ts`) so the token is
   never double-spent.
-- Git: **commit directly to `main`; never create a branch.** End commit messages with
+- Git: **commit directly to `main`; never create a branch** (single-ticket mode). End commit messages with
   the `Co-Authored-By` trailer. Commits are tagged `T-00x`.
-- Docs: see **§Documentation** — sync before commit. Frontend deferred work uses
-  **FD-0xx** — see [`docs/TAGS.md`](docs/TAGS.md).
+- **Batch ticket pipeline** ([`tickets/README.md`](tickets/README.md)): Composer 2.5 writes all docs on `main` first; Claude Code implements on `ticket/T-0xx` branches via `./scripts/ticket run`; you merge and run `./scripts/ticket done`. Docs sync on `main` after each merge (Composer 2.5 only).
+- Docs: see **§Documentation** — sync before commit. Ticket queue: [`docs/TICKET_LEAD.md`](docs/TICKET_LEAD.md).
 
 ## Documentation
 
@@ -66,23 +66,69 @@ Keep docs in sync **in the same commit** as the code change (or immediately befo
 
 | Change type | Update |
 |-------------|--------|
-| Shipped feature / milestone | **§Status** — new T-0xx bullet; bump "latest feature work" line |
+| Shipped feature / milestone | **§Status** — new T-0xx bullet under **Done**; bump `latest shipped` line |
+| **Active slice** (code in progress, not shipped) | **§Status — ACTIVE SLICE** block at top; keep `latest shipped` on last **git tag** only |
 | New/changed route | Matching `frontend/docs/pages/*.md` + row in `frontend/docs/INDEX.md`; verify against `frontend/src/router.tsx` |
 | UI surface (no new route) | Relevant page doc + `Live source:` path to `frontend/src/pages/` or `features/` |
 | API / model change | `internal/models/` tags + matching `frontend/src/types/`; note handler if behavior changed |
 | Mission Creator | MC README, `agent_execution.md` Decisions log, and/or `feature_inventory.md` — only if editor contract or Eden parity changed |
-| Frontend deferred work | **FD-0xx** in `frontend/docs/TRACKING.md` — never reuse T-0xx for deferred items |
+| Deferred / queued work | [`tickets/registry.json`](tickets/registry.json) row `status: deferred` or `queued` — sync via `./scripts/ticket sync`; never mark shipped until verified |
 
-**Doc hub:** [`docs/README.md`](docs/README.md) → domain **`ROADMAP.md`** files. Tag glossary: [`docs/TAGS.md`](docs/TAGS.md). **Commit checklist:** [`docs/AGENT_COMMIT_CHECKLIST.md`](docs/AGENT_COMMIT_CHECKLIST.md).
+**Doc hub:** [`docs/README.md`](docs/README.md) → [`docs/TICKET_LEAD.md`](docs/TICKET_LEAD.md) → domain **`ROADMAP.md`** files. Tag contract: [`docs/TAGS.md`](docs/TAGS.md). **Commit checklist:** [`docs/AGENT_COMMIT_CHECKLIST.md`](docs/AGENT_COMMIT_CHECKLIST.md).
 
 **Do not update** blueprint HTML, stitch exports, or mock-up HTML — archive tier only. Live UI = `frontend/src/pages` + `features/`.
 
 **Doc-only commits** (reorgs, typo fixes) get their own T-0xx tag and a §Status note if structure or authority changed.
 
-## Status (latest: **T-066 shipped** — 2026-06; worker compile offload)
+## Ticket operations
+
+**Source of truth:** [`tickets/registry.json`](tickets/registry.json). **Lead view:** [`docs/TICKET_LEAD.md`](docs/TICKET_LEAD.md). **Full table:** [`docs/TICKET_REGISTRY.md`](docs/TICKET_REGISTRY.md).
+
+| Step | Command / doc |
+|------|----------------|
+| Edit queue / status / spec | Edit `tickets/registry.json` |
+| Regenerate views + CLAUDE status block | `./scripts/ticket sync` (or `make ticket-sync`) |
+| Validate structure | `./scripts/ticket check` |
+| Strict legacy-ID scan | `make ticket-check-strict` |
+| Operator playbook | [`tickets/AI_PLAYBOOK.md`](tickets/AI_PLAYBOOK.md) |
+| Claude Code brief | `./scripts/ticket brief T-0xx` |
+| Batch implement | `./scripts/ticket run` on `ticket/T-0xx` branch |
+
+Do **not** hand-edit generated `docs/TICKET_*.md` or the `<!-- ticket-sync:status -->` markers — change the registry and sync.
+
+## Status
+
+<!-- ticket-sync:status:start -->
+**Latest shipped:** **T-066**
+
+**ACTIVE NOW:** **T-067** — T-067.0 (Spatial chunks). Spec: `Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md`.
+
+**Next (by order):**
+- **T-067** — Spatial chunks (`ready`)
+- **T-068** — Asset registry + palette (`queued`)
+- **T-069** — Markers on map (`queued`)
+- **T-070** — Vehicles placeable (`queued`)
+- **T-071** — ORBAT authoring UI (`queued`)
+- **T-072** — Ctrl multi-place (`queued`)
+- **T-073** — Shift + map rotation (`queued`)
+- **T-074** — Faction submode / catalog filter (`queued`)
+- **T-075** — Spacebar flyTo vs widget (`queued`)
+- **T-076** — Vehicle crew UI (`queued`)
+<!-- ticket-sync:status:end -->
+
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
-**Done:**
+### ACTIVE SLICE — T-067 spatial chunks (implement now)
+
+| | |
+|---|---|
+| **Tag** | **T-067.0** first (viewport cull + `slot-add-bulk` paste), then **T-067.1** (lazy RAM @ 1M) |
+| **Spec** | [`t067_spatial_chunks.md`](Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md) |
+| **Handoff** | [`agent_execution.md`](Design_Docs/Mission_Creator_Architecture/agent_execution.md) §ACTIVE SLICE |
+| **Claude Code** | Read spec → implement **T-067.0** → `npm run build && npm run lint` → return verify notes. **Do not edit docs.** |
+| **Cursor** | Doc sync + git tag **T-067** when human verifies @ repro mission |
+
+**Done (shipped):**
 - T-066 **Mission Creator — worker compile offload (T-066.1 `pickMapSnapshot`)**. Save Version + Export compile in `compiler.worker.ts` via Comlink; `pickMapSnapshot(useMapStore.getState())` strips Zustand actions before postMessage (fixes DataCloneError 25 on raw `getState()`). `terminateCompiler()` on mission unmount. Manual @ ~367k: Save **201**. Spec: [`t066_worker_compile.md`](Design_Docs/Mission_Creator_Architecture/t066_worker_compile.md).
 - T-065 **Mission Creator — cluster/LOD @ extreme zoom**. `supercluster` index (`slotClusterIndex.ts`); pan-stable `getClusterMarkers` full-terrain cache (T-065.2); `ZOOM_CLUSTER_MAX = -4` — default zoom `-2` stays detail @ ~160 fps @ 367k; cluster discs + drill-in only when zoomed out past -4 on missions >500 slots. Spec: [`t065_cluster_lod.md`](Design_Docs/Mission_Creator_Architecture/t065_cluster_lod.md).
 - T-064 **Mission Creator — virtualized outliner @ ~367k**. `@tanstack/react-virtual` + segment-index flatten (`flattenOutliner.ts`, `VirtualOutliner.tsx`, `TreeRow.tsx`); `virtualSlotIds` + `VIRTUAL_SLOT_THRESHOLD=50`; replaces T-059 `OUTLINER_LEAF_CAP`. **T-064.1:** callback-ref `scrollEl` fixes blank outliner until first map selection. Manual @ ~367k: outliner on first paint; scrollable 367k virtual rows; no tab freeze. Spec: [`t064_virtualized_outliner.md`](Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md).
@@ -113,7 +159,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   ~60 fps while dragging @ ~360k (was 5–10 fps). T-061.0.1: `slotIconCache` O(k) exclude/restore
   + bindings `fastSlotPatchIds` slot-position fast path — pickup/release materially improved
   (no ~10 fps release collapse). Build + lint clean. **Product call:** good enough for Eden-blocking
-  work; mega optimizations (T-061.1 typed-array, release repack collapse, T-066 worker, T-070+
+  work; mega optimizations (**T-094** typed-array, release repack collapse, T-066 worker, **T-110**
   terrain) deferred — see MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md)
   §Deferred mega optimizations. Spec: [`t061_drag_move_hotfix.md`](Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md).
 - T-060 **Mission Creator — fast load + save at scale (API body limit + progress UX)**. Unblocks
@@ -181,7 +227,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   so they update on add/remove/paste/delete/selection but **never on a cursor move** — the T-057
   cursor channel (`useMapStore.cursor`, rAF-throttled) is untouched, as are Deck layers/picking,
   pan coalescing, and `MissionCreatorPage` state. Slots only (vehicles/markers join the count in a
-  later P0 slice); no schema/compiler/backend change. Two real files + barrel export. Closes
+  later **T-069**/**T-070** slice); no schema/compiler/backend change. Two real files + barrel export. Closes
   feature_inventory `BOTTOM-OBJCOUNT-001`. Verified: frontend build + lint clean.
 - T-057 **Mission Creator — map performance hotfix (≥55 fps pan/zoom @ 200+ slots)**. Restores
   the engineering-plan perf contract after a regression dropped pan/zoom to **~9 fps at ~100–200
@@ -206,7 +252,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   (select, Ctrl-toggle, marquee, drag-move+undo, dbl-click→Attributes, Ctrl+C/V, Space, Delete)
   unchanged. Verified: frontend build + lint clean (fps acceptance is a manual in-browser check
   with 200+ slots via the `FpsCounter`).
-- T-056 **Mission Creator — Ctrl+C/V copy-paste (Eden P1-02)**. Placed slots can now be
+- T-056 **Mission Creator — Ctrl+C/V copy-paste (T-056)**. Placed slots can now be
   duplicated: **Ctrl/Cmd+C** snapshots the current slot selection to an in-editor clipboard and
   **Ctrl/Cmd+V** pastes it at the **map cursor**, preserving the group's relative layout
   (translate so the clip's centroid lands at the cursor; mouse off-map → fixed **+20m/+20m**
@@ -221,9 +267,9 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   (`cursorRef` mirrors the live cursor so the `window` keydown listener isn't re-bound on every
   mouse move). Both no-op without `preventDefault` when they can't act. **Scope:** copy+paste,
   slots only — Cut (Ctrl+X) and paste-at-original (Ctrl+Shift+V) stay out. Four files, no
-  backend / `useSelectTool` / compiler change. Closes gap_analysis P1-02 (`ACTION-COPY-001` /
+  backend / `useSelectTool` / compiler change. Closes gap_analysis **T-056** (`ACTION-COPY-001` /
   `ACTION-PASTE-001`). Verified: frontend build + lint clean.
-- T-055 **Mission Creator — asset browser search (Eden P1-04)**. The right palette's
+- T-055 **Mission Creator — asset browser search (T-055)**. The right palette's
   **Asset Browser** (Factions tab) gets a search field so finding a unit no longer means
   hand-expanding the Faction → Category → Class tree. `RightInspector/AssetBrowser.tsx` filters
   `ASSET_CATALOG` through a recursive `filterCatalog(nodes, q)` — **case-insensitive label
@@ -234,10 +280,10 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   the expand pass re-runs and reveals matches; empty result → "No assets match"; an `X` button
   + **Esc** clear the box. Filtered leaves still drag-to-place (`ASSET_DND_MIME` unchanged).
   Search is scoped to `AssetBrowser` (the only live catalog) — the stub tabs and `TreeView` /
-  `ASSET_CATALOG` are untouched; the `class:` classname-prefix search stays P2
-  (`RIGHT-SEARCH-002`). One real file. Closes gap_analysis P1-04 / `RIGHT-SEARCH-001`.
+  `ASSET_CATALOG` are untouched; classname-prefix search stays **T-084**
+  (`RIGHT-SEARCH-002`). One real file. Closes gap_analysis **T-055** / `RIGHT-SEARCH-001`.
   Verified: frontend build + lint clean.
-- T-054 **Mission Creator — Attributes modal entry points (Eden P1-09)**. Unifies how the
+- T-054 **Mission Creator — Attributes modal entry points (T-054)**. Unifies how the
   **Attributes** modal opens onto one native-`dblclick` contract. **Map (`SEL-MAP-004` harden):**
   `tactical-map/TacticalMap.tsx` drops the hand-rolled 350ms `lastClick` double-click timer in
   `onClick` for a native `onDoubleClick` on the gesture-host container `<div>` that picks the slot
@@ -248,9 +294,9 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   existing native `onDoubleClick` on a slot row now opens Attributes. Three-file change — no
   `TreeView`/`MissionCreatorPage`/store change. `MissionCreatorPage.onEntityActivate` keeps its
   `selection.ids.length <= 1` guard, so the **T-053 Ctrl/Cmd toggle** is unchanged (a Ctrl-built
-  multi still suppresses dbl-click→Attributes). Closes gap_analysis P1-09 / `SEL-ORBAT-DBL-001`.
+  multi still suppresses dbl-click→Attributes). Closes gap_analysis **T-054** / `SEL-ORBAT-DBL-001`.
   Verified: frontend build + lint clean.
-- T-053 **Mission Creator — Ctrl/Cmd+LMB additive (toggle) select (Eden P1-01)**. Marquee
+- T-053 **Mission Creator — Ctrl/Cmd+LMB additive (toggle) select (T-053)**. Marquee
   box-select already did multi-select, but a single click on a unit always **replaced** the
   selection — so trimming/extending a multi-selection meant redrawing a marquee. This adds
   modifier-click additive select in the Deck `onClick` of `tactical-map/TacticalMap.tsx`
@@ -260,15 +306,15 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   `none`); **Ctrl/Cmd + empty-click preserves** the selection (only a plain empty click
   deselects). **Shift stays unbound** (reserved for a future range-select); marquee still
   replaces; a Ctrl-built multi (>1) keeps dbl-click→Attributes suppressed. One-file change — no
-  store/schema or `useSelectTool` change. Closes gap_analysis P1-01 / `SEL-MOD-001`. Verified:
+  store/schema or `useSelectTool` change. Closes gap_analysis **T-053** / `SEL-MOD-001`. Verified:
   frontend build + lint clean.
-- T-052 **Mission Creator — undo/redo keyboard shortcuts (Eden P1-03)**. The editor toolbar's
+- T-052 **Mission Creator — undo/redo keyboard shortcuts (T-052)**. The editor toolbar's
   Undo/Redo buttons already drove the `Y.UndoManager`; this adds the matching keyboard shortcuts
   to the host keydown handler in `MissionCreatorPage` (reusing the existing `UndoController` — no
   second stack): **Cmd/Ctrl+Z** undo, **Cmd/Ctrl+Shift+Z** or **Ctrl+Y** redo. Skipped while focus
   is in an `INPUT`/`SELECT`/`TEXTAREA`/contentEditable field (so Ctrl+Z in an Attributes number
   field edits the field, not the map); `preventDefault` on a match, but only drives the stack when
-  `canUndo()`/`canRedo()`. Closes gap_analysis P1-03 / `KEY-UNDO-001`. Also fixed a `useMissionDoc`
+  `canUndo()`/`canRedo()`. Closes gap_analysis **T-052** / `KEY-UNDO-001`. Also fixed a `useMissionDoc`
   React 19 StrictMode lifecycle bug that left undo dead in dev: the setup→cleanup→setup double-invoke
   destroyed the memoized `Y.UndoManager` while `useMemo` returned the same dead instance (`canUndo()`
   always false) — a one-shot `instanceKey` bump on teardown now forces a fresh `md`+`UndoController` so
@@ -278,19 +324,19 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   The engine `onCursorMove` payload (`tactical-map/types.ts`) gained `z`; `TacticalMap` `onHover`
   emits `z: info.coordinate[2] ?? 0` (Deck.gl unproject); `MissionCreatorPage` cursor state +
   `BottomToolbelt` show it. **Z = 0 on the flat map** (a real ground-plane value, not a placeholder)
-  and will carry real elevation once Phase 2 DEM feeds z; off-map hover still shows `—` on all
+  and will carry real elevation once **T-091** DEM feeds z; off-map hover still shows `—` on all
   axes; SEL mode unchanged. Verified: frontend build + lint clean.
-- T-049 **Mission Creator — Track A quick P0 (terrain, title, numeric position)**. Code-only
-  Eden P0 slice (no map tiles / DEM / registry). **P0-07 terrain:** `MissionCreatorPage`
+- T-049 **Mission Creator — terrain, title, numeric position (T-049)**. Code-only
+  editor slice (no **T-090** tiles / **T-091** DEM / **T-068** registry). **Terrain:** `MissionCreatorPage`
   reads `meta.terrain` and passes it to `<TacticalMap key={terrainId} terrain={terrainId}>`
   (the `key` remounts the viewport so the camera + base grid resize to Everon 12800 vs Arland
-  10240). **P0-06 title hydrate:** new `applyMissionRowMeta` (INIT_ORIGIN) in `tactical-map`
+  10240). **Title hydrate:** new `applyMissionRowMeta` (INIT_ORIGIN) in `tactical-map`
   `state/ydoc.ts` sets `meta.title`/`terrain`/`environment` from the `GET /missions/:id`
   row; `useMissionEditor.onSynced` was rewritten so it **no longer early-returns when
   `json_payload` is `{}`** (the bug that left every freshly-created mission on "Untitled
   Mission"/Everon) — empty payload → apply row meta; non-empty → hydrate then re-apply row
   title; conflict "load server" re-applies the cached row meta. Hydrate-only (no `PATCH`;
-  Save Version still compiles payload). **P0-04 numeric transform:** new `updateSlotPosition`
+  Save Version still compiles payload). **Numeric transform:** new `updateSlotPosition`
   (x/y clamped to terrain bounds, rotation normalized 0–360, one undo step per commit) +
   a mono `NumberField` (blur/Enter commit, no effects) make the Attributes **Transform** tab
   X/Y/Z/rotation editable (replacing the read-only fields + stale "coming later" copy). The
@@ -312,7 +358,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
 - T-043 **Platform documentation reorg** — [`docs/README.md`](docs/README.md) hub with
   frontend/backend/archive master indexes; platform docs moved to `docs/platform/` and
   `docs/backend/architecture.md`; Mission Creator corpus reorg (`eden/`, `reference/`);
-  FD-0xx vs T-0xx split in [`docs/TAGS.md`](docs/TAGS.md); frontend
+  FD vs T split retired in **T-043**; T-0xx-only contract in [`docs/TAGS.md`](docs/TAGS.md); frontend
   surface specs refreshed (SplitPane events, mission editor route, §Documentation rule here).
 - T-001 initial backend (full schema + all handlers) + frontend scaffold.
 - T-002 Discord OAuth2 callback end-to-end.
@@ -411,7 +457,7 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
   feature modules `frontend/src/features/tactical-map/` (terrain-agnostic engine) +
   `frontend/src/features/mission-creator/` (editor wrapper), code-split lazy route
   `/missions/:id/edit` (mission_maker+, `fullBleed`). Execution authority is
-  `Design_Docs/Mission_Creator_Architecture/ROADMAP.md` (Tracks A/B/C) +
+  `Design_Docs/Mission_Creator_Architecture/ROADMAP.md` (T-0xx backlog) +
   `agent_execution.md` (Eden UX Decisions log); `engineering_plan.md` remains
   authoritative for the data model / workers / compiler / DEM. New deps:
   `deck.gl @deck.gl/core /layers /react @luma.gl/core yjs y-indexeddb comlink idb`.
@@ -477,13 +523,16 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**Not yet built / next (Mission Creator):** **T-066 shipped.** **Active: T-067** spatial chunks (spec pending). Eden **T-068+** after scale milestones.
-Mega render/bindings optimizations **deferred**
-— MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations.
-**T-070+** (after Eden T-068+): optional **terrain base + sparse deltas** for millions of map props — dual-layer model; do **not** replace Y.Doc/ORBAT. See [t070_terrain_base_mission_layers.md](Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md). **Eden P1-07+** resumes at **T-068+**.
-- **Deferred until after Eden P0–P2:** Phase 2 **DEM / Z-axis** + aligned map tiles (A-01/A-03; blocked on hosted assets).
-- **During Eden P0:** thin **registry** (Phase 5 / B-01) as needed for real palette + markers/vehicles — not full Track C.
-- Phase 8 **ruler/LoS/viewshed** (needs DEM for LoS) — after heightmap phase.
+**After T-067 (not started yet):**
+- **T-068+** — asset registry, markers, vehicles, ORBAT authoring ([`eden/gap_analysis.md`](Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md); queue in [`docs/TICKET_LEAD.md`](docs/TICKET_LEAD.md))
+- **T-110** — terrain base + sparse deltas for millions of map props ([`t110_terrain_base_mission_layers.md`](Design_Docs/Mission_Creator_Architecture/t110_terrain_base_mission_layers.md))
+
+Mega render/bindings optimizations **deferred** — MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations (**T-094** typed-array, etc.).
+
+**Platform / deferred (unchanged):**
+- **T-090** / **T-091** — aligned map tiles + DEM / Z-axis (blocked on hosted assets).
+- **T-068** — thin registry API as needed for real palette + markers/vehicles.
+- Ruler/LoS/viewshed — after **T-091** heightmap phase.
 - Real Discord OAuth credentials are blank in `.env` (dev uses dev-login).
 - Telemetry is ingested via service-token endpoints; no live game-server bridge wired.
 - A fresh DB is empty of content (events, missions, etc.) — seed those via the API

@@ -1,8 +1,8 @@
 // Right-panel default (Ultra Plan §5.2): the Asset Browser as a nested, collapsible
 // Eden-style tree (Faction → Category → Class), NOT flat pills. Leaves are draggable:
-// dragging one onto the <TacticalMap> places a slot at the drop point (Phase 7). The
-// catalog is still mock; the registry-backed feed (GET /api/v1/registry) lands later.
-// T-055 (Eden P1-04): a search field filters the tree live by asset/folder name.
+// dragging one onto the <TacticalMap> places a slot at the drop point. The catalog is
+// still mock; the registry-backed feed (GET /api/v1/registry) lands in T-068.
+// T-055: a search field filters the tree live by asset/folder name.
 
 import { useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'

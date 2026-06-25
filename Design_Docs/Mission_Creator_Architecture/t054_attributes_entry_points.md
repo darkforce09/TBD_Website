@@ -1,8 +1,8 @@
-# T-054 — Eden P1-09: Attributes modal entry points (map + ORBAT)
+# T-054 — Attributes modal entry points (map + ORBAT)
 
 **Status:** shipped (T-054)  
 **Git tag on ship:** T-054  
-**Authority:** [MC ROADMAP](ROADMAP.md) Eden P1 · [eden/gap_analysis.md](eden/gap_analysis.md) P1-09 · [feature_inventory.md](feature_inventory.md) SEL-ORBAT-DBL-001 / SEL-MAP-004
+**Authority:** [MC ROADMAP](ROADMAP.md) · [eden/gap_analysis.md](eden/gap_analysis.md) (`SEL-ORBAT-DBL-001 / SEL-MAP-004`) · [feature_inventory.md](feature_inventory.md) SEL-ORBAT-DBL-001 / SEL-MAP-004
 
 ---
 
@@ -14,11 +14,11 @@ already use.
 
 | ID | Gap | Deliverable |
 |----|-----|-------------|
-| **P1-09** | `SEL-ORBAT-DBL-001` | Double-click a slot row in the **ORBAT** tree opens its Attributes |
+| **SEL-ORBAT-DBL-001** | `SEL-ORBAT-DBL-001` | Double-click a slot row in the **ORBAT** tree opens its Attributes |
 | (harden) | `SEL-MAP-004` | Map double-click switches from a hand-rolled 350ms click timer to a native `dblclick` + `pickObject` |
 
-**Out of scope:** ORBAT *authoring* (P0-05), any AttributesModal field change, the Editor
-Layers tree (already wired), copy/paste (P1-02), backend changes.
+**Out of scope:** ORBAT *authoring* (T-071), any AttributesModal field change, the Editor
+Layers tree (already wired), copy/paste (T-056), backend changes.
 
 ---
 
@@ -37,7 +37,7 @@ Layers tree (already wired), copy/paste (P1-02), backend changes.
 
 - The shared `TreeView` already fires `onActivate` on a non-folder row's native
   `onDoubleClick` (`TreeView.tsx` L190). Editor Layers consumes it; ORBAT simply never
-  passed the prop. So P1-09 is pure wiring — no TreeView change.
+  passed the prop. So T-054 is pure wiring — no TreeView change.
 - The map's manual timer duplicated click bookkeeping and was perturbed by the T-053
   Ctrl/Cmd-toggle path (which reset `lastClick`). A native container `dblclick` + a single
   `pickObject` is the same idiom as the trees and as `useSelectTool`'s pick, so the editor
@@ -128,8 +128,8 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 | [`CLAUDE.md`](../../CLAUDE.md) §Status | T-054 bullet + bump `latest feature work` line |
 | [`feature_inventory.md`](feature_inventory.md) | SEL-ORBAT-DBL-001 → **working**; SEL-MAP-004 Procedure/Evidence → native `dblclick` + `pickObject` |
 | [`agent_execution.md`](agent_execution.md) | Decisions log row **Attributes entry points (T-054)** |
-| [`ROADMAP.md`](ROADMAP.md) | P1-09 → shipped; refresh "Next" |
-| [`eden/gap_analysis.md`](eden/gap_analysis.md) | P1-09 → ✅ shipped T-054 |
+| [`ROADMAP.md`](ROADMAP.md) | T-054 → shipped; refresh "Next" |
+| [`eden/gap_analysis.md`](eden/gap_analysis.md) | T-054 → ✅ shipped T-054 |
 
 **Do not update:** archive stitch, Eden wiki artifacts, historical CLAUDE bullets.
 
@@ -144,5 +144,5 @@ using AI. **Do not commit until the user asks.**
 
 ## Related
 
-- Prior: [t053_eden_p1_additive_select.md](t053_eden_p1_additive_select.md)
-- Next Eden P1: P1-04 asset browser search, P1-02 copy/paste
+- Prior: [t053_additive_select.md](t053_additive_select.md)
+- Next Eden backlog: see [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) (T-068+).

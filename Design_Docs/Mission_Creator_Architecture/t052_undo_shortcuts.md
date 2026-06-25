@@ -1,8 +1,8 @@
-# T-052 — Eden P1-03: Undo/redo keyboard shortcuts
+# T-052 — Undo/redo keyboard shortcuts
 
 **Status:** shipped (T-052)  
 **Git tag on ship:** T-052  
-**Authority:** [MC ROADMAP](ROADMAP.md) Eden P1 · [eden/gap_analysis.md](eden/gap_analysis.md) P1-03 · [feature_inventory.md](feature_inventory.md) TOP-UNDO-001 / TOP-REDO-001 / KEY-UNDO-001
+**Authority:** [MC ROADMAP](ROADMAP.md) · [eden/gap_analysis.md](eden/gap_analysis.md) (`TOP-UNDO-001 / KEY-UNDO-001`) · [feature_inventory.md](feature_inventory.md) TOP-UNDO-001 / TOP-REDO-001 / KEY-UNDO-001
 
 ---
 
@@ -13,10 +13,10 @@ Wire **keyboard undo/redo** in the Mission Creator. Toolbar Undo/Redo buttons al
 
 | ID | Gap | Deliverable |
 |----|-----|-------------|
-| **P1-03** | `TOP-UNDO-001` / `KEY-UNDO-001` | Host-level Ctrl/Cmd+Z and Ctrl/Cmd+Y (or Shift+Z) call existing `UndoController` |
+| **TOP-UNDO-001** | `TOP-UNDO-001` / `KEY-UNDO-001` | Host-level Ctrl/Cmd+Z and Ctrl/Cmd+Y (or Shift+Z) call existing `UndoController` |
 | **TOOLBAR-UNDO-001** | Eden toolbar parity | Keyboard matches toolbar behavior |
 
-**Out of scope:** Copy/paste (P1-02), new undo stack, undo while typing in modal fields, backend changes.
+**Out of scope:** Copy/paste (T-056), new undo stack, undo while typing in modal fields, backend changes.
 
 ---
 
@@ -151,8 +151,8 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 | [`agent_execution.md`](agent_execution.md) | Decisions log row **Undo keyboard (T-052)** |
 | [`ROADMAP.md`](ROADMAP.md) | Move **PLANNED T-052** → **DONE T-052**; line ~80 note keyboard undo |
 | [`docs/frontend/ROADMAP.md`](../../docs/frontend/ROADMAP.md) | Recently shipped T-052 |
-| [`eden/gap_analysis.md`](eden/gap_analysis.md) | P1-03 → ✅ shipped T-052; TOOLBAR-UNDO-001 parity → match or partial→match |
-| [`t050_cursor_z_readout.md`](t050_cursor_z_readout.md) | Related: next Eden P1 shipped |
+| [`eden/gap_analysis.md`](eden/gap_analysis.md) | TOP-UNDO-001 → ✅ shipped T-052; TOOLBAR-UNDO-001 parity → match or partial→match |
+| [`t050_cursor_z_readout.md`](t050_cursor_z_readout.md) | Related: prior shipped slice (T-050) |
 
 **Do not update:** archive stitch, Eden wiki artifacts, historical T-049 CLAUDE bullet.
 
@@ -187,7 +187,7 @@ T-050 must already be on `main` before T-052 (it is).
 ```
 Read CLAUDE.md and docs/AGENT_COMMIT_CHECKLIST.md first.
 
-Implement T-052 per Design_Docs/Mission_Creator_Architecture/t052_eden_p1_undo_shortcuts.md.
+Implement T-052 per Design_Docs/Mission_Creator_Architecture/t052_undo_shortcuts.md.
 Docs are PRE-STAGED in the spec §Documentation sync — FINALIZE on ship (status → shipped).
 
 LOCKED: see spec Locked decisions — reuse UndoController, macOS Cmd+Z/Shift+Z, Windows Ctrl+Z/Y/Shift+Z, focus guard, minimal diff.
@@ -201,5 +201,5 @@ Commit on main as T-052 with Co-Authored-By when I ask. Do not commit until I sa
 ## Related
 
 - Prior: [t050_cursor_z_readout.md](t050_cursor_z_readout.md)
-- Next Eden P1: P1-01 Ctrl+LMB additive select, P1-04 asset search
-- Deferred: **T-051** — optional `PATCH` title sync ([t049 amendment](t049_track_a_quick_p0.md))
+- Next Eden backlog: see [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) (T-068+).
+- Deferred: **T-051** — optional `PATCH` title sync ([t049 amendment](t049_terrain_title_position.md))

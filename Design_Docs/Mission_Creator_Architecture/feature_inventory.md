@@ -218,6 +218,7 @@
 | **Acceptance** | `- [x] Coords update on hover` `- [x] Z shows 0 on-map, — off-map (T-050)` `- [x] Page does not re-render on move (T-057)` |
 | **Eden parity** | Eden:BOTTOM-HUD-001 |
 | **Status** | working |
+| **Ticket** | T-050 |
 | **Evidence** | `TacticalMap.tsx`, `BottomToolbelt.tsx`, `MissionCreatorPage.tsx` |
 
 ---
@@ -240,6 +241,7 @@
 | **Acceptance** | `- [x] Click unit selects` `- [x] Highlight visible` |
 | **Eden parity** | Eden:SEL-001 |
 | **Status** | working |
+| **Ticket** | T-057 |
 | **Evidence** | `useSelectTool.ts`, `slotSpatialIndex.ts`, `useMapStore.ts`, `useIconLayer.ts` |
 
 #### SEL-MAP-002 — Click empty map deselect
@@ -258,6 +260,7 @@
 | **Acceptance** | `- [x] Plain click empty clears selection` `- [x] Ctrl/Cmd+empty preserves` |
 | **Eden parity** | Eden:SEL-002 |
 | **Status** | working |
+| **Ticket** | T-057 |
 | **Evidence** | `useSelectTool.ts` (T-053/T-063) |
 
 #### SEL-MAP-003 — Marquee box-select
@@ -276,6 +279,7 @@
 | **Acceptance** | `- [x] Drag box selects multiple units` `- [x] Empty box clears` |
 | **Eden parity** | Eden:SEL-003 |
 | **Status** | working |
+| **Ticket** | T-063 |
 | **Evidence** | `useSelectTool.ts`, `useSelectionLayer.ts`, `slotSpatialIndex.ts` |
 
 #### SEL-MAP-004 — Double-click open attributes
@@ -295,6 +299,7 @@
 | **Acceptance** | `- [x] Dbl-click unit opens modal` |
 | **Eden parity** | Eden:ATTR-OPEN-001 |
 | **Status** | working |
+| **Ticket** | T-054 |
 | **Evidence** | `TacticalMap.tsx` (`onDoubleClick`), `MissionCreatorPage.tsx`, `AttributesModal.tsx` |
 
 #### SEL-MOD-001 — Shift/Ctrl additive selection
@@ -313,6 +318,7 @@
 | **Acceptance** | `- [x] Ctrl-click adds units` `- [x] Ctrl-click selected removes it` `- [x] Ctrl-click empty preserves` |
 | **Eden parity** | Eden:SEL-MOD-001 |
 | **Status** | working |
+| **Ticket** | T-053 |
 | **Evidence** | `TacticalMap.tsx` `onClick` (T-053) |
 
 #### SEL-SYNC-001 — Map ↔ outliner selection sync
@@ -577,6 +583,7 @@
 | **Acceptance** | `- [ ] Dbl-click tree row opens modal` |
 | **Eden parity** | Eden:ATTR-OPEN-001 |
 | **Status** | working |
+| **Ticket** | T-054 |
 | **Evidence** | `TreeView.tsx`, `EditorLayersSection.tsx` |
 
 #### LEFT-LAYER-005 — New folder
@@ -779,6 +786,7 @@
 | **Acceptance** | `- [x] Query filters tree` `- [x] Folder-name match shows subtree` `- [x] Clear restores` |
 | **Eden parity** | Eden:RIGHT-SEARCH-001 |
 | **Status** | working |
+| **Ticket** | T-055 |
 | **Evidence** | `AssetBrowser.tsx` |
 
 #### RIGHT-STUB-001 — Vehicles tab placeholder
@@ -873,6 +881,7 @@
 | **Acceptance** | `- [x] Title edits persist in IndexedDB` · `- [x] Mission row title hydrates on load (T-049)` |
 | **Eden parity** | Eden:FILE-TITLE-001 |
 | **Status** | partial |
+| **Ticket** | T-049 |
 | **Evidence** | `TopCommandStrip.tsx`, `ydoc.ts` |
 
 #### TOP-DIRTY-001 — Unsaved changes dot
@@ -941,7 +950,7 @@
 | **Postconditions** | — |
 | **Inputs** | — |
 | **Outputs** | — |
-| **Edge cases** | P3 deferred |
+| **Edge cases** | Deferred (Visual-Git timeline) |
 | **Acceptance** | `- [ ] Button disabled` |
 | **Eden parity** | TBD-only |
 | **Status** | disabled |
@@ -963,6 +972,7 @@
 | **Acceptance** | `- [x] Undo after move (button + Cmd/Ctrl+Z)` |
 | **Eden parity** | Eden:KEY-UNDO-001 |
 | **Status** | working |
+| **Ticket** | T-052 |
 | **Evidence** | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx` keydown, `undo.ts`, `useMissionDoc.ts` (StrictMode `instanceKey`) |
 
 #### TOP-REDO-001 — Redo button
@@ -981,6 +991,7 @@
 | **Acceptance** | `- [x] Redo after undo (button + Cmd/Ctrl+Shift+Z / Ctrl+Y)` |
 | **Eden parity** | Eden:KEY-REDO-001 |
 | **Status** | working |
+| **Ticket** | T-052 |
 | **Evidence** | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx` keydown |
 
 #### TOP-SAVE-001 — Save Version dialog + POST
@@ -1017,6 +1028,7 @@
 | **Acceptance** | `- [ ] Export downloads JSON` |
 | **Eden parity** | Eden:FILE-EXPORT-001 |
 | **Status** | working |
+| **Ticket** | T-060 |
 | **Evidence** | `TopCommandStrip.tsx`, `exportSchema.ts` |
 
 #### TOP-SETTINGS-001 — Mission Settings gear
@@ -1113,6 +1125,7 @@
 | **Acceptance** | `- [x] OBJ counts slotsById` `- [x] SEL tracks marquee/Ctrl/paste/delete` `- [x] No re-render on cursor move (T-057 guard)` |
 | **Eden parity** | Eden:BOTTOM-HUD-001 (entity counter) |
 | **Status** | working |
+| **Ticket** | T-058 |
 | **Evidence** | `selectors.ts` (`selectSlotCount`), `BottomToolbelt.tsx` |
 
 ---
@@ -1133,6 +1146,7 @@
 | **Acceptance** | `- [x] Paste 10k no hard freeze` `- [x] OBJ correct` `- [x] Pan ≥55 fps after` `- [x] Undo one step` `- [x] 360k @ 100+ fps pan validated` |
 | **Eden parity** | Eden:ACTION-PASTE-001 (bulk scale) |
 | **Status** | working |
+| **Ticket** | T-059 |
 | **Evidence** | `state/ydoc.ts` (`pasteSlots`), `MissionCreatorPage.tsx`, `VirtualOutliner.tsx`, `flattenOutliner.ts` |
 
 ---
@@ -1153,6 +1167,7 @@
 | **Acceptance** | `- [x] Outliner visible on first paint @ ~367k` `- [x] Scroll 367k virtual rows` `- [x] No tab freeze` `- [x] DnD/reparent/root-drop/rename/delete` `- [x] Map pan/pick unchanged` |
 | **Eden parity** | Eden outliner scroll (scale) |
 | **Status** | working |
+| **Ticket** | T-064 |
 | **Evidence** | `VirtualOutliner.tsx`, `flattenOutliner.ts`, `TreeRow.tsx`, `LeftSidebar.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx` |
 
 ---
@@ -1173,6 +1188,7 @@
 | **Acceptance** | `- [x] Detail @ -2 ~160 fps @ 367k` `- [x] Pan-stable cluster path (T-065.2)` `- [x] Git tag T-065` |
 | **Eden parity** | Group icons when zoomed out (geo clusters v1 only) |
 | **Status** | working |
+| **Ticket** | T-065 |
 | **Evidence** | `slotClusterIndex.ts`, `useClusterIconLayer.ts`, `constants.ts`, `TacticalMap.tsx`, `useSelectTool.ts`, `slotIconCache.ts` |
 
 ---
@@ -1193,7 +1209,28 @@
 | **Acceptance** | `- [x] Save 201 @ ~367k` `- [x] pickMapSnapshot hotfix` `- [x] Git tag T-066` |
 | **Eden parity** | n/a (infra) |
 | **Status** | shipped |
+| **Ticket** | T-066 |
 | **Evidence** | `compiler.worker.ts`, `compilerClient.ts`, `compile.ts`, `useMissionEditor.ts`, `pickMapSnapshot` in `useMapStore.ts`; spec [`t066_worker_compile.md`](t066_worker_compile.md) |
+
+---
+
+#### PERF-CHUNK-001 — Spatial chunks / viewport cull (T-067)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | Render/patch path scales with viewport + chunk count, not total N; path to 1M–10M mission entities |
+| **Trigger** | Open mega mission; pan/zoom; bulk paste; (T-067.1) viewport crosses chunk boundary |
+| **Preconditions** | T-063 pick index; T-065 cluster band; T-066 worker save unchanged in T-067.0 |
+| **Procedure** | **T-067.0:** `spatialChunks.ts` grid; `getBaseIconsForBbox`; `slot-add-bulk` in `incPatchPlan`; **T-067.1:** lazy chunk residency + Y.Doc compile walk |
+| **Postconditions** | T-067.0: Deck detail layer receives visible-chunk icons + selection only when `slotCount > 50k`; paste ≤10k avoids full snapshot |
+| **Inputs** | World bbox from `view.makeViewport`; terrain bounds; selection ids |
+| **Outputs** | Subset `SlotIcon[]` to Deck; O(k) store patches on bulk paste |
+| **Edge cases** | Off-screen selection must still render; pick/marquee use full rbush (not culled); cluster mode unchanged |
+| **Acceptance** | T-067.0: `- [ ]` no fps regression @ 367k `- [ ]` Save 201 `- [ ]` 6k paste `- [ ]` pick/drag/cluster |
+| **Eden parity** | n/a (infra) |
+| **Status** | spec ready (T-067.0 code pending) |
+| **Evidence** | Spec [`t067_spatial_chunks.md`](t067_spatial_chunks.md); code not landed |
 
 ---
 
@@ -1213,6 +1250,7 @@
 | **Acceptance** | `- [x] Overlay + bulk-sync (T-060)` `- [x] Determinate % + chunked snapshot/hydrate (T-060.1)` `- [x] Hydrate inside bulk window (T-060.1)` `- [x] Restoring phase (T-060.1.1 legacy)` `- [x] v2 chunked IDB restore (T-062.1)` `- [ ] Pan regression clean (manual)` |
 | **Eden parity** | — |
 | **Status** | **shipped (T-060 + T-062.1)** — v2 determinate restore @ ~360k |
+| **Ticket** | T-060 |
 | **Evidence** | `useMissionDoc.ts`, `persistence/*`, `bindings.ts`, `ydoc.ts`, `MissionCreatorPage.tsx`, `t062_1_idb_streaming_load.md` |
 
 ---
@@ -1232,6 +1270,7 @@
 | **Edge cases** | Mid-upload `ERR_NETWORK` @ ~4% / ~135 MB → **FIXED T-060.1.4**; payload >256 MB → pre-gate 413; **T-062.1.1:** Save omits duplicate `orbat[]` (editor-only POST); Go derives ORBAT for events |
 | **Acceptance** | `- [x] E1/E2/E3b` `- [x] SZ + Save dialog (T-060.1.3)` `- [x] browser Save @ ~367k → 201` `- [x] T-062.1.1 IT: editor-only → event ORBAT` `- [x] Manual Save @ ~367k: ~94.8 MB estimated (~33% smaller vs ~141 MB)` |
 | **Status** | **shipped** — T-060..T-060.1.4 + **T-062.1.1** orbat dedup |
+| **Ticket** | T-060 |
 | **Evidence** | `useMissionEditor.ts`, `compiler/compile.ts`, `lib/missionSize.ts`, `internal/services/mission_payload.go`, `internal/handlers/missions_orbat_integration_test.go`, `t062_1_1_batch_save.md` |
 
 ---
@@ -1252,6 +1291,7 @@
 | **Acceptance** | `- [x] Drag motion 1 slot @ 360k ≥55 fps` `- [x] Drag motion ~10 selected @ 360k ≥55 fps` `- [x] Pickup/release good enough (not perfect)` `- [x] build + lint clean` `- [x] Full regression sweep documented` |
 | **Eden parity** | Eden:XFORM-MOVE-001 |
 | **Status** | **shipped (good enough)** — spec [`t061_drag_move_hotfix.md`](t061_drag_move_hotfix.md) |
+| **Ticket** | T-061 |
 | **Evidence** | `slotIconCache.ts`, `useMapStore.ts`, `bindings.ts`, `useIconLayer.ts`, `useSelectTool.ts`, `selectors.ts`, `TacticalMap.tsx` |
 
 ---
@@ -1271,6 +1311,7 @@
 | **Edge cases** | Overlapping icons → nearest to click; Ctrl/Cmd toggle (T-053); drag exclude no tree change |
 | **Acceptance** | `- [x] Click @ 367k instant` `- [x] Marquee no multi-s freeze` `- [x] Dbl-click Attributes` `- [x] Pan/drag unchanged` `- [x] build + lint clean` |
 | **Status** | **shipped** — spec [`t063_spatial_index.md`](t063_spatial_index.md) |
+| **Ticket** | T-063 |
 | **Evidence** | `slotSpatialIndex.ts`, `slotIconCache.ts`, `useSelectTool.ts`, `TacticalMap.tsx`, `useIconLayer.ts` |
 
 ---
@@ -1291,6 +1332,7 @@
 | **Acceptance** | `- [x] Asset drop instant @ 360k` `- [x] Delete 150/4000 no crash` `- [x] Drag not regressed` `- [x] Undo 6000 delete OK` `- [x] build + lint clean` |
 | **Eden parity** | Eden:XFORM-PLACE-001 (drop), Eden:DELETE-001 |
 | **Status** | **shipped** — spec [`t062_incremental_bindings.md`](t062_incremental_bindings.md) |
+| **Ticket** | T-062 |
 | **Evidence** | `incPatchPlan.ts`, `bindings.ts`, `useMapStore.ts`, `slotIconCache.ts`, `ydoc.ts`, `BottomToolbelt.tsx`, `EditorLayersSection.tsx`, `OrbatSection.tsx` |
 
 #### PERF-SESSION-001 — Editor session / alt-tab (T-062.2)
@@ -1304,6 +1346,7 @@
 | **Edge cases** | Warm path trusts local v2 store — remote server changes undetected until cold load. New tab = cold. `dirty` UI flag resets on reload (data in IDB). Undo stack session-only |
 | **Acceptance** | `- [x] Alt-tab 30+ min → no overlay (Firefox dev @ ~360k)` `- [x] Edits preserved` `- [x] Cold load unchanged` |
 | **Status** | **shipped** — spec [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md) |
+| **Ticket** | T-062.2 |
 | **Evidence** | `viteReloadGuard.ts`, `editorSession.ts`, `useMissionEditor.ts`, `useMissionDoc.ts`, `yieldToUi.ts` |
 
 #### PERF-IDB-001 — Chunked IDB slot restore (T-062.1)
@@ -1319,6 +1362,7 @@
 | **Edge cases** | Server-adopted mission not v2-cached until first edit. SPA navigate-away within ~2s debounce may drop last edits. `docAlive` / `isCancelled` guards prevent corrupt writes on teardown |
 | **Acceptance** | `- [x] Migration once` `- [x] 2nd+ load smooth progress @ ~360k` `- [x] Legacy DB deleted` `- [x] build/lint/tsc clean` |
 | **Status** | **shipped** — spec [`t062_1_idb_streaming_load.md`](t062_1_idb_streaming_load.md) |
+| **Ticket** | T-062.1 |
 | **Evidence** | `persistence/*`, `useMissionDoc.ts`, `useMissionEditor.ts`, `ydoc.ts` (`entityToYMap`) |
 
 ---
@@ -1359,6 +1403,7 @@
 | **Acceptance** | `- [x] Position editable (T-049)` `- [x] Stance editable` |
 | **Eden parity** | Eden:ATTR-XFORM-001 |
 | **Status** | partial |
+| **Ticket** | T-049 |
 | **Evidence** | `AttributesModal.tsx` |
 
 #### ATTR-TAB-002 — Identity tab
@@ -1435,6 +1480,7 @@
 | **Acceptance** | `- [x] F5 restores edits (v2)` `- [x] 2nd+ load determinate progress @ ~360k` `- [x] Legacy migrate once` |
 | **Eden parity** | N/A |
 | **Status** | **working (v2)** — legacy y-indexeddb only on first-return migrate path |
+| **Ticket** | T-062.1 |
 | **Evidence** | `persistence/*`, `useMissionDoc.ts`, `useMissionEditor.ts`, `t062_1_idb_streaming_load.md` |
 
 #### DATA-SEED-001 — Default meta + layer seed
@@ -1513,13 +1559,13 @@
 
 ## KEY — Keyboard (host-wired)
 
-| ID | Status | Trigger | Evidence |
-|----|--------|---------|----------|
-| KEY-SPACE-001 | working | `Space` → flyTo selection | `MissionCreatorPage.tsx` |
-| KEY-DEL-001 | working | Delete/Backspace → remove slots | `MissionCreatorPage.tsx` |
-| KEY-UNDO-001 | working | Buttons + Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
-| KEY-COPY-001 | working | Ctrl/Cmd+C copy slot selection + Ctrl/Cmd+V paste at cursor (relative layout; off-map +20m nudge) (T-056). **Bulk scale (T-059):** `pasteSlots` batch O(n) append (no O(n²) spreads); paste auto-selects only when ≤500 (`BULK_SELECT_CAP`), else clears to `none`. **Outliner (T-064):** virtualized scroll replaces T-059 `OUTLINER_LEAF_CAP` → 10k+ paste without hard freeze | `MissionCreatorPage.tsx`, `state/ydoc.ts` (`pasteSlots`), `state/schema.ts` (`ClipboardSlot`), `VirtualOutliner.tsx`, `LeftOutliner/EditorLayersSection.tsx`, `LeftOutliner/OrbatSection.tsx` |
-| KEY-SELALL-001 | not_built | Ctrl+A | — |
+| ID | Status | Ticket | Trigger | Evidence |
+|----|--------|--------|---------|----------|
+| KEY-SPACE-001 | working | — | `Space` → flyTo selection | `MissionCreatorPage.tsx` |
+| KEY-DEL-001 | working | — | Delete/Backspace → remove slots | `MissionCreatorPage.tsx` |
+| KEY-UNDO-001 | working | T-052 | Buttons + Cmd/Ctrl+Z/Shift+Z/Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
+| KEY-COPY-001 | working | T-056 | Ctrl/Cmd+C copy slot selection + Ctrl/Cmd+V paste at cursor (relative layout; off-map +20m nudge) (T-056). **Bulk scale (T-059):** `pasteSlots` batch O(n) append (no O(n²) spreads); paste auto-selects only when ≤500 (`BULK_SELECT_CAP`), else clears to `none`. **Outliner (T-064):** virtualized scroll replaces T-059 `OUTLINER_LEAF_CAP` → 10k+ paste without hard freeze | `MissionCreatorPage.tsx`, `state/ydoc.ts` (`pasteSlots`), `state/schema.ts` (`ClipboardSlot`), `VirtualOutliner.tsx`, `LeftOutliner/EditorLayersSection.tsx`, `LeftOutliner/OrbatSection.tsx` |
+| KEY-SELALL-001 | not_built | — | Ctrl+A | — |
 
 ---
 
@@ -1580,6 +1626,7 @@ Items verified in code + scrape cross-check; added after initial `06` draft.
 | **Trigger** | Page mount / terrain change |
 | **Procedure** | `terrainId = meta.terrain ?? 'everon'`; `<TacticalMap key={terrainId} terrain={terrainId}>` — `key` remounts the viewport so camera + base map resize (Everon 12800 / Arland 10240) |
 | **Status** | done (T-049) |
+| **Ticket** | T-049 |
 | **Evidence** | `MissionCreatorPage.tsx` (`terrainId` selector + `key`/`terrain` props); `MissionSettingsDialog.tsx` reads `meta.terrain` |
 
 #### MAP-MARQUEE-VIS-001 — Live marquee overlay
@@ -1610,6 +1657,7 @@ Items verified in code + scrape cross-check; added after initial `06` draft.
 | **Goal** | Eden parity: tree dbl-click opens attrs |
 | **Procedure** | T-054: `OrbatSection` gains `onActivateSlot` (threaded from `LeftSidebar`) and passes `onActivate` to its `TreeView` — mirrors `EditorLayersSection`; `TreeView` fires it on a slot row's native `onDoubleClick` → `setAttributesId` |
 | **Status** | working |
+| **Ticket** | T-054 |
 | **Evidence** | `OrbatSection.tsx`, `LeftSidebar.tsx`, `TreeView.tsx` L190 |
 
 #### SEL-ORBAT-MULTI-001 — ORBAT click collapses multi-select
@@ -1650,6 +1698,7 @@ Items verified in code + scrape cross-check; added after initial `06` draft.
 | **Goal** | Show server mission title on load |
 | **Procedure** | `hydrateMissionDoc` sets env/terrain; `GET /missions/:id` title not applied to `meta.title` |
 | **Status** | partial |
+| **Ticket** | T-049 |
 | **Evidence** | `useMissionEditor.ts`, `ydoc.ts` `hydrateMissionDoc` |
 
 #### DATA-CONFLICT-EDGE-001 — Conflict scope
@@ -1699,8 +1748,8 @@ Items verified in code + scrape cross-check; added after initial `06` draft.
 
 ### Expanded KEY table
 
-| ID | Status | Trigger | Evidence |
-|----|--------|---------|----------|
-| KEY-REDO-001 | working | Buttons + Cmd/Ctrl+Shift+Z / Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
-| KEY-RENAME-001 | working | Enter/Escape in tree rename | `TreeView.tsx` L216–221 |
-| KEY-DIALOG-001 | working | Conflict dialog cannot dismiss without choice | `MissionCreatorPage.tsx` `onOpenChange` noop |
+| ID | Status | Ticket | Trigger | Evidence |
+|----|--------|--------|---------|----------|
+| KEY-REDO-001 | working | T-052 | Buttons + Cmd/Ctrl+Shift+Z / Ctrl+Y keyboard (T-052) | `TopCommandStrip.tsx`, `MissionCreatorPage.tsx`, `useMissionDoc.ts` |
+| KEY-RENAME-001 | working | — | Enter/Escape in tree rename | `TreeView.tsx` L216–221 |
+| KEY-DIALOG-001 | working | — | Conflict dialog cannot dismiss without choice | `MissionCreatorPage.tsx` `onOpenChange` noop |

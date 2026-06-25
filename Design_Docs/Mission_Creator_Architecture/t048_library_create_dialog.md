@@ -294,7 +294,7 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 | [`t048_library_create_dialog.md`](t048_library_create_dialog.md) | Status → **shipped** |
 | [`CLAUDE.md`](../../CLAUDE.md) §Status | T-048 Done bullet; bump latest-feature line |
 | [`agent_execution.md`](agent_execution.md) | **Update stale `/missions/create` refs** in repository map (lines ~92, ~151), phase table (~207), DEFERRED table (~448) — Decisions log already correct |
-| [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md) | FD-003 doc link: `mission-creator.md` → `mission-library.md` |
+| [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md) | Points to `docs/TICKET_LEAD.md`; mission editor doc lives under `pages/mission-editor.md` |
 | [`.cursor/rules/tbd-documentation.mdc`](../../.cursor/rules/tbd-documentation.mdc) | Create Cursor rule (optional but recommended) |
 | [`docs/backend/architecture.md`](../../docs/backend/architecture.md) | Optional: "Mission Creator wizard" → "Library create dialog" (line ~547) |
 
@@ -314,7 +314,7 @@ Docs are PRE-STAGED — do not revert target-state docs; FINALIZE per spec §Doc
 - Add + New Mission to MissionLibraryPage header (mission_maker+ only; match admin.tsx header flex)
 - Remove /missions/create route, sidebar nav, MissionCreatorPage export
 - macOS Dialog styling (match admin Event Manager create pattern)
-- On ship: update agent_execution.md stale /missions/create refs + TRACKING FD-003 link + CLAUDE §Status
+- On ship: update agent_execution.md stale /missions/create refs + TRACKING pointer + CLAUDE §Status
 - Verify: npm run build && npm run lint + manual test plan
 - Commit on main as T-048 with Co-Authored-By trailer when I ask
 ```

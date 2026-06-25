@@ -1,69 +1,79 @@
-# Documentation tag glossary
+# T-0xx ticket naming contract
 
-Use the correct prefix everywhere. **Do not reuse T-0xx for frontend deferred work.**
+Every shipped feature, active slice, and queued/deferred item uses a **`T-0xx`** ticket ID. Former planning prefixes (frontend-deferred numbers, backend-deferred numbers, Eden parity tiers, engineering track letters, and A/B/C requirement codes) are **retired** — do not add them to authority docs.
 
-## Naming convention (T-045)
+## Source of truth
 
-Every domain has exactly one **`ROADMAP.md`** — the AI/human entry point for planning and doc links.
+| Resource | Purpose |
+|----------|---------|
+| [`tickets/registry.json`](../tickets/registry.json) | Canonical ticket rows (status, order, spec path, program) |
+| [`docs/TICKET_REGISTRY.md`](TICKET_REGISTRY.md) | Full generated table — all tickets |
+| [`docs/TICKET_LEAD.md`](TICKET_LEAD.md) | Lead dashboard — **ready**, **active**, next queued |
+| [`docs/TICKET_DEV_QUEUE.md`](TICKET_DEV_QUEUE.md) | Claude Code implementation queue |
+| [`tickets/AI_PLAYBOOK.md`](../tickets/AI_PLAYBOOK.md) | Edit registry → `./scripts/ticket sync` workflow |
 
-| Domain | Path |
-|--------|------|
-| Platform hub | [`docs/README.md`](README.md) → points to domain ROADMAPs |
+After changing `registry.json`, run **`./scripts/ticket sync`** and commit registry + generated views together. Never hand-edit `TICKET_*.md` or the `<!-- ticket-sync:status -->` block in `CLAUDE.md`.
+
+## What T-0xx means
+
+| Pattern | Meaning |
+|---------|---------|
+| **T-0xx** | Platform git milestone — one tag per ship (`T-067`, `T-068`, …) |
+| **T-0xx.y** | Sub-slice within a ticket (e.g. **T-067.0** viewport cull, **T-067.1** lazy RAM @ 1M) |
+| **T-0xx.y.z** | Hotfix sub-slice (e.g. **T-060.1.4** mid-upload socket reset) |
+
+**Status values** (in registry): `idea` → `queued` → `ready` → `shipped` | `deferred` | `cancelled`.
+
+**Programs:** `platform`, `backend`, `eden`, `scale`, `infra` — see registry `program` column.
+
+## Domain ROADMAPs
+
+Planning narrative lives in domain ROADMAPs; ticket IDs live in the registry.
+
+| Domain | ROADMAP |
+|--------|---------|
+| Platform hub | [`docs/README.md`](README.md) |
 | Frontend | [`docs/frontend/ROADMAP.md`](frontend/ROADMAP.md) |
 | Backend | [`docs/backend/ROADMAP.md`](backend/ROADMAP.md) |
 | Mission Creator | [`Design_Docs/Mission_Creator_Architecture/ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) |
 
-Supporting docs use **descriptive snake_case** filenames (no numeric prefixes): `engineering_plan.md`, `ux_spec.md`, `agent_execution.md`, etc. Old numbered paths redirect via stubs.
+Supporting MC specs use **descriptive snake_case** filenames: `t067_spatial_chunks.md`, `engineering_plan.md`, `agent_execution.md`.
 
-## Tag prefixes
+## Shipped MC specs (renamed paths)
 
-| Prefix | Meaning | Where |
-|--------|---------|-------|
-| **T-0xx** | Platform git milestones | [`CLAUDE.md`](../CLAUDE.md) §Status |
-| **T-048** | Library create dialog (shipped) | [`t048_library_create_dialog.md`](../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) |
-| **T-049** | Track A quick P0 (shipped) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) |
-| **T-050** | Cursor Z readout (shipped) | [`t050_cursor_z_readout.md`](../Design_Docs/Mission_Creator_Architecture/t050_cursor_z_readout.md) |
-| **T-052** | Eden P1 undo keyboard shortcuts (shipped) | [`t052_eden_p1_undo_shortcuts.md`](../Design_Docs/Mission_Creator_Architecture/t052_eden_p1_undo_shortcuts.md) |
-| **T-053** | Eden P1 Ctrl/Cmd+LMB additive toggle select (shipped) | [`t053_eden_p1_additive_select.md`](../Design_Docs/Mission_Creator_Architecture/t053_eden_p1_additive_select.md) |
-| **T-054** | Eden P1 Attributes entry points — map dbl-click + ORBAT tree (shipped) | [`t054_attributes_entry_points.md`](../Design_Docs/Mission_Creator_Architecture/t054_attributes_entry_points.md) |
-| **T-055** | Eden P1 asset browser search (shipped) | [`t055_asset_browser_search.md`](../Design_Docs/Mission_Creator_Architecture/t055_asset_browser_search.md) |
-| **T-056** | Eden P1 Ctrl+C/V copy-paste at cursor (slots) (shipped) | [`t056_eden_p1_copy_paste.md`](../Design_Docs/Mission_Creator_Architecture/t056_eden_p1_copy_paste.md) |
-| **T-057** | Map perf hotfix — ≥55 fps @ 200+ slots (shipped) | [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) |
-| **T-058** | Toolbelt OBJ/SEL entity counts (shipped) | [`t058_entity_count_readout.md`](../Design_Docs/Mission_Creator_Architecture/t058_entity_count_readout.md) |
-| **T-059** | Bulk paste/delete at scale — validated **360k @ 100+ fps** pan (shipped) | [`t059_bulk_paste_operations.md`](../Design_Docs/Mission_Creator_Architecture/t059_bulk_paste_operations.md) |
-| **T-060** | Fast load + save @ ~360k — shipped `b1fd25a` (browser ~142 MB → 201 + curl 140 MB → 201) | [`t060_fast_initial_load.md`](../Design_Docs/Mission_Creator_Architecture/t060_fast_initial_load.md) · [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) |
-| **T-060.1** | Determinate load + save upload timeouts (shipped in T-060) | [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) |
-| **T-060.1.1** | IDB restoring phase + paint fix (shipped; load partial pass @ ~360k) | [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.1 |
-| **T-060.1.2** | Save upload fixes — E1/E2/E3b (shipped in T-060) | [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.2 |
-| **T-060.1.3** | Save observability — measured size + debug (shipped; failure diagnosed @ 367k) | [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.3 |
-| **T-060.1.4** | Fix mid-upload socket reset @ ~135 MB (shipped; hardened `GlobalBodyLimit` skip + production-like IT) | [`t060_1_scale_load_save_completion.md`](../Design_Docs/Mission_Creator_Architecture/t060_1_scale_load_save_completion.md) §T-060.1.4 |
-| **T-061** | Drag-move @ 360k — dual IconLayer + `slotIconCache` + slot fast path (**shipped — good enough**) | [`t061_drag_move_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) |
-| **T-061.0** | (sub) Motion hotfix — dual IconLayer + split drag state (**shipped**) | [`t061_drag_move_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) §T-061.0 |
-| **T-061.0.1** | (sub) Boundary hotfix — `slotIconCache` + bindings fast path (**shipped**) | [`t061_drag_move_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t061_drag_move_hotfix.md) §T-061.0.1 |
-| **T-061.1** | Typed-array IconLayer (**deferred** — mega optimizations backlog) | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations |
-| **T-062** | Incremental bindings @ 360k — classifier + bulk delete (**shipped**) | [`t062_incremental_bindings.md`](../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md) |
-| **T-062.0** | (sub) `incPatchPlan` + O(k) store patches (**shipped**) | [`t062_incremental_bindings.md`](../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md) §T-062.0 |
-| **T-062.0.1** | (sub) Batched delete + `slotCount`/`slotsRevision` (**shipped**) | [`t062_incremental_bindings.md`](../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md) §T-062.0.1 |
-| **T-062.2** | Editor session / alt-tab resilience — Vite reload guard + warm session (**shipped**) | [`t062_2_editor_session_persistence.md`](../Design_Docs/Mission_Creator_Architecture/t062_2_editor_session_persistence.md) |
-| **T-062.1** | Chunked IDB slot restore (**shipped**) | [`t062_1_idb_streaming_load.md`](../Design_Docs/Mission_Creator_Architecture/t062_1_idb_streaming_load.md) |
-| **T-062.1.1** | Save orbat dedup (**shipped**) | [`t062_1_1_batch_save.md`](../Design_Docs/Mission_Creator_Architecture/t062_1_1_batch_save.md) |
-| **T-063** | Spatial index — rbush pick/marquee (**shipped**) | [`t063_spatial_index.md`](../Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md) |
-| **T-064** ✅ | Scale program | Virtualized outliner @ ~367k — **shipped** | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
-| **T-065** ✅ | Scale program | Cluster/LOD @ extreme zoom — **shipped** | [`t065_cluster_lod.md`](../Design_Docs/Mission_Creator_Architecture/t065_cluster_lod.md) |
-| **T-066** | Scale program | Worker compile + `pickMapSnapshot` — shipped; [`t066_worker_compile.md`](../Design_Docs/Mission_Creator_Architecture/t066_worker_compile.md) |
-| **T-067** | Scale program → 1M–10M (**active**) | Spatial chunks | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
-| **T-070+** | Terrain base + sparse deltas (future — millions of map props) | [`t070_terrain_base_mission_layers.md`](../Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md) |
-| **T-051** | Title PATCH sync (**deferred**, not started) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) amendment |
-| **FD-0xx** | Frontend deferred work | [`frontend/docs/TRACKING.md`](../frontend/docs/TRACKING.md) |
-| **BE-0xx** | Backend deferred work | [`docs/backend/ROADMAP.md`](backend/ROADMAP.md) |
-| **P0–P3** | Eden parity backlog | MC `eden/gap_analysis.md` |
-| **A / B / C** | MC functional tracks | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) |
+Use these paths in links — old `eden_p1_*` / `track_a_*` slugs are obsolete.
+
+| T-ID | Spec |
+|------|------|
+| T-048 | [`t048_library_create_dialog.md`](../Design_Docs/Mission_Creator_Architecture/t048_library_create_dialog.md) |
+| T-049 | [`t049_terrain_title_position.md`](../Design_Docs/Mission_Creator_Architecture/t049_terrain_title_position.md) |
+| T-050 | [`t050_cursor_z_readout.md`](../Design_Docs/Mission_Creator_Architecture/t050_cursor_z_readout.md) |
+| T-052 | [`t052_undo_shortcuts.md`](../Design_Docs/Mission_Creator_Architecture/t052_undo_shortcuts.md) |
+| T-053 | [`t053_additive_select.md`](../Design_Docs/Mission_Creator_Architecture/t053_additive_select.md) |
+| T-054 | [`t054_attributes_entry_points.md`](../Design_Docs/Mission_Creator_Architecture/t054_attributes_entry_points.md) |
+| T-055 | [`t055_asset_browser_search.md`](../Design_Docs/Mission_Creator_Architecture/t055_asset_browser_search.md) |
+| T-056 | [`t056_copy_paste.md`](../Design_Docs/Mission_Creator_Architecture/t056_copy_paste.md) |
+| T-057 … T-067 | [`t057_map_performance_hotfix.md`](../Design_Docs/Mission_Creator_Architecture/t057_map_performance_hotfix.md) … [`t067_spatial_chunks.md`](../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md) |
+
+Full shipped scale-program table: [`docs/TICKET_REGISTRY.md`](TICKET_REGISTRY.md).
+
+## Deferred / absorbed tickets
+
+- **Title PATCH sync** — scope lives under **T-089** (absorbs former T-051; no separate T-051 row).
+- **Typed-array IconLayer** — **T-094** (was T-061.1 in prose).
+- **Terrain base + sparse deltas** — **T-110** ([`t110_terrain_base_mission_layers.md`](../Design_Docs/Mission_Creator_Architecture/t110_terrain_base_mission_layers.md)).
+- Platform/backend deferred items (**T-085** wiki markdown, **T-086** server control, **T-095** API reference, **T-096** telemetry bridge, …) — see [`TICKET_REGISTRY.md`](TICKET_REGISTRY.md) `deferred` rows.
 
 ## T-0xx vs engineering phases
 
-[`CLAUDE.md`](../CLAUDE.md) T-029–T-040 = git milestones.  
-[`engineering_plan.md`](../Design_Docs/Mission_Creator_Architecture/engineering_plan.md) phases 0–9 = design doc — not 1:1.
+[`CLAUDE.md`](../CLAUDE.md) **T-029–T-040** = git milestones for the MC shell.  
+[`engineering_plan.md`](../Design_Docs/Mission_Creator_Architecture/engineering_plan.md) phases 0–9 = engineering design — not 1:1 with ticket order.
 
-## Historical commits
+## Adding or changing tickets
 
-Frontend TRACKING once used T-0xx for deferred items — those are **FD-0xx** from T-043 onward.
+1. Edit [`tickets/registry.json`](../tickets/registry.json).
+2. `./scripts/ticket sync` (regenerates `TICKET_*.md`, `CLAUDE.md` status block, queue).
+3. `./scripts/ticket check` (or `make ticket-check-strict` before doc-only merges).
+4. Sync narrative docs per [`AGENT_COMMIT_CHECKLIST.md`](AGENT_COMMIT_CHECKLIST.md).
+
+Do **not** invent a new prefix. If work is not shipped, keep it **`queued`**, **`ready`**, or **`deferred`** in the registry — never reuse a shipped T-ID for new scope.

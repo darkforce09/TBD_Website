@@ -42,12 +42,12 @@ function parseManifest(text) {
     }
     const slug = line.match(/^\s+- slug: (.+)$/);
     if (slug) {
-      current = { category, slug: slug[1].trim(), priority: 'P2', status: 'pending' };
+      current = { category, slug: slug[1].trim(), ticket: 'T-078', status: 'pending' };
       pages.push(current);
       continue;
     }
-    const pri = line.match(/^\s+priority: (.+)$/);
-    if (pri && current) current.priority = pri[1].trim();
+    const ticket = line.match(/^\s+ticket: (.+)$/);
+    if (ticket && current) current.ticket = ticket[1].trim();
   }
 
   // dedupe by slug
@@ -192,7 +192,7 @@ async function main() {
         raw_excerpt: excerpt,
         status: 'draft',
         category: page.category,
-        priority: page.priority,
+        ticket: page.ticket,
       });
     }
 

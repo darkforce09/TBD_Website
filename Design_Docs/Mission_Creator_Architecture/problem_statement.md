@@ -59,3 +59,5 @@ Before a single line of React or WebGL is written, the following assets must be 
 1. **The Target JSON:** A perfect, working example of the final `loadout.json` / `mission.json` file expected by the Reforger mod.
 2. **The Map Assets:** High-resolution top-down imagery of Everon/Arland to serve as the map tiles.
 3. **The DEM Data:** The raw 16-bit heightmap data extracted from the Enfusion engine for elevation tracking.
+
+Open work: [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) · full table [`docs/TICKET_REGISTRY.md`](../../docs/TICKET_REGISTRY.md)

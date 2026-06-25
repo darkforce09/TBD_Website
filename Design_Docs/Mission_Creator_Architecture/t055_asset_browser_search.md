@@ -1,8 +1,8 @@
-# T-055 — Eden P1-04: Asset browser search
+# T-055 — Asset browser search
 
 **Status:** shipped (T-055)  
 **Git tag on ship:** T-055  
-**Authority:** [MC ROADMAP](ROADMAP.md) Eden P1 · [eden/gap_analysis.md](eden/gap_analysis.md) P1-04 · [feature_inventory.md](feature_inventory.md) RIGHT-SEARCH-001
+**Authority:** [MC ROADMAP](ROADMAP.md) · [eden/gap_analysis.md](eden/gap_analysis.md) (`RIGHT-SEARCH-001`) · [feature_inventory.md](feature_inventory.md) RIGHT-SEARCH-001
 
 ---
 
@@ -15,10 +15,10 @@ filters the catalog to matching assets.
 
 | ID | Gap | Deliverable |
 |----|-----|-------------|
-| **P1-04** | `RIGHT-SEARCH-001` | Search field filters the Asset Browser tree live by asset/folder name |
+| **RIGHT-SEARCH-001** | `RIGHT-SEARCH-001` | Search field filters the Asset Browser tree live by asset/folder name |
 
 **Out of scope:** `class:` classname-prefix search (`RIGHT-SEARCH-002`, P2); BLUFOR/OPFOR
-submode (`RIGHT-SUBMODE-001`, P1-07); the stub tabs (Vehicles/Markers/Objectives — no catalog
+submode (`RIGHT-SUBMODE-001`, T-074); the stub tabs (Vehicles/Markers/Objectives — no catalog
 yet); registry feed; backend changes.
 
 ---
@@ -121,7 +121,7 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 | [`feature_inventory.md`](feature_inventory.md) | **New `RIGHT-SEARCH-001` FEDS entry** (Status working; Evidence `AssetBrowser.tsx`) |
 | [`agent_execution.md`](agent_execution.md) | Decisions log row **Asset browser search (T-055)**; refresh one-line prompt Next-slices |
 | [`ROADMAP.md`](ROADMAP.md) | DONE T-055 section + spec index row; Eden execution-order line; refresh Next |
-| [`eden/gap_analysis.md`](eden/gap_analysis.md) | P1-04 → ✅ shipped T-055; RIGHT-SEARCH-001 table row → built |
+| [`eden/gap_analysis.md`](eden/gap_analysis.md) | T-055 → ✅ shipped T-055; RIGHT-SEARCH-001 table row → built |
 
 **Do not update:** archive stitch, Eden wiki artifacts, historical CLAUDE bullets.
 
@@ -137,4 +137,4 @@ using AI. **Do not commit until the user asks.**
 ## Related
 
 - Prior: [t054_attributes_entry_points.md](t054_attributes_entry_points.md)
-- Next Eden P1: P1-02 copy/paste; later P1-07 faction submode (`RIGHT-SUBMODE-001`)
+- Next Eden backlog: see [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) (T-068+).

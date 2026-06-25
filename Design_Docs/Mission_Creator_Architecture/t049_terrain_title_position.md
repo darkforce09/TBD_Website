@@ -1,22 +1,22 @@
-# T-049 — Track A quick Eden P0 (terrain, title, numeric position)
+# T-049 — Terrain, title hydrate, numeric position
 
 **Status:** shipped (T-049)  
 **Git tag on ship:** T-049  
-**Authority:** [MC ROADMAP](ROADMAP.md) Track A Phase 1 · [eden/gap_analysis.md](eden/gap_analysis.md) P0-04, P0-06, P0-07 · [engineering_plan.md](engineering_plan.md) §2
+**Authority:** [MC ROADMAP](ROADMAP.md) · [eden/gap_analysis.md](eden/gap_analysis.md) (`MAP-TERRAIN-001`, `TOP-TITLE-001`, `DATA-HYD-TITLE-001`, `ATTR-FIELD-OBJ-POSITION`) · [engineering_plan.md](engineering_plan.md) §2
 
 ---
 
 ## Goal
 
-Ship the **code-only** slice of Eden P0 / Track A Phase 1 — no map tiles, no DEM, no registry:
+Ship the **code-only** flat-grid slice — no map tiles (**T-090**), no DEM (**T-091**), no registry (**T-068**):
 
-| ID | Gap | Deliverable |
-|----|-----|-------------|
-| **P0-07** | `MAP-TERRAIN-001` | Wire `meta.terrain` → `<TacticalMap>` viewport (Everon / Arland bounds) |
-| **P0-06** | `TOP-TITLE-001` / `DATA-HYD-TITLE-001` | Hydrate mission row `title` into `meta.title` on editor load |
-| **P0-04** | `ATTR-FIELD-OBJ-POSITION` | Editable **X, Y, Z, rotation** on Transform tab; map icon stays in sync |
+| ID | FEDS ID | Deliverable |
+|----|---------|-------------|
+| **MAP-TERRAIN-001** | `MAP-TERRAIN-001` | Wire `meta.terrain` → `<TacticalMap>` viewport (Everon / Arland bounds) |
+| **TOP-TITLE-001** | `TOP-TITLE-001` / `DATA-HYD-TITLE-001` | Hydrate mission row `title` into `meta.title` on editor load |
+| **ATTR-FIELD-OBJ-POSITION** | `ATTR-FIELD-OBJ-POSITION` | Editable **X, Y, Z, rotation** on Transform tab; map icon stays in sync |
 
-**Out of scope for T-049:** P0-01 registry, P0-02 markers, P0-03 vehicles, P0-05 ORBAT authoring, DEM sampling, map imagery, `PATCH` title sync, multi-selection transform, toolbelt-driven editing.
+**Out of scope for T-049:** T-068 registry, T-069 markers, T-070 vehicles, T-071 ORBAT authoring, DEM sampling, map imagery, `PATCH` title sync, multi-selection transform, toolbelt-driven editing.
 
 ---
 
@@ -27,7 +27,7 @@ Ship the **code-only** slice of Eden P0 / Track A Phase 1 — no map tiles, no D
 | Position fields | **X + Y + Z + rotation** all editable (manual Z; no DEM) |
 | Title ↔ PostgreSQL | **Hydrate on load only** — strip edits live in Y.Doc; no `PATCH /missions/:id` in T-049 (see rationale below) |
 | Toolbelt coords | **Selection-aware** — when exactly **one slot** selected, show entity X/Y/Z; otherwise show **cursor** X/Y. _(Superseded by **T-050**: CUR mode now shows cursor X/Y/**Z** with Z=0 on the flat map.)_ |
-| Build order | **P0-07 → P0-06 → P0-04** (terrain first — unblocks Arland missions) |
+| Build order | **MAP-TERRAIN-001 → TOP-TITLE-001 → ATTR-FIELD-OBJ-POSITION** (terrain first — unblocks Arland missions) |
 | State rule | All entity/meta mutations via `ydoc.ts` `transact()` / `INIT_ORIGIN` for hydrate |
 | Inspector rule | Attributes modal on dbl-click only — unchanged |
 
@@ -42,7 +42,7 @@ Ship the **code-only** slice of Eden P0 / Track A Phase 1 — no map tiles, no D
 
 ## Root cause audit (why it's broken today)
 
-### P0-07 — Terrain
+### MAP-TERRAIN-001 — Terrain
 
 ```89:90:frontend/src/features/mission-creator/MissionCreatorPage.tsx
 // TODAY: hardcoded — ignores meta.terrain and mission row
@@ -53,7 +53,7 @@ Ship the **code-only** slice of Eden P0 / Track A Phase 1 — no map tiles, no D
 - Fresh missions: `POST /missions` stores `terrain` on DB row; initial `json_payload` is `{}` → `hydrateMissionDoc` never sets terrain → local meta stays `everon` from `seedMeta`.
 - `getTerrain()` + `useBaseMapLayer` + `useOrthographicView` already resize/clamp from `TerrainDef` — they just need the correct prop.
 
-### P0-06 — Title
+### TOP-TITLE-001 — Title
 
 ```56:70:frontend/src/features/mission-creator/hooks/useMissionEditor.ts
 // TODAY: fetches mission but ignores res.data.title; bails on empty payload
@@ -67,7 +67,7 @@ seedMeta(md, { id: missionId ?? 'draft', title: 'Untitled Mission' })
 
 - Create dialog sends `title` → DB row; editor always shows **Untitled Mission** until user retypes.
 
-### P0-04 — Position
+### ATTR-FIELD-OBJ-POSITION — Position
 
 ```83:103:frontend/src/features/mission-creator/layout/AttributesModal.tsx
 // TODAY: ReadonlyField for X/Y/Z/rotation; stale help text says drag is "coming later"
@@ -194,7 +194,7 @@ export interface MissionDetail extends MissionCard {
 
 Matches backend `GET /missions/:id` (GORM preloads version + payload).
 
-### 5. P0-07 — Wire terrain to map
+### 5. MAP-TERRAIN-001 — Wire terrain to map
 
 **File:** [`frontend/src/features/mission-creator/MissionCreatorPage.tsx`](../../frontend/src/features/mission-creator/MissionCreatorPage.tsx)
 
@@ -213,7 +213,7 @@ const terrainId = useMapStore((s) => s.meta?.terrain ?? 'everon')
 
 **File:** [`layout/MissionSettingsDialog.tsx`](../../frontend/src/features/mission-creator/layout/MissionSettingsDialog.tsx) — read-only terrain display already uses meta; verify it reads store after hydrate.
 
-### 6. P0-06 — Title (no new UI)
+### 6. TOP-TITLE-001 — Title (no new UI)
 
 **Files:** Top strip already works via `setTitle`.
 
@@ -222,7 +222,7 @@ const terrainId = useMapStore((s) => s.meta?.terrain ?? 'everon')
 
 **Acceptance:** Create mission "Op Iron Curtain" → editor top strip shows that title, not Untitled.
 
-### 7. P0-04 — Attributes Transform tab
+### 7. ATTR-FIELD-OBJ-POSITION — Attributes Transform tab
 
 **File:** [`frontend/src/features/mission-creator/layout/AttributesModal.tsx`](../../frontend/src/features/mission-creator/layout/AttributesModal.tsx)
 
@@ -286,19 +286,19 @@ cd frontend && npm run build && npm run lint
 
 ### Manual test plan
 
-**P0-07 terrain**
+**MAP-TERRAIN-001 terrain**
 
 1. Create mission with **Arland** in Library dialog → open editor → grid bounds **10240×10240** (smaller than Everon); pan clamp matches.
 2. Create with **Everon** → 12800×12800 grid.
 3. Existing saved mission with `json_payload.map.terrain: "arland"` hydrates correctly.
 
-**P0-06 title**
+**TOP-TITLE-001 title**
 
 4. Create mission titled **"Test Op Alpha"** → editor strip + left sidebar show that title.
 5. Reload page → title persists from API/IndexedDB reconcile.
 6. Edit title in strip → still works; refresh → shows edited local title (IndexedDB) until conflict/server load.
 
-**P0-04 position**
+**ATTR-FIELD-OBJ-POSITION position**
 
 7. Place a slot → open Attributes Transform → change X/Y → icon moves on map.
 8. Change Z to `50` → persists in modal and toolbelt selection readout.
@@ -323,8 +323,8 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 |-----|--------|
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Transform editable; terrain wired; toolbelt selection readout |
 | [`Design_Docs/.../feature_inventory.md`](feature_inventory.md) | Update TOP-TITLE-001, MAP-TERRAIN-001, ATTR-FIELD-OBJ-POSITION rows |
-| [`eden/gap_analysis.md`](eden/gap_analysis.md) | Mark P0-04/06/07 **partial→match** where appropriate |
-| [`ROADMAP.md`](ROADMAP.md) | A-02, A-09, A-06 partial progress; add DONE T-049 section |
+| [`eden/gap_analysis.md`](eden/gap_analysis.md) | Mark MAP-TERRAIN-001 / TOP-TITLE-001 / ATTR-FIELD-OBJ-POSITION **partial→match** where appropriate |
+| [`ROADMAP.md`](ROADMAP.md) | Phase 1 row → ✅ T-049; add DONE T-049 section |
 | [`docs/frontend/ROADMAP.md`](../../docs/frontend/ROADMAP.md) | mission-editor notes |
 | [`CLAUDE.md`](../../CLAUDE.md) §Status | T-049 bullet |
 | **This file** | Status → **shipped** |
@@ -348,12 +348,12 @@ If T-048 is still uncommitted, **commit T-048 first**, then T-049 — do not mix
 ```
 Read CLAUDE.md and docs/AGENT_COMMIT_CHECKLIST.md first.
 
-Implement T-049 per Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md.
+Implement T-049 per Design_Docs/Mission_Creator_Architecture/t049_terrain_title_position.md.
 
 LOCKED:
-- P0-07: meta.terrain → TacticalMap (key={terrainId}); fix onSynced for empty json_payload
-- P0-06: applyMissionRowMeta — title/terrain/env from GET row (hydrate only, no PATCH)
-- P0-04: updateSlotPosition — editable X/Y/Z/rotation in AttributesModal Transform; clamp x/y to terrain bounds
+- MAP-TERRAIN-001: meta.terrain → TacticalMap (key={terrainId}); fix onSynced for empty json_payload
+- TOP-TITLE-001: applyMissionRowMeta — title/terrain/env from GET row (hydrate only, no PATCH)
+- ATTR-FIELD-OBJ-POSITION: updateSlotPosition — editable X/Y/Z/rotation in AttributesModal Transform; clamp x/y to terrain bounds
 - Toolbelt: show selected slot X/Y/Z when exactly one slot selected; else cursor X/Y
 - Build order: terrain → title path → transform UI
 - All writes through ydoc.ts transact / INIT_ORIGIN for hydrate
@@ -369,5 +369,5 @@ Commit on main as T-049 with Co-Authored-By when I ask. Do not commit until I sa
 ## Related
 
 - Prior UX: [t048_library_create_dialog.md](t048_library_create_dialog.md)
-- Full P0 backlog (deferred): gap_analysis P0-01..05
-- Track A Phase 2+: map tiles (A-01), DEM (A-03) — blocked on assets
+- Eden backlog (deferred): [`eden/gap_analysis.md`](eden/gap_analysis.md) ticket column → T-068+
+- **T-090** / **T-091** map tiles + DEM — blocked on hosted assets

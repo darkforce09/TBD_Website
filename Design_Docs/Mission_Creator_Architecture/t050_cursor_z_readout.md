@@ -2,7 +2,7 @@
 
 **Status:** shipped (T-050)  
 **Git tag on ship:** T-050  
-**Authority:** [MC ROADMAP](ROADMAP.md) Track A · [eden/ui_anatomy.md](eden/ui_anatomy.md) Status Bar X/Y/Z · follows [t049_track_a_quick_p0.md](t049_track_a_quick_p0.md)
+**Authority:** [MC ROADMAP](ROADMAP.md) §Recommended program order · [eden/ui_anatomy.md](eden/ui_anatomy.md) Status Bar X/Y/Z · follows [t049_terrain_title_position.md](t049_terrain_title_position.md)
 
 ---
 
@@ -35,7 +35,7 @@ type export, `onAssetDrop` changes, SEL-mode behavior.
 - The Reforger world is a flat local grid in meters (Ultra Plan §4.1); with no DEM yet, the ground
   plane elevation **is** 0 — so `0` is the correct reading, and a `—` falsely implies "unknown".
 - Deck.gl's `OrthographicView` unproject returns `coordinate[2]` (z) — `?? 0` covers the flat case
-  and will carry real elevation for free once a DEM layer feeds z (Phase 2, A-03/A-04).
+  and will carry real elevation for free once a DEM layer feeds z (**T-091** DEM).
 
 ---
 
@@ -119,10 +119,10 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 | [`frontend/docs/pages/mission-editor.md`](../../frontend/docs/pages/mission-editor.md) | Element #5 (toolbelt X/Y/Z incl. cursor) + M3.6 milestone |
 | [`feature_inventory.md`](feature_inventory.md) | `MAP-CURSOR-001` — X/Y/Z, Outputs fix, acceptance |
 | [`agent_execution.md`](agent_execution.md) | Decisions log — CUR readout X/Y/Z |
-| [`ROADMAP.md`](ROADMAP.md) | DONE T-050; A-05 note; fix stale A-09 → Done (T-049); shipped-list cursor X/Y/Z |
+| [`ROADMAP.md`](ROADMAP.md) | DONE T-050; T-050 shipped note; shipped-list cursor X/Y/Z |
 | [`docs/frontend/ROADMAP.md`](../../docs/frontend/ROADMAP.md) | Recently shipped T-050 |
 | [`eden/ui_anatomy.md`](eden/ui_anatomy.md) | Status Bar X/Y/Z mapping row |
-| [`t049_track_a_quick_p0.md`](t049_track_a_quick_p0.md) | Amendment: renumber Future T-050 title PATCH → **T-051**; mark "cursor Z stays `—`" superseded |
+| [`t049_terrain_title_position.md`](t049_terrain_title_position.md) | Amendment: renumber Future T-050 title PATCH → **T-051**; mark "cursor Z stays `—`" superseded |
 
 **Do not update:** archive stitch, Eden wiki artifacts.
 
@@ -130,7 +130,7 @@ Use [`docs/AGENT_COMMIT_CHECKLIST.md`](../../docs/AGENT_COMMIT_CHECKLIST.md).
 
 ## Related
 
-- Prior: [t049_track_a_quick_p0.md](t049_track_a_quick_p0.md)
-- Next: [**t052_eden_p1_undo_shortcuts.md**](t052_eden_p1_undo_shortcuts.md) — Eden P1-03 keyboard undo/redo (shipped)
+- Prior: [t049_terrain_title_position.md](t049_terrain_title_position.md)
+- Next: [**t052_undo_shortcuts.md**](t052_undo_shortcuts.md) — keyboard undo/redo (T-052, shipped)
 - Deferred: **T-051** — optional `PATCH` title sync on Save Version / debounced strip edit
-- Phase 2: DEM (A-03) feeds real cursor + slot Z — blocked on hosted heightmaps
+- **T-091** DEM feeds real cursor + slot Z — blocked on hosted heightmaps

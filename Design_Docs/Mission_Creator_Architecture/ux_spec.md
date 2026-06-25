@@ -89,3 +89,5 @@ route handle only changes the `<main>` padding/overflow, not the chrome. Phase 3
 escape — e.g. an `editorFullscreen` (or reused `fullBleed`-strict) route handle that suppresses
 `<Sidebar/>` + `<TopNav/>`, **or** the editor route mounts outside the `AppLayout` `<Outlet/>`
 entirely. Either way, `/missions/:id/edit` owns the full viewport.
+
+Open work: [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) · full table [`docs/TICKET_REGISTRY.md`](../../docs/TICKET_REGISTRY.md)

@@ -40,7 +40,7 @@
 - **Chromeless:** No platform Sidebar/TopNav (`fullBleed` + `chromeless` route handles).
 - **Loading:** Four-phase overlay on **cold** load: **restoring** (T-062.1 ✅ v2 chunked / legacy migrate once) → download → apply → local flush. **Warm return** (T-062.2): restoring → local flush only. **v2 @ ~360k:** determinate restoring `done/total` ticks smoothly (no 0→300k jump on 2nd+ load). **Dev alt-tab:** overlay should not reappear after extended background (T-062.2). **Save:** T-060.1.4 FIXED.
 - **Dirty:** Local autosave to v2 `idb` on `LOCAL_ORIGIN` edits; Save Version posts **editor-only** payload (T-062.1.1 — no duplicate `orbat[]`); server derives ORBAT for events. Export keeps full superset.
-- **Blocked phases:** DEM/Z-axis (Phase 2), asset registry (Phase 5/6), ruler/LoS viewshed (Phase 8).
+- **Blocked:** T-091 DEM/Z-axis, T-068 asset registry + palette, ruler/LoS viewshed (after T-091).
 
 ### Keyboard (host — `/missions/:id/edit`)
 | Shortcut | Action |
@@ -91,7 +91,8 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M4.21 — [x] T-063 spatial index (rbush pick/marquee @ ~367k — spec: [t063_spatial_index.md](../../../Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md))
 ### M4.22 — [x] T-064 virtualized outliner @ ~367k (incl. T-064.1 scroll-ref hotfix — spec: [t064_virtualized_outliner.md](../../../Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md))
 ### M5.23 — [x] T-066 worker compile offload + `pickMapSnapshot` (Save 201 @ ~367k — spec: [t066_worker_compile.md](../../../Design_Docs/Mission_Creator_Architecture/t066_worker_compile.md))
-### M5 — [ ] T-067 spatial chunks (active — spec pending)
+### M5.24 — [ ] T-067.0 spatial chunks — viewport cull + bulk paste (spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md))
+### M5.25 — [ ] T-067.1 lazy chunk residency @ 1M+ (spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md) §T-067.1)
 
 ## Test Plan
 
@@ -111,4 +112,6 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 - **[PERF-006] Incremental bindings @ 360k** — **Resolved T-062.** Spec: [t062_incremental_bindings.md](../../../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md).
 - **[PERF-007] Alt-tab / session reload @ 360k** — **Resolved T-062.2.** Extended alt-tab (Firefox dev) no longer re-triggers full load overlay; warm session skips server GET on same-tab return. Spec: [t062_2_editor_session_persistence.md](../../../Design_Docs/Mission_Creator_Architecture/t062_2_editor_session_persistence.md).
 - **[PERF-008] Outliner @ 360k** — **Resolved T-064.** Virtualized ORBAT + Editor Layers; outliner visible on first paint @ ~367k; scrollable 367k rows; T-064.1 scroll-ref hotfix. Spec: [t064_virtualized_outliner.md](../../../Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md).
-- [FD-003](../TRACKING.md): Phases 2/5/6/8 — see [Mission Creator hub](../../../Design_Docs/Mission_Creator_Architecture/README.md).
+- **[PERF-009] Spatial chunks @ 367k+ / 1M path** — **Active T-067.** Spec ready: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md). T-067.0: viewport IconLayer cull + bulk-paste incremental patch; T-067.1: lazy RAM. Claude Code implements from spec only.
+- **Active slice:** **T-067** (spatial chunks — T-067.0 viewport cull + bulk paste; T-067.1 lazy RAM @ 1M). Spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md). Queue: [TICKET_LEAD.md](../../../docs/TICKET_LEAD.md).
+- **Next queued (T-068+):** T-068 asset registry + palette, T-069 markers, T-070 vehicles, T-071 ORBAT authoring — see [Mission Creator ROADMAP](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) and [TICKET_REGISTRY.md](../../../docs/TICKET_REGISTRY.md).
