@@ -1177,6 +1177,26 @@
 
 ---
 
+#### PERF-WORKER-001 — Compiler worker offload (T-066 + T-066.1)
+
+| Field | Value |
+|-------|-------|
+| **Domain** | PERF |
+| **Goal** | Run `compileMissionWithProgress` + `buildVersionBlob` off main thread @ 367k+; stretch ≤10 s @ 1M |
+| **Trigger** | Save Version or Export on large mission |
+| **Preconditions** | T-060 compile progress + T-060.1.2 blob streaming; **T-066.1:** `pickMapSnapshot(getState())` before Comlink RPC |
+| **Procedure** | `compiler.worker.ts` + `compilerClient.ts` (Comlink); `useMissionEditor` Save + Export; `terminateCompiler` on unmount |
+| **Postconditions** | Same `MissionPayload` / POST contract; Save progress phases unchanged |
+| **Inputs** | `MapSnapshot` via `pickMapSnapshot(useMapStore.getState())` — **never raw getState()** |
+| **Outputs** | `MissionPayload` or version POST `Blob` |
+| **Edge cases** | Raw `getState()` → DataCloneError 25 (T-066.1 fixed); Export `JSON.stringify` still on main thread |
+| **Acceptance** | `- [x] Save 201 @ ~367k` `- [x] pickMapSnapshot hotfix` `- [x] Git tag T-066` |
+| **Eden parity** | n/a (infra) |
+| **Status** | shipped |
+| **Evidence** | `compiler.worker.ts`, `compilerClient.ts`, `compile.ts`, `useMissionEditor.ts`, `pickMapSnapshot` in `useMapStore.ts`; spec [`t066_worker_compile.md`](t066_worker_compile.md) |
+
+---
+
 #### PERF-LOAD-001 — Fast initial load / hydrate gate (T-060 + T-060.1 + T-060.1.1)
 
 | Field | Value |

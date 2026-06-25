@@ -150,4 +150,4 @@ hovering an icon (no per-move hover pick). Click/dbl-click/marquee/drag picking 
 
 ## After T-057
 
-**T-058** — toolbelt entity-count telemetry. **T-059** bulk paste ✅ (**360k @ 100+ fps**). **T-060** ✅ (`b1fd25a`). **T-061** ✅ drag-move good enough @ 360k. **T-062** ✅ incremental bindings @ 360k. **T-062.2** ✅ editor session. **T-062.1** ✅ chunked IDB load. **T-062.1.1** ✅ Save orbat dedup. **T-063** ✅ spatial index. **T-064** ✅ virtualized outliner. **Active: T-065..T-067**. Eden **T-068+**.
+**T-058** — toolbelt entity-count telemetry. **T-059** bulk paste ✅ (**360k @ 100+ fps**). **T-060** ✅ (`b1fd25a`). **T-061** ✅ drag-move good enough @ 360k. **T-062** ✅ incremental bindings @ 360k. **T-062.2** ✅ editor session. **T-062.1** ✅ chunked IDB load. **T-062.1.1** ✅ Save orbat dedup. **T-063** ✅ spatial index. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067**. Eden **T-068+**.

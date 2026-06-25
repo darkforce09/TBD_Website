@@ -1,6 +1,6 @@
 ---
 name: Mission Creator — Agent Execution Plan
-overview: "Self-contained agent handoff for Mission Creator. T-057–T-065 shipped. Active: T-066..T-067. Eden T-068+."
+overview: "Self-contained agent handoff for Mission Creator. T-057–T-066 shipped. Active T-067. Eden T-068+."
 todos:
   - id: step-0-publish
     content: "STEP 0: Plan published to Design_Docs/Mission_Creator_Architecture/agent_execution.md"
@@ -24,7 +24,7 @@ todos:
     content: "PHASE 9: Compiler + Export + useMissionEditor autosave (only after 3.5, 7b, 7a complete)"
     status: completed
   - id: eden-backlog
-    content: "T-057–T-064 SHIPPED. Active: T-065..T-067. Eden T-068+."
+    content: "T-057–T-066 SHIPPED. Active T-067. Eden T-068+."
     status: in_progress
   - id: phase-blocked
     content: "DEFERRED until after Eden P0-P2: Phase 2 DEM/tiles, full registry/Arsenal (Phases 5-6), Phase 8 tools — do not start without user approval"
@@ -35,7 +35,7 @@ isProject: false
 # AGENT EXECUTION CONTRACT
 
 > **Phase completion log (T-033–T-040):** PRE-3.5 ✅ DOC-0 ✅ 3.5 ✅ 7b ✅ 7a ✅ 9 ✅.
-> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-060 shipped** (`b1fd25a`). **T-061 shipped (good enough)** — drag @ ~360k. **T-062 shipped** — incremental bindings @ 360k. **T-062.2 shipped** — editor session / alt-tab. **T-062.1 shipped** — chunked IDB slot restore. **T-062.1.1 shipped** — Save orbat dedup. **T-063 shipped** — rbush spatial index for click/marquee pick @ ~367k. **T-064 shipped** — virtualized outliner @ ~367k. **Active: T-065..T-067.** Mega optimizations deferred ([ROADMAP.md](ROADMAP.md) §Deferred mega optimizations). Eden **T-068+**.
+> **North star:** **1M–10M editable entities** via **T-059..T-067**. **T-066 shipped.** **Active: T-067** spatial chunks. Eden **T-068+**.
 
 > **For the human:** Open a new Cursor Agent / CLI session and paste the prompt below. The agent reads this file; execute **open** phases only.
 
@@ -46,7 +46,7 @@ Read CLAUDE.md first. Mission Creator is Eden-first (locked 2026-06): the shell 
 PRE-3.5–9 are DONE (T-033–T-040). Open work = the Eden parity backlog in
 eden/gap_analysis.md — P0 remaining + P1 + P2 — shipped as T-053+ slices BEFORE Track A
 Phase 2 (map tiles A-01, DEM A-03/A-04) and DEM-dependent Phase 8 tools. Authority:
-ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **T-060–T-064 shipped.** **Active: T-065..T-067** → Eden **T-068+**.
+ROADMAP.md §Current strategy → this file's Decisions log for UX locks. **T-057–T-066 shipped.** **Active T-067** → Eden **T-068+**.
 A thin Track B registry (B-01) for Eden P0 (P0-01..03) is in scope; full registry/Arsenal and
 tiles/DEM are deferred. After each slice: `cd frontend && npm run build && npm run lint`. Do not
 commit unless I ask.
@@ -55,7 +55,7 @@ commit unless I ask.
 Shorter variant:
 
 ```
-ROADMAP.md §Current strategy → @agent_execution.md §ACTIVE SLICE. **T-064 shipped.** **Active: T-065..T-067** → Eden **T-068+**.
+ROADMAP.md §Current strategy → @agent_execution.md §ACTIVE SLICE. **T-066 shipped.** **Active T-067** → Eden **T-068+**.
 ```
 
 ## Agent roles — Cursor vs Claude Code (locked 2026-06)
@@ -330,10 +330,10 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 | **Spatial index** (T-063 — **shipped**) | rbush R-tree for click/marquee pick @ ~367k; `slot-icons` `pickable: false`. Spec: [`t063_spatial_index.md`](t063_spatial_index.md). |
 | **Virtualized outliner** (T-064 — **shipped**) | `@tanstack/react-virtual` + segment flatten; `virtualSlotIds`; T-064.1 callback-ref `scrollEl`. **Verified @ ~367k.** Spec: [`t064_virtualized_outliner.md`](t064_virtualized_outliner.md). |
 | **Editor session / alt-tab** (T-062.2 — **shipped**) | Dev: `viteReloadGuard` blocks Vite HMR full reload on editor route. Warm session: `editorSession.ts` → skip multi-MB GET on same-tab return when IDB has content. Background-safe yields. **Tradeoff:** warm path trusts local IDB. Spec: [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md). |
-| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-064 shipped**; **active T-065..T-067**). Eden **T-068+**; **T-070+** terrain base after that. … |
+| **Eden-first program order** (2026-06) | … **Exception:** **T-057..T-067** perf/scale program runs first (**T-066 shipped**; **active T-067**). Eden **T-068+**; **T-070+** terrain base after that. … |
 | **Mission title hydrate** (T-049) | On editor load the **PostgreSQL mission row** (`title`, `terrain`, time/weather) hydrates `meta` via `applyMissionRowMeta` (INIT_ORIGIN) — including new missions whose `json_payload` is `{}`. **No PATCH-back** in T-049; Save Version still compiles payload only. |
-| **Phase order** | … **T-057–T-064 shipped.** **Active: T-065..T-067** → Eden **T-068+** → **T-070+** terrain base (optional). … |
-| **Drag perf — good enough** (2026-06) | T-061 closed Eden-blocking drag @ ~360k. T-062 closed everyday edit bindings @ ~360k. T-063 closed pick/marquee @ ~367k. T-064 closed outliner @ ~367k. Do **not** pursue T-061.1 / release repack collapse until T-065..T-067 + Eden milestones unless regression. See ROADMAP §Deferred mega optimizations. |
+| **Phase order** | … **T-057–T-066 shipped.** **Active T-067** → Eden **T-068+** → **T-070+** terrain base (optional). … |
+| **Drag perf — good enough** (2026-06) | T-061 closed Eden-blocking drag @ ~360k. T-062 closed everyday edit bindings @ ~360k. T-063 closed pick/marquee @ ~367k. T-064 closed outliner @ ~367k. T-065 closed extreme-zoom clusters. Do **not** pursue T-061.1 / release repack collapse until T-066..T-067 + Eden milestones unless regression. See ROADMAP §Deferred mega optimizations. |
 | **Eden completeness** | Eden parity checklist = `eden/interactions.md`, `eden/ui_anatomy.md`, `eden/attributes.md`, `eden/gap_analysis.md` + scrape artifacts. Read `eden/ui_anatomy.md` / `eden/attributes.md` before implementing UI/attrs. Implement the P0 backlog from `eden/gap_analysis.md`. Feature status lives in `feature_inventory.md` + `reference/feds_schema.md`; new TBD features → FEDS row in `feature_inventory.md`. Wiki cache = `eden/wiki_manifest.yaml` + `artifacts/eden-wiki/`; regenerate via `node scripts/tools/scrape-eden-wiki.mjs` when the wiki updates. |
 
 ---
@@ -341,7 +341,7 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 ## Agent rules (mandatory)
 
 1. **Read first:** `CLAUDE.md` (conventions), then this file, then `engineering_plan.md` §0–§2.
-2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-064 shipped.** **Active: T-065** cluster/LOD → T-066..T-067. Eden **T-068+** after scale milestones.
+2. **Start at `ROADMAP.md` §Current strategy + §Map performance:** **T-066 shipped.** **Active: T-067** spatial chunks. Eden **T-068+**.
 3. **Verify gate** after every phase:
    ```bash
    cd frontend && npm run build && npm run lint
@@ -358,15 +358,11 @@ These resolve ambiguities from earlier drafts. **Do not re-litigate without user
 
 ---
 
-## ACTIVE SLICE — T-066 worker offload (then T-067 spatial chunks)
+## ACTIVE SLICE — T-067 spatial chunks
 
-**T-065 shipped** — cluster/LOD @ extreme zoom; spec: [`t065_cluster_lod.md`](t065_cluster_lod.md). `ZOOM_CLUSTER_MAX = -4`; default `-2` detail @ ~160 fps @ 367k.
+**T-066 shipped** — spec: [`t066_worker_compile.md`](t066_worker_compile.md). Worker + Comlink client; **T-066.1** `pickMapSnapshot` hotfix. Manual @ ~367k: Save **201** (user verified).
 
-**T-064 shipped** (`8838e58`) — virtualized outliner; spec: [`t064_virtualized_outliner.md`](t064_virtualized_outliner.md).
-
-**T-063 shipped** — rbush spatial index; spec: [`t063_spatial_index.md`](t063_spatial_index.md).
-
-**Next:** T-066 worker → T-067 spatial chunks. **Eden T-068+** after scale milestones.
+**Next:** T-067 spatial chunks (spec pending). **Eden T-068+** after scale milestones.
 
 ---
 

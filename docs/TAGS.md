@@ -50,7 +50,8 @@ Supporting docs use **descriptive snake_case** filenames (no numeric prefixes): 
 | **T-063** | Spatial index — rbush pick/marquee (**shipped**) | [`t063_spatial_index.md`](../Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md) |
 | **T-064** ✅ | Scale program | Virtualized outliner @ ~367k — **shipped** | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
 | **T-065** ✅ | Scale program | Cluster/LOD @ extreme zoom — **shipped** | [`t065_cluster_lod.md`](../Design_Docs/Mission_Creator_Architecture/t065_cluster_lod.md) |
-| **T-066..T-067** | Scale program → 1M–10M (**active**) | Worker, chunks | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
+| **T-066** | Scale program | Worker compile + `pickMapSnapshot` — shipped; [`t066_worker_compile.md`](../Design_Docs/Mission_Creator_Architecture/t066_worker_compile.md) |
+| **T-067** | Scale program → 1M–10M (**active**) | Spatial chunks | MC [`ROADMAP.md`](../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance |
 | **T-070+** | Terrain base + sparse deltas (future — millions of map props) | [`t070_terrain_base_mission_layers.md`](../Design_Docs/Mission_Creator_Architecture/t070_terrain_base_mission_layers.md) |
 | **T-051** | Title PATCH sync (**deferred**, not started) | [`t049_track_a_quick_p0.md`](../Design_Docs/Mission_Creator_Architecture/t049_track_a_quick_p0.md) amendment |
 | **FD-0xx** | Frontend deferred work | [`frontend/docs/TRACKING.md`](../frontend/docs/TRACKING.md) |

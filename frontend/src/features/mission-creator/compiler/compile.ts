@@ -6,7 +6,11 @@
 // folders) the backend ignores but the editor reloads losslessly — orbat[] alone has no
 // coordinates. Pure + synchronous (a few hundred entities → sub-ms; no worker needed).
 
-import { getTerrain, yieldToUi, type MapSnapshot } from '@/features/tactical-map'
+// Worker-safe imports (T-066): import from the leaf modules, NOT the `@/features/tactical-map`
+// barrel — the barrel re-exports <TacticalMap> (Deck.gl/React), which throws at module-eval in a
+// Web Worker. `coords/terrains.ts` is pure; `MapSnapshot` is a type-only import (fully erased).
+import { getTerrain } from '@/features/tactical-map/coords/terrains'
+import type { MapSnapshot } from '@/features/tactical-map/state/useMapStore'
 
 export interface OrbatSlot {
   role: string
@@ -217,7 +221,9 @@ export async function buildVersionBlob(
     for (let j = i; j < end; j++) chunk += (j > 0 ? ',' : '') + JSON.stringify(slots[j])
     parts.push(chunk)
     onProgress?.(end, total)
-    await yieldToUi()
+    // Worker-safe yield (T-066): bare macrotask. yieldToUi's rAF paint-gate is meaningless in a
+    // worker (nothing to paint), and `requestAnimationFrame`/`document` aren't defined there.
+    await new Promise((r) => setTimeout(r, 0))
   }
   onProgress?.(total, total)
 

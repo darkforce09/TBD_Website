@@ -119,7 +119,7 @@ Replace the 500-row cap with **real list virtualization** so users can expand an
 
 ## After T-064
 
-- **Active:** **T-065** cluster/LOD — spec [`t065_cluster_lod.md`](t065_cluster_lod.md) (WIP uncommitted, good enough) → T-066 worker → T-067 spatial chunks
+- **Active:** **T-067** spatial chunks (T-066 worker compile shipped — [`t066_worker_compile.md`](t066_worker_compile.md))
 - Eden **T-068+** after scale milestones
 
 ---

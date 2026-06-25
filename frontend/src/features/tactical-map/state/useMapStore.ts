@@ -131,6 +131,25 @@ const EMPTY_SNAPSHOT: MapSnapshot = {
   editorLayersById: {},
 }
 
+/** Copy just the serializable entity-dictionary slice out of the live store (T-066). The full
+ *  MapStoreState extends MapSnapshot but also carries action functions (setSelection,
+ *  _applySnapshot, _patchSlots, reset, …) which structuredClone cannot serialize — passing
+ *  getState() straight to the compiler Web Worker throws DataCloneError. */
+export function pickMapSnapshot(s: MapSnapshot): MapSnapshot {
+  return {
+    meta: s.meta,
+    factionsById: s.factionsById,
+    squadsById: s.squadsById,
+    slotsById: s.slotsById,
+    loadoutsById: s.loadoutsById,
+    itemsById: s.itemsById,
+    objectivesById: s.objectivesById,
+    vehiclesById: s.vehiclesById,
+    markersById: s.markersById,
+    editorLayersById: s.editorLayersById,
+  }
+}
+
 const NO_SELECTION: Selection = { kind: 'none', ids: [] }
 
 export const useMapStore = create<MapStoreState>()((set, get) => ({

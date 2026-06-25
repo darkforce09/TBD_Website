@@ -14,7 +14,7 @@ export type {
 } from './types'
 
 // State foundation (Ultra Plan §2)
-export { useMapStore } from './state/useMapStore'
+export { useMapStore, pickMapSnapshot } from './state/useMapStore'
 export type { MapStoreState, MapSnapshot } from './state/useMapStore'
 export {
   createMissionDoc,

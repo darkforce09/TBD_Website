@@ -9,6 +9,7 @@ import {
   applyMissionRowMeta,
   hydrateMissionDoc,
   hydrateMissionDocWithProgress,
+  pickMapSnapshot,
   useMapStore,
   type MissionDoc,
 } from '@/features/tactical-map'
@@ -29,7 +30,13 @@ import {
 } from './editorSession'
 import { flushSlots, saveSlotsFromDocDebounced } from '../persistence/slotChunkStore'
 import { flushMeta, saveMissionMetaFromDocDebounced } from '../persistence/missionMetaStore'
-import { buildVersionBlob, compileMission, compileMissionWithProgress } from '../compiler/compile'
+// Compile + version-blob assembly run in a Web Worker (T-066); call sites below are unchanged.
+import {
+  buildVersionBlob,
+  compileMission,
+  compileMissionWithProgress,
+  terminateCompiler,
+} from '../compiler/compilerClient'
 import { toMissionExport } from '../compiler/exportSchema'
 import {
   estimateCompiledBytes,
@@ -304,6 +311,11 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
     }
   }, [missionId])
 
+  // Tear down the compiler Web Worker on mission unmount (T-066). The worker is spawned lazily on
+  // the first save/export, so a StrictMode dev double-mount or a route leave before any save is a
+  // safe no-op; getCompiler respawns the singleton on the next save/export.
+  useEffect(() => () => terminateCompiler(), [])
+
   const invalidMissionId = !!missionId && !UUID_RE.test(missionId)
 
   const saveVersion = useCallback(
@@ -315,7 +327,9 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
       if (!missionId || invalidMissionId) return { ok: false, error: NEEDS_REAL_ID }
       // Measure up-front (T-060.1.3) so every progress tick + the debug report carry real bytes.
       const t0 = performance.now()
-      const snapshot = useMapStore.getState()
+      // Pick only the serializable entity dicts (T-066): the full store carries action functions
+      // that structuredClone can't transfer to the compiler Worker (DataCloneError).
+      const snapshot = pickMapSnapshot(useMapStore.getState())
       const slotCount = Object.keys(snapshot.slotsById).length
       const report: SaveDebugReport = {
         phaseAtFailure: 'compiling',
@@ -450,6 +464,11 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
         if (import.meta.env.DEV) console.error('[mission-save] FAILED', { ...report })
         const debug: SaveDebugReport = { ...report }
         if (!resp) {
+          // A non-serializable value reached the compiler Worker (T-066) — structuredClone throws
+          // a DataCloneError, which has no HTTP response. Call it out rather than blaming the network.
+          if (err.message?.includes('could not be cloned')) {
+            return { ok: false, error: 'Worker compile failed: non-serializable state', debug }
+          }
           // No HTTP response: timeout, or a connection drop mid-upload (proxy or direct). Surface
           // axios code + message (e.g. ECONNABORTED, ERR_NETWORK) — full bytes/route in `debug`.
           const detail = [err.code, err.message].filter(Boolean).join(': ')
@@ -476,9 +495,9 @@ export function useMissionEditor(missionId: string | undefined): MissionEditorHa
     [missionId, invalidMissionId, md],
   )
 
-  const exportJson = useCallback(() => {
-    const state = useMapStore.getState()
-    const payload = compileMission(state)
+  const exportJson = useCallback(async () => {
+    const state = pickMapSnapshot(useMapStore.getState()) // function-free for the Worker (T-066)
+    const payload = await compileMission(state) // worker compile (T-066)
     const doc = toMissionExport(state.meta, payload, currentSemver ?? '0.1.0')
     const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)

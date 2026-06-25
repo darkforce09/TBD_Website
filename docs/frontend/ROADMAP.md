@@ -36,7 +36,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
 | `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-065..T-067 scale active; Eden T-068+ |
+| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-066 shipped; active T-067; Eden T-068+ |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
 | `/events/:id/missions/:emid/orbat` | [event-hub.md § ORBAT deep-link](../../frontend/docs/pages/event-hub.md) | |
@@ -94,7 +94,7 @@ Full table: [`frontend/docs/TRACKING.md`](../../frontend/docs/TRACKING.md).
 
 ## Recommended next work
 
-1. **Mission Creator — T-065 cluster/LOD** (MC [ROADMAP](../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Map performance; WIP uncommitted [`t065_cluster_lod.md`](../../Design_Docs/Mission_Creator_Architecture/t065_cluster_lod.md); ~~T-064~~ ✅ [`t064_virtualized_outliner.md`](../../Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md)) → **T-066..T-067** → Eden **T-068+** → **T-070+** terrain base.
+1. **Mission Creator — T-067 spatial chunks** (active; ~~T-066~~ ✅ worker compile — [`t066_worker_compile.md`](../../Design_Docs/Mission_Creator_Architecture/t066_worker_compile.md)) → Eden **T-068+**
 2. **Mission editor Track A Phase 2+** — map tiles (A-01), DEM (A-03) — **deferred until Eden P0–P2**
 3. **FD-008** — wiki markdown (low risk, high UX)
 4. **FD-001** — when backend exposes server/RCON endpoints
