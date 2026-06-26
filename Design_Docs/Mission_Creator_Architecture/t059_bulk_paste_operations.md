@@ -160,4 +160,4 @@ items d/e (design preserved above).
 
 ## After T-059
 
-**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **T-062** ✅. **T-062.2** ✅. **T-062.1** ✅. **T-062.1.1** ✅. **T-063** ✅. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+.**
+**T-060.1.4:** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **T-062** ✅. **T-062.2** ✅. **T-062.1** ✅. **T-062.1.1** ✅. **T-063** ✅. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **T-067** ✅ spatial chunks — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+**.

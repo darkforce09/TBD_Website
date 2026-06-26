@@ -21,18 +21,17 @@ Left and right panels are **docked flush** to the viewport edges; the map fills 
 ├──────────┬──────────────────────────────────────┬───────────┤
 │ Left     │         TacticalMap                  │ Right     │
 │ w-64     │         ml-64 mr-80                  │ w-80      │
-│ ORBAT +  │         topo + grid overlay          │ Asset     │
+│ Editor   │         topo + grid overlay          │ Asset     │
 │ Layers   │         [BottomToolbelt in map area] │ Palette   │
 └──────────┴──────────────────────────────────────┴───────────┘
 ```
 
-- **Left sidebar (`w-64` / 256px):** one scroll with **ORBAT** (Factions→Squads→Slots) on top and
-  **Editor Layers** (workflow folders) below; stub sections for Waypoints / Zones / Logic until Phase 8.
+- **Left sidebar (`w-64` / 256px):** **Editor Layers** (workflow folders) only — select, reparent, drag slots between folders. **ORBAT Manager** modal (Top Command Strip, **T-071**) replaces the duplicate Faction→Squad→Slot tree that lived above Editor Layers. Stub sections for Waypoints / Zones / Logic until Phase 8. *Live today (pre-T-071):* one virtualized scroll still renders ORBAT + Editor Layers (T-064).
 - **Right Asset Palette (`w-80` / 320px):** **always visible** — never swaps to an inspector.
   Tabs (Factions / Vehicles / Markers / Objectives); 2-col grid cards drill down into an
   Eden-style nested tree (Men → Rifleman). Drag a leaf onto the map to place it.
 - **Top Command Strip:** mission title (inline edit), File/Edit/View/Mission/Environment menu stubs,
-  Eden-style **time slider/scrub** + weather, Undo/Redo, Export (disabled until Phase 9), settings gear.
+  Eden-style **time slider/scrub** + weather, Undo/Redo, **ORBAT Manager** (**T-071**), Export (disabled until Phase 9), settings gear.
 - **Bottom Toolbelt:** Select / Ruler / LoS + live X/Y/Z readout + **OBJ/SEL entity counts** (T-058) in JetBrains Mono, centered in the map area.
 - **Attributes Modal:** opens on **double-click** of a single entity (Transform / Identity / States / Arsenal tabs).
 
@@ -67,7 +66,8 @@ Left and right panels are **docked flush** to the viewport edges; the map fills 
 |-------|----------|
 | **Visual target** | **Arma 3 Eden Editor** layout + interactions, **modernized with Aegis glass** (macOS). Not HTML mockups. |
 | **Platform chrome** | **Hide** platform `Sidebar` + `TopNav` on `/missions/:id/edit` — true fullscreen Eden-style editor (dedicated layout escape in `AppLayout` or editor wrapper). |
-| **Left sidebar** | **Both sections visible** in one scroll: **ORBAT** (Factions→Squads→Slots) on top, **Editor Layers** (workflow folders) below. Stub sections for Waypoints/Zones/Logic until Phase 8. |
+| **Left sidebar** | **Editor Layers only** in the left scroll (**T-071**). No duplicate ORBAT tree on the left. *Until T-071 ships:* both ORBAT + Editor Layers remain (T-064). |
+| **ORBAT Manager** (T-071) | Modal from Top Command Strip — all-side faction/squad/slot authoring, Event slotting order, standardizations, logos, arsenal. |
 | **Right palette** | **Docked flush right** — mirror left sidebar (~`w-80` / 320px), full height below top bar, no floating gap. Map sits between two glass panels. |
 | **Inspector** | Asset Palette always visible. **Attributes modal on double-click only** (no right-panel inspector swap). |
 | **Map pan** | **Middle-mouse or right-drag** = pan/zoom. **Left-drag on empty map** = marquee box-select. |

@@ -89,7 +89,7 @@ const snapshot = pickMapSnapshot(useMapStore.getState())
 
 ## After T-066 ship
 
-- **Active:** T-067 — [`t067_spatial_chunks.md`](t067_spatial_chunks.md) (**spec ready**; T-067.0 code pending)
+- **T-067** ✅ shipped — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Next:** Eden **T-068+**
 - Eden **T-068+**
 
 ---

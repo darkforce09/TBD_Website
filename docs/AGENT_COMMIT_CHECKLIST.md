@@ -64,7 +64,7 @@ If the registry row has a `spec`, read it before editing code.
 | Eden UI parity | `eden/gap_analysis.md` + `eden/ui_anatomy.md` |
 | Shipped git milestone | Registry `shipped` + sync + §Status + MC ROADMAP + frontend ROADMAP + mission-editor + gap_analysis + feature_inventory + agent_execution as applicable |
 
-Shell **T-033–T-040** shipped. Scale program **T-057–T-066** shipped. **Active: T-067.0** — [`t067_spatial_chunks.md`](../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md). Next: **T-068+** per [`TICKET_LEAD.md`](TICKET_LEAD.md).
+Shell **T-033–T-040** shipped. Scale program **T-057–T-067** shipped. Next: **T-068+** per [`TICKET_LEAD.md`](TICKET_LEAD.md).
 
 ### Mission Creator slice workflow
 

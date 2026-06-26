@@ -97,6 +97,13 @@ export interface MapStoreState extends MapSnapshot {
     squadPatches: Record<ID, Squad>,
     layerPatches: Record<ID, EditorLayer>,
   ) => void
+  /** Bindings fast path (T-067.0): O(k) add many slots (bulk paste). Mirrors _patchAddSlot but
+   *  loops, so a ≤10k paste applies in-place without a full ~360k snapshot rebuild. */
+  _patchAddSlotsBulk: (
+    slots: Slot[],
+    squadPatches: Record<ID, Squad>,
+    layerPatches: Record<ID, EditorLayer>,
+  ) => void
   /** Bindings fast path (T-062.0): O(k) remove slots (Delete). Drops the ids from slotsById,
    *  merges changed squads/layers, and removes the icons. */
   _patchRemoveSlots: (
@@ -199,6 +206,23 @@ export const useMapStore = create<MapStoreState>()((set, get) => ({
         : s.editorLayersById,
     })
     slotIconCache.append([slot], get().selection)
+    set({ iconCacheVersion: slotIconCache.getVersion() })
+  },
+  _patchAddSlotsBulk: (slots, squadPatches, layerPatches) => {
+    const s = get()
+    // In-place inserts — leaves the slotsById ref unchanged (no O(n) spread of ~360k keys).
+    for (const slot of slots) s.slotsById[slot.id] = slot
+    set({
+      slotCount: s.slotCount + slots.length,
+      slotsRevision: s.slotsRevision + 1,
+      squadsById: Object.keys(squadPatches).length
+        ? { ...s.squadsById, ...squadPatches }
+        : s.squadsById,
+      editorLayersById: Object.keys(layerPatches).length
+        ? { ...s.editorLayersById, ...layerPatches }
+        : s.editorLayersById,
+    })
+    slotIconCache.append(slots, get().selection)
     set({ iconCacheVersion: slotIconCache.getVersion() })
   },
   _patchRemoveSlots: (ids, squadPatches, layerPatches) => {

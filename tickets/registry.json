@@ -850,7 +850,7 @@
       "id": "T-067",
       "order": 670,
       "program": "scale",
-      "status": "ready",
+      "status": "shipped",
       "surfaces": [
         "MAP",
         "DATA"
@@ -860,13 +860,13 @@
         "state"
       ],
       "title": "Spatial chunks",
-      "summary": "Viewport IconLayer cull and bulk-paste patch; lazy RAM @ 1M slice.",
+      "summary": "Bulk-paste slot-add-bulk patch; chunk bucket scaffolding; CPU viewport cull deferred (T-067.0.1 revert). Lazy RAM + GPU cull follow-on.",
       "spec": "Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md",
       "slices": [
         "T-067.0",
+        "T-067.0.1",
         "T-067.1"
       ],
-      "active_slice": "T-067.0",
       "unblocks": [
         "T-068"
       ],
@@ -951,18 +951,35 @@
       "program": "eden",
       "status": "queued",
       "surfaces": [
-        "LEFT",
-        "ORBAT"
+        "TOP",
+        "ORBAT",
+        "ATTR"
       ],
       "impact": [
         "ui",
-        "state"
+        "state",
+        "schema",
+        "compiler"
       ],
-      "title": "ORBAT authoring UI",
-      "summary": "Author squads and slots in left ORBAT panel.",
+      "title": "ORBAT Manager modal",
+      "summary": "Remove duplicate ORBAT tree from left sidebar; open ORBAT Manager modal for all-side faction/squad/slot authoring, slotting-screen order, standardizations, logos, and arsenal.",
+      "slices": [
+        "T-071.0",
+        "T-071.1",
+        "T-071.2",
+        "T-071.3",
+        "T-071.4"
+      ],
       "depends_on": [
         "T-068"
       ],
+      "implements": [
+        "LEFT-ORBAT-001",
+        "CONN-GROUP-001",
+        "API-ORBAT-001",
+        "ATTR-TAB-004"
+      ],
+      "user_story": "As a mission maker I open ORBAT Manager once to configure all factions, squads, kits, and slotting order without hunting the same slots in two left trees.",
       "route": "/missions/:id/edit",
       "branch": "ticket/T-071"
     },

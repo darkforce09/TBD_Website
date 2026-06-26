@@ -88,7 +88,7 @@ Replace Deck GPU picking with an **rbush** R-tree in world meters, kept in sync 
 
 ## After T-063
 
-- **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile — [`t066_worker_compile.md`](t066_worker_compile.md). **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)
+- **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile — [`t066_worker_compile.md`](t066_worker_compile.md). **T-067** ✅ — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+**
 - Eden **T-068+** after scale milestones
 
 ---

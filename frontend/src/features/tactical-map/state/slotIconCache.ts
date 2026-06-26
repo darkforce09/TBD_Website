@@ -19,9 +19,12 @@
 
 import type { ID, Selection, Slot } from './schema'
 import type { SlotIcon } from './selectors'
+import type { TerrainDef } from '../coords/terrains'
+import { getTerrain } from '../coords/terrains'
 import * as spatialIndex from './slotSpatialIndex'
 import * as clusterIndex from './slotClusterIndex'
 import { CLUSTER_SLOT_THRESHOLD } from './constants'
+import { chunkColRow, chunkKey, chunkRectForBbox, terrainChunkCols } from './spatialChunks'
 
 let dense: SlotIcon[] = []
 const index = new Map<ID, number>() // id -> position in `dense`
@@ -30,6 +33,63 @@ const excluded = new Map<ID, SlotIcon>() // ids lifted out of `dense` during a d
 let version = 0
 let view: SlotIcon[] = []
 let viewVersion = -1
+
+// Viewport cull (T-067.0): geographic chunk membership for getBaseIconsForBbox. `chunkBuckets`
+// maps a 512m chunk key → the dense SlotIcon objects sitting in it (reused, not copied — a
+// position patch mutates the shared object in place); `iconChunk` is the id → current chunk so a
+// move/remove is O(1). Maintained in every dense mutator below (kept out of the `excluded` map:
+// a dragged icon leaves its bucket so the culled base layer can't ghost it under the drag
+// overlay). `cullView`/`lastCullSig` cache the last culled array so an intra-chunk pan returns the
+// same reference and Deck never re-packs (the ~160 fps contract). Default terrain = Everon (same
+// default the store/view open with) so a prime that runs before setChunkTerrain still buckets.
+let cullTerrain: TerrainDef = getTerrain()
+const chunkBuckets = new Map<number, Set<SlotIcon>>()
+const iconChunk = new Map<ID, number>()
+let cullView: SlotIcon[] = []
+let lastCullSig = ''
+
+function bucketAdd(icon: SlotIcon): void {
+  const [cx, cy] = chunkColRow(icon.x, icon.y, cullTerrain)
+  const key = chunkKey(cx, cy, terrainChunkCols(cullTerrain))
+  iconChunk.set(icon.id, key)
+  let set = chunkBuckets.get(key)
+  if (!set) chunkBuckets.set(key, (set = new Set()))
+  set.add(icon)
+}
+
+function bucketRemove(icon: SlotIcon): void {
+  const key = iconChunk.get(icon.id)
+  if (key !== undefined) chunkBuckets.get(key)?.delete(icon)
+  iconChunk.delete(icon.id)
+}
+
+/** Re-home a dense icon whose x/y just changed; no-op when it didn't cross a chunk boundary. */
+function bucketMove(icon: SlotIcon): void {
+  const [cx, cy] = chunkColRow(icon.x, icon.y, cullTerrain)
+  const next = chunkKey(cx, cy, terrainChunkCols(cullTerrain))
+  const prev = iconChunk.get(icon.id)
+  if (prev === next) return
+  if (prev !== undefined) chunkBuckets.get(prev)?.delete(icon)
+  iconChunk.set(icon.id, next)
+  let set = chunkBuckets.get(next)
+  if (!set) chunkBuckets.set(next, (set = new Set()))
+  set.add(icon)
+}
+
+function rebuildBuckets(): void {
+  chunkBuckets.clear()
+  iconChunk.clear()
+  for (const icon of dense) bucketAdd(icon)
+  lastCullSig = '' // buckets changed without a version-bearing edit → force next cull recompute
+}
+
+/** Align the chunk grid to the active terrain (mirrors slotClusterIndex.setTerrain). Rebuilds
+ *  buckets when the column count changes so keys stay valid (Everon 25 cols vs Arland 20). */
+export function setChunkTerrain(terrain: TerrainDef): void {
+  if (terrain === cullTerrain) return
+  cullTerrain = terrain
+  rebuildBuckets()
+}
 
 function bump(): void {
   version++
@@ -60,6 +120,7 @@ export function rebuildFromSlots(slotsById: Record<ID, Slot>, selection: Selecti
   // otherwise so switching from a large to a small mission leaves no stale points.
   if (dense.length > CLUSTER_SLOT_THRESHOLD) clusterIndex.rebuild(dense)
   else clusterIndex.clear()
+  rebuildBuckets() // T-067.0: chunk membership for the viewport cull
   bump()
 }
 
@@ -80,6 +141,7 @@ export function append(slots: Slot[], selection: Selection): void {
     }
     dense.push(icon)
     added.push(icon)
+    bucketAdd(icon) // T-067.0: chunk membership for the viewport cull
   }
   spatialIndex.insert(added)
   // Cluster index (T-065.1): only when large. If this append crossed the threshold, the earlier
@@ -98,6 +160,7 @@ export function remove(ids: ID[]): void {
   for (const id of ids) {
     const i = index.get(id)
     if (i === undefined) continue
+    bucketRemove(dense[i]) // T-067.0: drop from chunk membership before the swap-pop
     const last = dense.length - 1
     if (i !== last) {
       const moved = dense[last]
@@ -118,6 +181,7 @@ export function exclude(ids: ID[]): void {
     const i = index.get(id)
     if (i === undefined) continue
     const icon = dense[i]
+    bucketRemove(icon) // T-067.0: a dragged icon leaves its bucket (overlay layer renders it)
     const last = dense.length - 1
     if (i !== last) {
       const moved = dense[last]
@@ -140,6 +204,7 @@ export function restore(ids: ID[]): void {
     if (index.has(id)) continue // defensive: already present
     index.set(id, dense.length)
     dense.push(icon)
+    bucketAdd(icon) // T-067.0: re-home into its (patched-position) chunk
   }
   bump()
 }
@@ -148,11 +213,13 @@ export function restore(ids: ID[]): void {
 export function patchPositions(ids: ID[], delta: { dx: number; dy: number }): void {
   const patches: Record<ID, { x: number; y: number }> = {}
   for (const id of ids) {
-    const icon = excluded.get(id) ?? denseIcon(id)
+    const ex = excluded.get(id)
+    const icon = ex ?? denseIcon(id)
     if (!icon) continue
     icon.x += delta.dx
     icon.y += delta.dy
     patches[id] = { x: icon.x, y: icon.y }
+    if (!ex) bucketMove(icon) // T-067.0: re-home a dense icon if it crossed a chunk seam
   }
   spatialIndex.updatePositions(patches)
   if (dense.length > CLUSTER_SLOT_THRESHOLD) clusterIndex.updatePositions(patches)
@@ -162,10 +229,12 @@ export function patchPositions(ids: ID[], delta: { dx: number; dy: number }): vo
 /** O(k) absolute set — bindings fast path; idempotent vs the relative optimistic patch. */
 export function setPositions(patches: Record<ID, { x: number; y: number }>): void {
   for (const id in patches) {
-    const icon = excluded.get(id) ?? denseIcon(id)
+    const ex = excluded.get(id)
+    const icon = ex ?? denseIcon(id)
     if (!icon) continue
     icon.x = patches[id].x
     icon.y = patches[id].y
+    if (!ex) bucketMove(icon) // T-067.0: re-home a dense icon if it crossed a chunk seam
   }
   spatialIndex.updatePositions(patches)
   if (dense.length > CLUSTER_SLOT_THRESHOLD) clusterIndex.updatePositions(patches)
@@ -206,9 +275,58 @@ export function clearSlotIconCache(): void {
   excluded.clear()
   view = []
   viewVersion = -1
+  chunkBuckets.clear()
+  iconChunk.clear()
+  cullView = []
+  lastCullSig = ''
   spatialIndex.clear()
   clusterIndex.clear()
   bump()
+}
+
+/** Viewport-culled base-layer data (T-067.0). Chunk-rect variant — preferred at runtime so the
+ *  layer hook can key on a stable `cx0,cy0,cx1,cy1` signature instead of a fresh bbox array each
+ *  pan frame (T-067.0.1 pan-stability fix). */
+export function getBaseIconsForChunkRect(
+  cx0: number,
+  cy0: number,
+  cx1: number,
+  cy1: number,
+  extraIds: Set<ID>,
+): SlotIcon[] {
+  const sig = `${version}|${cx0},${cy0},${cx1},${cy1}`
+  if (sig === lastCullSig) return cullView
+
+  const cols = terrainChunkCols(cullTerrain)
+  const out: SlotIcon[] = []
+  for (let cy = cy0; cy <= cy1; cy++) {
+    for (let cx = cx0; cx <= cx1; cx++) {
+      const set = chunkBuckets.get(chunkKey(cx, cy, cols))
+      if (set) for (const icon of set) out.push(icon)
+    }
+  }
+  for (const id of extraIds) {
+    const key = iconChunk.get(id)
+    if (key === undefined) continue
+    const cx = key % cols
+    const cy = (key - cx) / cols
+    if (cx >= cx0 && cx <= cx1 && cy >= cy0 && cy <= cy1) continue
+    const icon = denseIcon(id)
+    if (icon) out.push(icon)
+  }
+
+  cullView = out
+  lastCullSig = sig
+  return cullView
+}
+
+/** Viewport-culled base-layer data (T-067.0). Bbox wrapper — derives chunk rect then delegates. */
+export function getBaseIconsForBbox(
+  bbox: [number, number, number, number],
+  extraIds: Set<ID>,
+): SlotIcon[] {
+  const [cx0, cy0, cx1, cy1] = chunkRectForBbox(bbox, cullTerrain, 0)
+  return getBaseIconsForChunkRect(cx0, cy0, cx1, cy1, extraIds)
 }
 
 /** Selected icons only (T-065) — the cluster-mode detail layer renders these over the cluster

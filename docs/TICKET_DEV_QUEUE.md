@@ -4,9 +4,3 @@
 # Developer Queue
 
 Only `ready` tickets with specs.
-
-## T-067 — Spatial chunks
-
-- **Spec:** `Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md`
-- **Branch:** `ticket/T-067`
-- **Summary:** Viewport IconLayer cull and bulk-paste patch; lazy RAM @ 1M slice.

@@ -17,6 +17,7 @@ import { useSelectTool } from './tools/useSelectTool'
 import { MapContextProvider, createMapContextValue } from './context/MapContext'
 import * as slotSpatialIndex from './state/slotSpatialIndex'
 import * as slotClusterIndex from './state/slotClusterIndex'
+import * as slotIconCache from './state/slotIconCache'
 import { useMapStore } from './state/useMapStore'
 import { ZOOM_CLUSTER_MAX, CLUSTER_SLOT_THRESHOLD } from './state/constants'
 import { ASSET_DND_MIME, type AssetDropPayload, type MapViewState, type TacticalMapProps } from './types'
@@ -56,9 +57,10 @@ function TacticalMapInner({
   // same data reference and the layer is not rebuilt per frame.
   const clusterLayers = useClusterIconLayer({ clusterMode, deckZoom: viewState.zoom })
 
-  // Keep the cluster index's normalization window aligned with the active terrain.
+  // Keep the cluster index's normalization window + the cull chunk grid aligned with the terrain.
   useEffect(() => {
     slotClusterIndex.setTerrain(terrain)
+    slotIconCache.setChunkTerrain(terrain)
   }, [terrain])
 
   // Cluster drill-in (T-065): recenter on a cluster centroid and zoom one step closer.

@@ -62,6 +62,15 @@ const ICON_MAPPING = {
 // T-065: in cluster mode (`detail === false`) the cluster layers cover the bulk of the slots, so
 // the base IconLayer renders ONLY the current selection (highlighted, over the bubbles). `detail`
 // is a derived boolean — the layer rebuilds only when the mode flips, never per zoom tick.
+//
+// T-067.0.1: viewport CPU-cull reverted. `getBaseIcons()` returns a cached array whose identity is
+// stable across pan frames (only the version moves it), so Deck uploads the icon attributes once and
+// never re-packs while panning — the pre-T-067 ~160 fps contract @ ~367k. The earlier chunk-rect cull
+// swapped the IconLayer `data` whenever the viewport crossed a 512m chunk; at zoom -2 a normal drag
+// crosses several chunks PER FRAME (high m/px) and the populated area is fully in view, so it re-packed
+// ~360k attributes every frame (165→21 fps) for zero benefit. True render scaling for the 1M+ north
+// star wants GPU-side culling (DataFilterExtension: one stable buffer, viewport bounds as a uniform)
+// or clustering/residency — a separate slice; the slotIconCache chunk machinery stays in place for it.
 export function useIconLayer({
   detail,
   selection,
@@ -70,8 +79,8 @@ export function useIconLayer({
   selection: Selection
 }): IconLayer<SlotIcon> {
   const iconCacheVersion = useMapStore((s) => s.iconCacheVersion)
-  // Stable array identity across pan frames: getBaseIcons() returns a cached view per version,
-  // and the selected-only branch only re-derives when the mode/selection/version changes.
+  // Stable array identity across pan frames: getBaseIcons() returns a cached view per version, and the
+  // selected-only branch only re-derives when the mode/selection/version changes.
   const icons = useMemo(
     () =>
       detail

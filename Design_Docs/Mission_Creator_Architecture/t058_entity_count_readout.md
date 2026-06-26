@@ -131,4 +131,4 @@ Re-export: `selectSlotCount` alongside `selectSlotIcons`.
 
 **T-059 (bulk paste/delete):** fix O(n²) spreads, cap selection/outliner after bulk paste, optional chunked paste — **10k paste without hard freeze**. Use **OBJ** to confirm totals. Spec: [`t059_bulk_paste_operations.md`](t059_bulk_paste_operations.md).
 
-**T-060.1.4** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **T-062** ✅. **T-062.2** ✅. **T-062.1** ✅. **T-062.1.1** ✅. **T-063** ✅. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+.**
+**T-060.1.4** Fix mid-upload @ ~135 MB — ✅ (`b1fd25a`). **T-061** ✅. **T-062** ✅. **T-062.2** ✅. **T-062.1** ✅. **T-062.1.1** ✅. **T-063** ✅. **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **T-067** ✅ spatial chunks — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+**. **Eden T-068+.**

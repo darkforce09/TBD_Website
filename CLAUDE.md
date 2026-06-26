@@ -99,36 +99,35 @@ Do **not** hand-edit generated `docs/TICKET_*.md` or the `<!-- ticket-sync:statu
 ## Status
 
 <!-- ticket-sync:status:start -->
-**Latest shipped:** **T-066**
+**Latest shipped:** **T-067**
 
-**ACTIVE NOW:** **T-067** — T-067.0 (Spatial chunks). Spec: `Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md`.
 
 **Next (by order):**
-- **T-067** — Spatial chunks (`ready`)
 - **T-068** — Asset registry + palette (`queued`)
 - **T-069** — Markers on map (`queued`)
 - **T-070** — Vehicles placeable (`queued`)
-- **T-071** — ORBAT authoring UI (`queued`)
+- **T-071** — ORBAT Manager modal (`queued`)
 - **T-072** — Ctrl multi-place (`queued`)
 - **T-073** — Shift + map rotation (`queued`)
 - **T-074** — Faction submode / catalog filter (`queued`)
 - **T-075** — Spacebar flyTo vs widget (`queued`)
 - **T-076** — Vehicle crew UI (`queued`)
+- **T-077** — Alt + empty vehicle (`queued`)
 <!-- ticket-sync:status:end -->
 
 T-005..T-007 between T-004 and T-008 are documentation/seed only; the status below is current.
 
-### ACTIVE SLICE — T-067 spatial chunks (implement now)
+### ACTIVE SLICE — Eden T-068+ (queue)
 
 | | |
 |---|---|
-| **Tag** | **T-067.0** first (viewport cull + `slot-add-bulk` paste), then **T-067.1** (lazy RAM @ 1M) |
-| **Spec** | [`t067_spatial_chunks.md`](Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md) |
+| **Next** | **T-068** — asset registry + palette per [`docs/TICKET_LEAD.md`](docs/TICKET_LEAD.md) |
 | **Handoff** | [`agent_execution.md`](Design_Docs/Mission_Creator_Architecture/agent_execution.md) §ACTIVE SLICE |
-| **Claude Code** | Read spec → implement **T-067.0** → `npm run build && npm run lint` → return verify notes. **Do not edit docs.** |
-| **Cursor** | Doc sync + git tag **T-067** when human verifies @ repro mission |
+| **Claude Code** | Read registry spec → implement on `ticket/T-0xx` branch → verify → return notes. **Do not edit docs.** |
+| **Cursor** | Registry + narrative doc sync on ship |
 
 **Done (shipped):**
+- T-067 **Mission Creator — spatial chunks / bulk-paste scale**. **`slot-add-bulk`** incremental patch in `incPatchPlan` / `_patchAddSlotsBulk` — O(k) paste ≤10k, no full ~367k snapshot rebuild. Dormant 512m chunk scaffolding in `spatialChunks.ts` + `slotIconCache` chunk buckets. **T-067.0.1:** CPU viewport cull reverted — render path restored to pan-stable `getBaseIcons()` (~160 fps @ 367k zoom -2); CPU array-swap cull deferred (regressed to ~21 fps pan). Lazy RAM (T-067.1) + GPU `DataFilterExtension` cull deferred @ 1M+. Spec: [`t067_spatial_chunks.md`](Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md).
 - T-066 **Mission Creator — worker compile offload (T-066.1 `pickMapSnapshot`)**. Save Version + Export compile in `compiler.worker.ts` via Comlink; `pickMapSnapshot(useMapStore.getState())` strips Zustand actions before postMessage (fixes DataCloneError 25 on raw `getState()`). `terminateCompiler()` on mission unmount. Manual @ ~367k: Save **201**. Spec: [`t066_worker_compile.md`](Design_Docs/Mission_Creator_Architecture/t066_worker_compile.md).
 - T-065 **Mission Creator — cluster/LOD @ extreme zoom**. `supercluster` index (`slotClusterIndex.ts`); pan-stable `getClusterMarkers` full-terrain cache (T-065.2); `ZOOM_CLUSTER_MAX = -4` — default zoom `-2` stays detail @ ~160 fps @ 367k; cluster discs + drill-in only when zoomed out past -4 on missions >500 slots. Spec: [`t065_cluster_lod.md`](Design_Docs/Mission_Creator_Architecture/t065_cluster_lod.md).
 - T-064 **Mission Creator — virtualized outliner @ ~367k**. `@tanstack/react-virtual` + segment-index flatten (`flattenOutliner.ts`, `VirtualOutliner.tsx`, `TreeRow.tsx`); `virtualSlotIds` + `VIRTUAL_SLOT_THRESHOLD=50`; replaces T-059 `OUTLINER_LEAF_CAP`. **T-064.1:** callback-ref `scrollEl` fixes blank outliner until first map selection. Manual @ ~367k: outliner on first paint; scrollable 367k virtual rows; no tab freeze. Spec: [`t064_virtualized_outliner.md`](Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md).
@@ -523,8 +522,9 @@ T-005..T-007 between T-004 and T-008 are documentation/seed only; the status bel
     an invalid-mission-id banner (T-039); the `/missions/create` wizard now sends `max_players`,
     uses the real weather enums, and navigates to `/missions/:id/edit` (T-040).
 
-**After T-067 (not started yet):**
-- **T-068+** — asset registry, markers, vehicles, ORBAT authoring ([`eden/gap_analysis.md`](Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md); queue in [`docs/TICKET_LEAD.md`](docs/TICKET_LEAD.md))
+**Next (Eden — T-068+):**
+- **T-068** — asset registry + palette ([`docs/TICKET_LEAD.md`](docs/TICKET_LEAD.md); [`eden/gap_analysis.md`](Design_Docs/Mission_Creator_Architecture/eden/gap_analysis.md))
+- **T-069+** — markers, vehicles, ORBAT Manager modal, …
 - **T-110** — terrain base + sparse deltas for millions of map props ([`t110_terrain_base_mission_layers.md`](Design_Docs/Mission_Creator_Architecture/t110_terrain_base_mission_layers.md))
 
 Mega render/bindings optimizations **deferred** — MC [`ROADMAP.md`](Design_Docs/Mission_Creator_Architecture/ROADMAP.md) §Deferred mega optimizations (**T-094** typed-array, etc.).

@@ -31,6 +31,7 @@ export const REMOVE_PATCH_CAP = 10_000
 export type PatchPlan =
   | { kind: 'slot-fields'; ids: ID[] }
   | { kind: 'slot-add'; slot: Slot; squads: Record<ID, Squad>; layers: Record<ID, EditorLayer> }
+  | { kind: 'slot-add-bulk'; slots: Slot[]; squads: Record<ID, Squad>; layers: Record<ID, EditorLayer> }
   | { kind: 'slot-remove'; ids: ID[]; squads: Record<ID, Squad>; layers: Record<ID, EditorLayer> }
   | { kind: 'meta'; meta: MissionMeta }
   | { kind: 'editor-layers'; patches: Record<ID, EditorLayer> }
@@ -120,12 +121,29 @@ export function classifyTransaction(
     if (added.length && removed.length) return null // ambiguous mix → safe fallback
 
     if (added.length) {
-      if (added.length !== 1) return null // v1: single addSlot only (bulk paste → full snapshot)
-      const slot = e.slots.get(added[0])?.toJSON() as Slot | undefined
-      if (!slot) return null
+      // Single addSlot (asset drop) — the original T-062.0 fast path.
+      if (added.length === 1) {
+        const slot = e.slots.get(added[0])?.toJSON() as Slot | undefined
+        if (!slot) return null
+        return {
+          kind: 'slot-add',
+          slot,
+          squads: childPatches<Squad>(squadChildren),
+          layers: childPatches<EditorLayer>(layerChildren),
+        }
+      }
+      // Bulk paste (T-067.0): >1 add, already capped at REMOVE_PATCH_CAP by the keys.size guard
+      // above. Gather each new slot once so the store applies an O(k) bulk insert instead of a
+      // full ~360k docToSnapshot rebuild. Any missing slot → safe fallback to the full snapshot.
+      const slots: Slot[] = []
+      for (const id of added) {
+        const slot = e.slots.get(id)?.toJSON() as Slot | undefined
+        if (!slot) return null
+        slots.push(slot)
+      }
       return {
-        kind: 'slot-add',
-        slot,
+        kind: 'slot-add-bulk',
+        slots,
         squads: childPatches<Squad>(squadChildren),
         layers: childPatches<EditorLayer>(layerChildren),
       }

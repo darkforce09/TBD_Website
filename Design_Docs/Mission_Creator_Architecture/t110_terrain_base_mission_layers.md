@@ -1,6 +1,6 @@
 # T-110 — Terrain base + mission layers (future architecture)
 
-**Status:** **future / not started** — do **not** implement before **T-067** + Eden **T-068+** unless product explicitly reprioritizes.
+**Status:** **future / not started** — do **not** implement before Eden **T-068+** unless product explicitly reprioritizes.
 **Git tag on ship:** *(none — not started)*
 **Authority:** [ROADMAP.md](ROADMAP.md) §Map performance · [engineering_plan.md](engineering_plan.md)
 **Relates to:** External “Base + Delta / event sourcing” proposal (2026-06) — **adopt the good parts here**, not as a rewrite of the current Y.Doc mission model.
@@ -74,7 +74,7 @@ flowchart TB
 
 - Keep **Y.Doc** normalized model ([`schema.ts`](../../frontend/src/features/tactical-map/state/schema.ts)).
 - **T-061.0.1 ✅ shipped:** Slot-position fast path in `bindings.ts` + `slotIconCache` (drag @ 360k — good enough).
-- **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)
+- **T-066** ✅ worker compile. **T-067** ✅ — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+**
 - **T-066:** Worker `compileMission` for export/save assembly.
 - **Save payload:** `orbat[]` (backend contract) + compact `editor` patch or full block for missions under ~50k; avoid duplicating orbat in editor block long-term.
 

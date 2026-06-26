@@ -40,6 +40,9 @@ function applyPlan(md: MissionDoc, plan: PatchPlan): void {
     case 'slot-add':
       store._patchAddSlot(plan.slot, plan.squads, plan.layers)
       break
+    case 'slot-add-bulk':
+      store._patchAddSlotsBulk(plan.slots, plan.squads, plan.layers)
+      break
     case 'slot-remove':
       store._patchRemoveSlots(plan.ids, plan.squads, plan.layers)
       break

@@ -77,7 +77,7 @@
 
 | eden_id | tbd_id | parity | ticket | gap_notes |
 |---------|--------|--------|----------|-----------|
-| CONN-GROUP-001 | — | missing | T-071 | ORBAT squad authoring related |
+| CONN-GROUP-001 | — | missing | T-071 | ORBAT squad authoring in ORBAT Manager modal |
 | CONN-SYNC-001 | XFORM-SYNC-001 | missing | — | Entity sync |
 | CONN-TRG-OWNER-001 | — | missing | — | Triggers |
 | CONN-WP-ACT-001 | — | missing | — | Waypoints |
@@ -85,7 +85,7 @@
 | CREW-PANEL-001 | — | missing | T-076 | Hover crew list |
 | CREW-BOARD-001 | — | missing | T-076 | Drag into vehicle |
 | CREW-SEAT-001 | — | missing | — | Change seat RMB |
-| SEL-GROUP-ICON-001 | LEFT-ORBAT-001 | partial | T-071 | ORBAT read-only |
+| SEL-GROUP-ICON-001 | LEFT-ORBAT-001 | partial | T-071 | Left ORBAT read-only until T-071 removes duplicate; full authoring in modal |
 
 ---
 

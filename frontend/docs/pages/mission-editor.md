@@ -20,7 +20,7 @@
 |---|---------|------|----------------|---------|-------------|
 | 1 | Map viewport | canvas | Tactical grid + entities | Primary editor surface | Y.Doc + Deck.gl |
 | 2 | Top strip | bar | Title, undo/redo, time/weather scrubber, settings, Export | Command chrome; Undo/Redo buttons + **keyboard shortcuts** (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Ctrl+Y) (T-052) | Mission metadata |
-| 3 | Left dock | panel | ORBAT tree + Editor Layers | Outliner / drop target | `editorLayers` map |
+| 3 | Left dock | panel | Editor Layers (+ ORBAT tree until **T-071** removes duplicate) | Outliner / drop target | `editorLayers` map |
 | 4 | Right dock | panel | Asset Palette tabs + **Asset Browser search** | Drag assets to map; **search filters the Factions tree by name** (T-055) | Mock catalog (registry pending) |
 | 5 | Toolbelt | bar | Select, Ruler, LoS + X/Y/Z readout + **OBJ/SEL counts** (T-058) | Map tools; CUR/SEL coords; **OBJ** = total slots, **SEL** = selected count | Tool state + `slotsById` + selection |
 | 6 | Inspector | panel | Slot fields on double-click | `AttributesModal` opens from **map dbl-click**, **ORBAT** slot row, or **Editor Layers** slot row (T-054); **Transform X/Y/Z/rotation editable** (T-049) | Selected slot |
@@ -91,8 +91,8 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 ### M4.21 — [x] T-063 spatial index (rbush pick/marquee @ ~367k — spec: [t063_spatial_index.md](../../../Design_Docs/Mission_Creator_Architecture/t063_spatial_index.md))
 ### M4.22 — [x] T-064 virtualized outliner @ ~367k (incl. T-064.1 scroll-ref hotfix — spec: [t064_virtualized_outliner.md](../../../Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md))
 ### M5.23 — [x] T-066 worker compile offload + `pickMapSnapshot` (Save 201 @ ~367k — spec: [t066_worker_compile.md](../../../Design_Docs/Mission_Creator_Architecture/t066_worker_compile.md))
-### M5.24 — [ ] T-067.0 spatial chunks — viewport cull + bulk paste (spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md))
-### M5.25 — [ ] T-067.1 lazy chunk residency @ 1M+ (spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md) §T-067.1)
+### M5.24 — [x] T-067 spatial chunks — bulk-paste `slot-add-bulk` + chunk scaffolding; CPU viewport cull deferred (T-067.0.1 revert to `getBaseIcons()` @ ~160 fps pan @ 367k) — spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md)
+### M5.25 — [ ] T-067.1 lazy chunk residency @ 1M+ / GPU viewport cull (deferred — spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md) §Deferred)
 
 ## Test Plan
 
@@ -112,6 +112,6 @@ Undo/redo applies to **session edits only** (drop, drag, delete, title/env chang
 - **[PERF-006] Incremental bindings @ 360k** — **Resolved T-062.** Spec: [t062_incremental_bindings.md](../../../Design_Docs/Mission_Creator_Architecture/t062_incremental_bindings.md).
 - **[PERF-007] Alt-tab / session reload @ 360k** — **Resolved T-062.2.** Extended alt-tab (Firefox dev) no longer re-triggers full load overlay; warm session skips server GET on same-tab return. Spec: [t062_2_editor_session_persistence.md](../../../Design_Docs/Mission_Creator_Architecture/t062_2_editor_session_persistence.md).
 - **[PERF-008] Outliner @ 360k** — **Resolved T-064.** Virtualized ORBAT + Editor Layers; outliner visible on first paint @ ~367k; scrollable 367k rows; T-064.1 scroll-ref hotfix. Spec: [t064_virtualized_outliner.md](../../../Design_Docs/Mission_Creator_Architecture/t064_virtualized_outliner.md).
-- **[PERF-009] Spatial chunks @ 367k+ / 1M path** — **Active T-067.** Spec ready: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md). T-067.0: viewport IconLayer cull + bulk-paste incremental patch; T-067.1: lazy RAM. Claude Code implements from spec only.
-- **Active slice:** **T-067** (spatial chunks — T-067.0 viewport cull + bulk paste; T-067.1 lazy RAM @ 1M). Spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md). Queue: [TICKET_LEAD.md](../../../docs/TICKET_LEAD.md).
-- **Next queued (T-068+):** T-068 asset registry + palette, T-069 markers, T-070 vehicles, T-071 ORBAT authoring — see [Mission Creator ROADMAP](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) and [TICKET_REGISTRY.md](../../../docs/TICKET_REGISTRY.md).
+- **[PERF-009] Spatial chunks / bulk paste @ 367k+** — **Partially resolved T-067.** Bulk paste `slot-add-bulk` shipped; pan ~160 fps @ 367k (CPU cull deferred). Lazy RAM + GPU cull @ 1M+ deferred. Spec: [t067_spatial_chunks.md](../../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md).
+- **Active slice:** **T-068+** Eden backlog — see [TICKET_LEAD.md](../../../docs/TICKET_LEAD.md).
+- **Next queued (T-068+):** T-068 asset registry + palette, T-069 markers, T-070 vehicles, T-071 ORBAT Manager modal — see [Mission Creator ROADMAP](../../../Design_Docs/Mission_Creator_Architecture/ROADMAP.md) and [TICKET_REGISTRY.md](../../../docs/TICKET_REGISTRY.md).

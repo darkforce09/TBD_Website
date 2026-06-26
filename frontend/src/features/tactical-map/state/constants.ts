@@ -15,3 +15,10 @@ export const ZOOM_CLUSTER_MAX = -4
  *  show individual icons even when zoomed out. Matches BULK_SELECT_CAP (500) in
  *  MissionCreatorPage, NOT the outliner's VIRTUAL_SLOT_THRESHOLD (50, T-064). */
 export const CLUSTER_SLOT_THRESHOLD = 500
+
+/** Above this placed-slot count the detail IconLayer culls to the visible 512m chunks + halo +
+ *  selection (T-067.0, slotIconCache.getBaseIconsForBbox) instead of feeding Deck every icon via
+ *  getBaseIcons(). Below it the all-icons path is unchanged — small/medium missions never pay the
+ *  bbox/chunk bookkeeping. Well above CLUSTER_SLOT_THRESHOLD: clustering only kicks in at extreme
+ *  zoom-out (ZOOM_CLUSTER_MAX), so the cull is what keeps the 50k–1M detail band affordable. */
+export const CHUNK_CULL_THRESHOLD = 50_000

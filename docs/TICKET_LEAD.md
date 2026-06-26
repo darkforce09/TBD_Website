@@ -8,14 +8,13 @@
 
 ## Ready
 
-- **T-067** (670) — Spatial chunks [ready] — Viewport IconLayer cull and bulk-paste patch; lazy RAM @ 1M slice.
 
 ## Next queued (top 10)
 
 - **T-068** (680) — Asset registry + palette [queued] — Replace mock catalog with registry-backed Factions tree.
 - **T-069** (690) — Markers on map [queued] — Place and edit map markers with registry-backed types.
 - **T-070** (700) — Vehicles placeable [queued] — Drag vehicles from palette onto map with crew hooks.
-- **T-071** (710) — ORBAT authoring UI [queued] — Author squads and slots in left ORBAT panel.
+- **T-071** (710) — ORBAT Manager modal [queued] — Remove duplicate ORBAT tree from left sidebar; open ORBAT Manager modal for all-side faction/squad/slot authoring, slotting-screen order, standardizations, logos, and arsenal.
 - **T-072** (720) — Ctrl multi-place [queued] — Hold Ctrl to place multiple copies without re-selecting asset.
 - **T-073** (730) — Shift + map rotation [queued] — Shift-drag and map rotation widget for placed entities.
 - **T-074** (740) — Faction submode / catalog filter [queued] — Faction submode tabs and catalog filtering in asset browser.

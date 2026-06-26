@@ -89,7 +89,7 @@ Dual IconLayer + split drag state + rAF-coalesced delta. Fixed sustained 5–10 
 
 - ~~**T-062** incremental bindings~~ ✅ — spec [`t062_incremental_bindings.md`](t062_incremental_bindings.md)
 - ~~**T-062.2** editor session~~ ✅ — spec [`t062_2_editor_session_persistence.md`](t062_2_editor_session_persistence.md)
-- **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile — [`t066_worker_compile.md`](t066_worker_compile.md). **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)
+- **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile — [`t066_worker_compile.md`](t066_worker_compile.md). **T-067** ✅ — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+**
 - **Stretch:** ~~**T-062.1** IDB streaming~~ ✅
 - **Deferred mega optimizations** — [ROADMAP.md](ROADMAP.md) §Deferred mega optimizations (T-061.1 typed-array, release repack collapse, T-066 worker, T-110 terrain, 1M–10M stretch)
 

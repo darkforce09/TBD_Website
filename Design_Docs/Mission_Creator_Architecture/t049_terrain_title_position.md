@@ -16,7 +16,7 @@ Ship the **code-only** flat-grid slice — no map tiles (**T-090**), no DEM (**T
 | **TOP-TITLE-001** | `TOP-TITLE-001` / `DATA-HYD-TITLE-001` | Hydrate mission row `title` into `meta.title` on editor load |
 | **ATTR-FIELD-OBJ-POSITION** | `ATTR-FIELD-OBJ-POSITION` | Editable **X, Y, Z, rotation** on Transform tab; map icon stays in sync |
 
-**Out of scope for T-049:** T-068 registry, T-069 markers, T-070 vehicles, T-071 ORBAT authoring, DEM sampling, map imagery, `PATCH` title sync, multi-selection transform, toolbelt-driven editing.
+**Out of scope for T-049:** T-068 registry, T-069 markers, T-070 vehicles, T-071 ORBAT Manager modal, DEM sampling, map imagery, `PATCH` title sync, multi-selection transform, toolbelt-driven editing.
 
 ---
 

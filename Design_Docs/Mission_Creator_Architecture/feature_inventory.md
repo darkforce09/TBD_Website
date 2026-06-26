@@ -485,14 +485,14 @@
 | **Goal** | Show export hierarchy Faction→Squad→Slot |
 | **Trigger** | Slots exist in store |
 | **Preconditions** | `buildOrbat` from factions/squads/slots |
-| **Procedure** | `OrbatSection` renders `TreeView`; sort by index; tag badges |
-| **Postconditions** | Tree visible |
+| **Procedure** | `OrbatSection` renders `TreeView` in left outliner until **T-071**; then ORBAT display moves to **ORBAT Manager modal** |
+| **Postconditions** | Tree visible (left today; modal after T-071) |
 | **Inputs** | N/A |
 | **Outputs** | UI |
-| **Edge cases** | Empty state message; no authoring UI |
-| **Acceptance** | `- [ ] Placed units appear under default faction/squad` |
+| **Edge cases** | Empty state message; authoring UI in ORBAT Manager (**T-071**) |
+| **Acceptance** | `- [ ] Placed units appear under default faction/squad` `- [ ] T-071: no duplicate ORBAT tree on left; Editor Layers only` |
 | **Eden parity** | Eden:ORBAT-001 |
-| **Status** | partial |
+| **Status** | partial — read-only left tree today; **T-071** ORBAT Manager modal queued |
 | **Evidence** | `OrbatSection.tsx`, `ydoc.ts` `ensureDefaultSquad` |
 
 #### LEFT-ORBAT-002 — ORBAT slot select
@@ -1214,23 +1214,24 @@
 
 ---
 
-#### PERF-CHUNK-001 — Spatial chunks / viewport cull (T-067)
+#### PERF-CHUNK-001 — Spatial chunks / bulk-paste scale (T-067)
 
 | Field | Value |
 |-------|-------|
 | **Domain** | PERF |
-| **Goal** | Render/patch path scales with viewport + chunk count, not total N; path to 1M–10M mission entities |
-| **Trigger** | Open mega mission; pan/zoom; bulk paste; (T-067.1) viewport crosses chunk boundary |
-| **Preconditions** | T-063 pick index; T-065 cluster band; T-066 worker save unchanged in T-067.0 |
-| **Procedure** | **T-067.0:** `spatialChunks.ts` grid; `getBaseIconsForBbox`; `slot-add-bulk` in `incPatchPlan`; **T-067.1:** lazy chunk residency + Y.Doc compile walk |
-| **Postconditions** | T-067.0: Deck detail layer receives visible-chunk icons + selection only when `slotCount > 50k`; paste ≤10k avoids full snapshot |
-| **Inputs** | World bbox from `view.makeViewport`; terrain bounds; selection ids |
-| **Outputs** | Subset `SlotIcon[]` to Deck; O(k) store patches on bulk paste |
-| **Edge cases** | Off-screen selection must still render; pick/marquee use full rbush (not culled); cluster mode unchanged |
-| **Acceptance** | T-067.0: `- [ ]` no fps regression @ 367k `- [ ]` Save 201 `- [ ]` 6k paste `- [ ]` pick/drag/cluster |
+| **Goal** | Bulk paste O(k) not O(n) snapshot; chunk scaffolding for 1M+ lazy RAM / GPU cull |
+| **Trigger** | Ctrl+V bulk paste; (future) viewport crosses chunk @ 1M |
+| **Preconditions** | T-062 incremental bindings; T-066 worker save unchanged |
+| **Procedure** | **Shipped:** `slot-add-bulk` in `incPatchPlan` → `_patchAddSlotsBulk`; dormant `chunkBuckets` in `slotIconCache`. **Render:** `getBaseIcons()` (CPU cull reverted T-067.0.1). **Deferred:** T-067.1 lazy RAM; GPU `DataFilterExtension` |
+| **Postconditions** | Paste ≤10k avoids full snapshot; pan ~160 fps @ 367k zoom -2 |
+| **Inputs** | Added slot ids from Y.Doc txn; (future) viewport bounds |
+| **Outputs** | O(k) store + cache updates on bulk paste |
+| **Edge cases** | Structural squad/layer paste → full snapshot fallback (unchanged) |
+| **Acceptance** | `- [x]` pan ~160 fps @ 367k `- [x]` build/lint `- [x]` 6k paste path `- [ ]` Save 201 formal `- [x]` pick/drag/cluster unchanged |
 | **Eden parity** | n/a (infra) |
-| **Status** | spec ready (T-067.0 code pending) |
-| **Evidence** | Spec [`t067_spatial_chunks.md`](t067_spatial_chunks.md); code not landed |
+| **Status** | **shipped** (bulk paste + scaffolding; CPU cull deferred) |
+| **Ticket** | T-067 |
+| **Evidence** | `incPatchPlan.ts`, `useMapStore._patchAddSlotsBulk`, `spatialChunks.ts`, `slotIconCache.ts` chunk buckets, `useIconLayer.ts` → `getBaseIcons()`; spec [`t067_spatial_chunks.md`](t067_spatial_chunks.md) |
 
 ---
 

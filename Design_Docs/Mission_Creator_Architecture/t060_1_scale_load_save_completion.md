@@ -20,7 +20,7 @@ Manual verify @ **~300k objects** (2026-06):
 | **Save** | ~~Upload ~4% → ERR_NETWORK~~ | 360k → 201 | **FIXED T-060.1.4** (stale API + 1 MB global wrap; curl 140 MB → 201; browser verify pending) |
 | **Hydrate bulk window** | — | “hydrate in bulk coalesce” | `endBulkSync()` runs **before** server hydrate completes |
 
-T-060 was the **foundation** (gate, coalesce, API cap, compile progress). **T-060.1 completes acceptance.** **T-061** drag-move shipped (good enough). **T-062** incremental bindings @ 360k. **T-062.2** editor session / alt-tab. **T-062.1** chunked IDB load. **T-062.1.1** Save orbat dedup. **T-063** spatial index. **T-064** virtualized outliner. **T-065** cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md).
+T-060 was the **foundation** (gate, coalesce, API cap, compile progress). **T-060.1 completes acceptance.** **T-061** drag-move shipped (good enough). **T-062** incremental bindings @ 360k. **T-062.2** editor session / alt-tab. **T-062.1** chunked IDB load. **T-062.1.1** Save orbat dedup. **T-063** spatial index. **T-064** virtualized outliner. **T-065** cluster/LOD. **T-066** ✅ worker compile. **T-067** ✅ spatial chunks — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+**.
 
 **North-star reminder:** Linear load time @ 300k → ~10 min @ 10M without incremental IDB + bindings at scale. T-060.1 targets **360k acceptance** (determinate UX + save works); **≤10 s @ 1M** remains **T-066** stretch. **T-062.1** shipped v2 chunked IDB restore.
 

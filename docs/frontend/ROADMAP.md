@@ -37,7 +37,7 @@ All routes below have a surface spec unless noted. Live UI = `frontend/src/pages
 | `/leaderboards` | [leaderboards.md](../../frontend/docs/pages/leaderboards.md) | Live: `operations.tsx` |
 | `/missions` | [mission-library.md](../../frontend/docs/pages/mission-library.md) | Create dialog shipped (T-048); `/missions/create` removed |
 | `/missions/:id` | [mission-overview.md](../../frontend/docs/pages/mission-overview.md) | Sheet dossier |
-| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-067 spec ready ([`t067_spatial_chunks.md`](../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md)); T-067.0 code pending |
+| `/missions/:id/edit` | [mission-editor.md](../../frontend/docs/pages/mission-editor.md) | **in-progress** — T-067 shipped ([`t067_spatial_chunks.md`](../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md)); next T-068+ |
 | `/events` | [event-schedule.md](../../frontend/docs/pages/event-schedule.md) | SplitPane; Live: `operations.tsx` |
 | `/events/:id` | [event-hub.md](../../frontend/docs/pages/event-hub.md) | Inline ORBAT |
 | `/events/:id/missions/:emid/orbat` | [event-hub.md § ORBAT deep-link](../../frontend/docs/pages/event-hub.md) | |
@@ -95,7 +95,7 @@ Full deferred table: [`docs/TICKET_REGISTRY.md`](../TICKET_REGISTRY.md).
 
 ## Recommended next work
 
-1. **Mission Creator — T-067.0 spatial chunks** (spec ready — [`t067_spatial_chunks.md`](../../Design_Docs/Mission_Creator_Architecture/t067_spatial_chunks.md)) → T-067.1 → **T-068+** per [`TICKET_LEAD.md`](../TICKET_LEAD.md)
+1. **Mission Creator — Eden T-068+** per [`TICKET_LEAD.md`](../TICKET_LEAD.md) (T-067 scale program shipped)
 2. **T-085** — wiki markdown (low risk, high UX)
 3. **T-086** — when backend exposes server/RCON endpoints
 

@@ -9,16 +9,16 @@
 <!-- ticket-sync:next:start -->
 ### Recommended next work (auto-generated)
 
-- **T-067** — Spatial chunks (ready)
 - **T-068** — Asset registry + palette (queued)
 - **T-069** — Markers on map (queued)
 - **T-070** — Vehicles placeable (queued)
-- **T-071** — ORBAT authoring UI (queued)
+- **T-071** — ORBAT Manager modal (queued)
 - **T-072** — Ctrl multi-place (queued)
 - **T-073** — Shift + map rotation (queued)
 - **T-074** — Faction submode / catalog filter (queued)
 - **T-075** — Spacebar flyTo vs widget (queued)
 - **T-076** — Vehicle crew UI (queued)
+- **T-077** — Alt + empty vehicle (queued)
 <!-- ticket-sync:next:end -->
 
 ---
@@ -31,7 +31,7 @@
 |--------|----------------------------------------|
 | ~~**T-057** map perf hotfix~~ ✅ **shipped** | Aligned map imagery (top-down tiles) |
 | **T-059..T-067 scale program** — path to **1M–10M** (~~T-059~~ ✅; ~~T-060..T-060.1.4~~ ✅ shipped `b1fd25a`) | DEM + Z sampling from heightmap |
-| **T-068+** — registry, markers, vehicles, ORBAT authoring, multi-place, rotate, … | Mod golden coord test (needs mod team + accurate map) |
+| **T-068+** — registry, markers, vehicles, ORBAT Manager modal, multi-place, rotate, … | Mod golden coord test (needs mod team + accurate map) |
 | Thin registry as needed to unblock **T-068** (not “full registry completeness”) | **T-051** title PATCH sync (optional; not Eden-blocking) |
 | Continue Eden slices as **T-068+** (spec → code → docs, same as T-048..T-056) | Full loadout matrix / Loadout Forge (separate program) |
 
@@ -41,8 +41,8 @@
 
 Work [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md) queue in dependency order; interleave small **T-068+** slices between heavier blocks:
 
-1. **Scale program (active)** — ~~**T-064**~~ ✅ virtualized outliner → ~~**T-065**~~ ✅ cluster/LOD → ~~**T-066**~~ ✅ worker compile → **T-067.0** ([`t067_spatial_chunks.md`](t067_spatial_chunks.md)) → …
-2. **T-068+ ship-blocking** — **T-068** registry + palette → **T-069** markers → **T-070** vehicles → **T-071** ORBAT authoring UI
+1. **Scale program (complete through T-067)** — ~~**T-064**~~ ✅ virtualized outliner → ~~**T-065**~~ ✅ cluster/LOD → ~~**T-066**~~ ✅ worker compile → ~~**T-067**~~ ✅ bulk paste + chunk scaffolding ([`t067_spatial_chunks.md`](t067_spatial_chunks.md)) → …
+2. **T-068+ ship-blocking** — **T-068** registry + palette → **T-069** markers → **T-070** vehicles → **T-071** ORBAT Manager modal
 3. **T-068+ remainder** — **T-072**..**T-077** (multi-place, rotate, Space conflict, vehicle crew, …) and later queued tickets
 4. **Then** map imagery + DEM — new tickets after Eden backlog closes (see [`engineering_plan.md`](engineering_plan.md))
 
@@ -61,7 +61,7 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | Pan | `useOrthographicView` `setViewState` every pan frame re-renders `TacticalMap` + children | ✅ `useSelectTool` rAF-coalesces pan to one `setViewState`/frame (layers already memoized) |
 | Gestures | `pickObject` on pointerdown + hover during pan | ✅ Hover picking removed (T-057); **T-063:** rbush `pickNearest`/`pickRect` replaces Deck GPU pick; `slot-icons` not pickable |
 
-**1M–10M editable entities** is the **north star** (Arma 3 reference ~8M map objects); reach it **step-by-step** (not one commit). **Validated (2026-06):** pan/zoom **100+ fps @ 360k** (T-057 + T-059); repeat **6k paste** loops smooth. **Bulk paste — fixed (T-059).** **T-060 shipped** (`b1fd25a`): load partial pass @ ~360k; Save @ ~367k/~142 MB → **201**. **T-061 shipped (good enough):** drag motion ~60 fps @ 360k. **T-062 shipped:** incremental bindings — asset drop, delete (≤10k/batch), meta, editor-layers @ 360k. **T-062.2 shipped:** editor session / alt-tab — no automatic reload overlay after extended background (dev Vite guard + warm session fast path). **T-062.1 shipped:** chunked IDB slot restore — v2 `tbd-mission-persist`; determinate restoring @ ~360k (no 0→300k jump on 2nd+ load). **T-062.1.1 shipped:** Save orbat dedup — editor-only POST; Go derives ORBAT for events. **T-063 shipped:** rbush spatial index — click/marquee pick @ ~367k significantly faster vs Deck GPU pick. **T-064 shipped:** virtualized outliner — scrollable @ ~367k, no DOM explosion; T-064.1 scroll-ref hotfix. **T-065 shipped** (`845bfb2`) — cluster/LOD. **T-066 shipped** (`53bc2a8`) — worker compile + `pickMapSnapshot`; Save 201 @ ~367k. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md) spec ready (code pending). Remaining bottleneck: full `docToSnapshot` on hydrate/undo-multi-add (T-067.1 lazy RAM). Phased track:
+**1M–10M editable entities** is the **north star** (Arma 3 reference ~8M map objects); reach it **step-by-step** (not one commit). **Validated (2026-06):** pan/zoom **100+ fps @ 360k** (T-057 + T-059); repeat **6k paste** loops smooth. **Bulk paste — fixed (T-059).** **T-060 shipped** (`b1fd25a`): load partial pass @ ~360k; Save @ ~367k/~142 MB → **201**. **T-061 shipped (good enough):** drag motion ~60 fps @ 360k. **T-062 shipped:** incremental bindings — asset drop, delete (≤10k/batch), meta, editor-layers @ 360k. **T-062.2 shipped:** editor session / alt-tab — no automatic reload overlay after extended background (dev Vite guard + warm session fast path). **T-062.1 shipped:** chunked IDB slot restore — v2 `tbd-mission-persist`; determinate restoring @ ~360k (no 0→300k jump on 2nd+ load). **T-062.1.1 shipped:** Save orbat dedup — editor-only POST; Go derives ORBAT for events. **T-063 shipped:** rbush spatial index — click/marquee pick @ ~367k significantly faster vs Deck GPU pick. **T-064 shipped:** virtualized outliner — scrollable @ ~367k, no DOM explosion; T-064.1 scroll-ref hotfix. **T-065 shipped** (`845bfb2`) — cluster/LOD. **T-066 shipped** (`53bc2a8`) — worker compile + `pickMapSnapshot`; Save 201 @ ~367k. **T-067 shipped** — bulk-paste `slot-add-bulk` + chunk scaffolding; CPU viewport cull deferred (T-067.0.1). Remaining @ 1M+: lazy RAM (T-067.1) + GPU cull. Phased track:
 
 | Tag | Focus | Entity target | FPS / UX target |
 |-----|-------|---------------|-----------------|
@@ -87,7 +87,7 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | **T-064** ✅ | Outliner | 50k+ UI | Virtualized outliner — **shipped**; spec: [`t064_virtualized_outliner.md`](t064_virtualized_outliner.md) |
 | **T-065** ✅ | Cluster/LOD | 100k–1M | Cluster/LOD extreme zoom — **shipped**; spec: [`t065_cluster_lod.md`](t065_cluster_lod.md) |
 | **T-066** ✅ | Worker | 1M+ export | Worker offload — **shipped** (T-066.1 `pickMapSnapshot`); spec: [`t066_worker_compile.md`](t066_worker_compile.md) |
-| **T-067** | Chunks | 1M–10M | Spatial chunks — **spec ready** ([`t067_spatial_chunks.md`](t067_spatial_chunks.md)); **T-067.0 active** (viewport cull + bulk paste) |
+| **T-067** | Chunks | 1M–10M | **Shipped** — bulk paste + scaffolding; CPU cull deferred ([`t067_spatial_chunks.md`](t067_spatial_chunks.md)) |
 | **T-110** | Terrain base | 1M–10M props | Binary world base + sparse terrain deltas — **future**; see [`t110_terrain_base_mission_layers.md`](t110_terrain_base_mission_layers.md) |
 
 **Dual-layer north star (T-110, not current work):** **Terrain base** (millions of read-mostly map objects → binary + sparse deltas) is separate from **authored mission entities** (ORBAT slots, markers → Y.Doc + T-061..T-062). Do **not** replace the mission layer with terrain deltas. External “Base + Delta” proposal adopted **only** for the terrain track after T-067 + **T-068+**.
@@ -100,7 +100,7 @@ Authority for individual Eden items: [`feature_inventory.md`](feature_inventory.
 | 1M ideal | T-061–T-065 | ✅ T-059 | T-060 + T-062.1 + **≤10 s** stretch (**T-066** worker) |
 | 1M–10M props | T-061–T-067 + **T-110** | ✅ T-059 | Terrain base + deltas; mission patch save |
 
-**T-057–T-065 shipped.** **T-066 shipped** → **T-067 spec ready / T-067.0 code** → **T-068+** Eden backlog → **T-110** terrain base (optional).
+**T-057–T-067 shipped.** **T-068+** Eden backlog → **T-110** terrain base (optional).
 
 Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shipped T-057).
 
@@ -139,7 +139,7 @@ Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shippe
 | **[`t064_virtualized_outliner.md`](t064_virtualized_outliner.md)** | **T-064** — Virtualized outliner @ 100k–360k+ leaves (**shipped**) |
 | **[`t065_cluster_lod.md`](t065_cluster_lod.md)** | **T-065** — Cluster / LOD @ extreme zoom (**shipped** `845bfb2`) |
 | **[`t066_worker_compile.md`](t066_worker_compile.md)** | **T-066** — Worker compile + version blob (**shipped** — T-066.1 `pickMapSnapshot`) |
-| **[`t067_spatial_chunks.md`](t067_spatial_chunks.md)** | **T-067** — Spatial chunks / lazy regions (**spec ready** — T-067.0 code pending) |
+| **[`t067_spatial_chunks.md`](t067_spatial_chunks.md)** | **T-067** — Spatial chunks / bulk-paste scale (**shipped**) |
 | **[`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md)** | **T-057** — Map perf hotfix: ≥55 fps pan/zoom @ 200+ slots (shipped) |
 | **[`t056_copy_paste.md`](t056_copy_paste.md)** | **T-056** — Ctrl+C/V copy-paste at cursor (slots) (shipped) |
 | **[`t055_asset_browser_search.md`](t055_asset_browser_search.md)** | **T-055** — Asset browser search (filters Factions tree) (shipped) |
@@ -258,7 +258,7 @@ Spec: [`t057_map_performance_hotfix.md`](t057_map_performance_hotfix.md) (shippe
 |------|------|-------------|
 | **Ctrl/Cmd+Z/Y undo-redo** | [`t052_undo_shortcuts.md`](t052_undo_shortcuts.md) | ✅ Host keydown in `MissionCreatorPage` + **`useMissionDoc` StrictMode `instanceKey` lifecycle** (dev undo was dead without it). Cmd/Ctrl+Z undo; Cmd/Ctrl+Shift+Z or Ctrl+Y redo; focus guard (INPUT/SELECT/TEXTAREA/contentEditable). Closes gap_analysis **TOOLBAR-UNDO-001** / **KEY-UNDO-001**. |
 
-**Next:** see [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md). **T-067.0 active** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). Eden remainder at **T-068+**.
+**Next:** see [`docs/TICKET_LEAD.md`](../../docs/TICKET_LEAD.md). **T-067 shipped** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). Eden remainder at **T-068+**.
 
 ---
 
@@ -328,7 +328,7 @@ Required to place **real objects**, not just generic slots. **Queue and dependen
 | **T-068** | Registry API + catalog UI backed by registry (not `assetCatalogMock.ts`) | **Queued** |
 | **T-069** | Markers on map — `addMarker`, render, select, move, delete | **Queued** |
 | **T-070** | Vehicles placeable — `addVehicle`, map layer, drop creates correct kind | **Queued** |
-| **T-071** | ORBAT authoring UI — create faction/squad before place | **Queued** |
+| **T-071** | ORBAT Manager modal — remove duplicate left ORBAT tree; faction/squad/slot authoring, slotting order, standardizations, logos, arsenal | **Queued** |
 | **T-072** | Ctrl multi-place | **Queued** |
 | **T-073** | Shift + map rotation | **Queued** |
 | **T-074** | Faction submode / catalog filter | **Queued** |
@@ -399,7 +399,7 @@ Local IndexedDB + manual save  Autosave + semver versions
 | **4** | Mod golden test (one coordinate round-trip) | Mod team JSON spec |
 | **5** | Registry v1 API + ingest + palette (expand beyond Eden-minimal) | In-game classname list |
 | **6** | Vehicles + markers on map (if not closed in **T-068+**) | Phase 5 |
-| **7** | ORBAT authoring (if not closed in **T-068+**) | Phase 5 |
+| **7** | ORBAT Manager modal (if not closed in **T-068+**) | Phase 5 |
 | **8** | Loadout Forge MVP | Phase 5 + Armory Forger export |
 | **9** | Full item matrix + compiler loadouts | Phase 8 |
 | **10** | **T-110** terrain base + sparse deltas | T-067 + T-068+ |
@@ -423,7 +423,7 @@ Phases **1b** = **Eden parity on flat grid.** Phases 2–4 = **map + accurate po
 | Virtualized outliner | **T-064** ✅ | Sidebar @ 100k+ leaves | **Shipped** — spec [`t064_virtualized_outliner.md`](t064_virtualized_outliner.md) |
 | Cluster / LOD extreme zoom | **T-065** ✅ | Pan-stable clusters @ zoom ≤ -4; detail @ -2 | [`t065_cluster_lod.md`](t065_cluster_lod.md) |
 | Worker offload compile/export | **T-066** ✅ | `compiler.worker.ts` + `pickMapSnapshot`; Save 201 @ ~367k | [`t066_worker_compile.md`](t066_worker_compile.md) |
-| Spatial chunks / lazy regions | **T-067** spec ready | T-067.0 viewport cull + bulk paste; T-067.1 lazy RAM @ 1M | [`t067_spatial_chunks.md`](t067_spatial_chunks.md) |
+| Spatial chunks / lazy regions | **T-067** shipped | Bulk paste + scaffolding; CPU cull deferred; T-067.1 lazy RAM @ 1M | [`t067_spatial_chunks.md`](t067_spatial_chunks.md) |
 | Terrain base + sparse deltas | **T-110** | Millions of map props (separate from mission layer) | After T-068+ |
 | ≤10 s load @ 1M | T-062.1 ✅ + T-066 | Chunked IDB + worker — not drag perf | Stretch north star |
 

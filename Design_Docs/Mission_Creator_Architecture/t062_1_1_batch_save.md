@@ -90,7 +90,7 @@ Real missions (~128 ORBAT slots) are tiny; this slice targets **future object-he
 
 ## After T-062.1.1
 
-- **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **Active: T-067.0** — [`t067_spatial_chunks.md`](t067_spatial_chunks.md)
+- **T-064** ✅ virtualized outliner. **T-065** ✅ cluster/LOD. **T-066** ✅ worker compile. **T-067** ✅ — [`t067_spatial_chunks.md`](t067_spatial_chunks.md). **Eden T-068+**
 
 ---
 
